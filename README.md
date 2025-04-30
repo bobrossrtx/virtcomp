@@ -106,11 +106,31 @@ Support for an actual assembly language is planned for the future (and even supp
 01 00 05 01 01 07 02 00 01 FF
 ```
 
----
+### Current Instructions
+- `0x00` (NOP) — NOP (No operation)
+- `0x01` (LOAD_IMM) — Load immediate value into register
+- `0x02` (ADD) — Add register values
+- `0x03` (SUB) — Subtract register values
+- `0x04` (MUL) — Multiply register values
+- `0x05` (DIV) — Divide register values
+- `0x06` (SHL) — Shift left
+- `0x07` (SHR) — Shift right
+- `0x08` (AND) — Bitwise AND
+- `0x09` (OR) — Bitwise OR
+- `0x0A` (XOR) — Bitwise XOR
+- `0x0B` (NOT) — Bitwise NOT
+- `0x0C` (CMP) — Compare register values
+- `0x0D` (JMP) — Jump to address
+- `0x0E` (JZ) — Jump if zero
+- `0x0F` (JNZ) — Jump if not zero
+- `0x10` (PUSH) — Push value onto stack
+- `0x11` (POP) — Pop value from stack
 
-## License
-
-MIT License
+### Future Instructions
+- `0x12` (CALL) — Call subroutine
+- `0x13` (RET) — Return from subroutine
+- `0x14` (PUSH_ARG) — Push argument onto stack
+- `0x15` (POP_ARG) — Pop argument from stack
 
 ---
 
