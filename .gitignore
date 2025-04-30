@@ -30,3 +30,20 @@
 *.exe
 *.out
 *.app
+
+# Debug files
+*.dSYM
+*.su
+*.gcno
+*.log
+
+# Build directories
+build/
+build-*
+bin/
+lib/
+lib64/
+libexec/
+
+# executable files
+*.exe
