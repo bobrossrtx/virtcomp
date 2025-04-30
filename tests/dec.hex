@@ -1,0 +1,2 @@
+# Decrement: R1 = 2, DEC R1, HALT
+01 01 02 13 01 FF

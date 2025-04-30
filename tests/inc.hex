@@ -1,0 +1,2 @@
+# Increment: R0 = 5, INC R0, HALT
+01 00 05 12 00 FF

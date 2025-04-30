@@ -1,0 +1,2 @@
+# Out of bounds register: Try to use register 10, which may not exist
+01 0A 05 FF

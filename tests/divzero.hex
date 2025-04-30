@@ -1,0 +1,2 @@
+# Division by zero error (error expected): R0 = 10, R1 = 0, R0 = R0 / R1, HALT
+01 00 0A 01 01 00 11 00 01 FF

@@ -1,0 +1,2 @@
+# Bitwise AND: R0 = 0xF0, R1 = 0x0F, R0 = R0 & R1, HALT
+01 00 F0 01 01 0F 14 00 01 FF

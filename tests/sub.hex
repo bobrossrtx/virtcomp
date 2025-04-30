@@ -1,0 +1,2 @@
+# Subtraction: R2 = 10, R3 = 3, R2 = R2 - R3, HALT
+01 02 0A 01 03 03 03 02 03 FF

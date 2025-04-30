@@ -1,0 +1,2 @@
+# Jump: JMP to HALT [jmp 0x02 -> HALT]
+05 02 FF
