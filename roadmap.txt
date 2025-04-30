@@ -1,0 +1,30 @@
+The following opcodes are planned to be added:
+
+Stack and Call operations:
+- CALL: Calls a subroutine by pushing the return address onto the stack and jumping to the subroutine.
+- RET: Returns from a subroutine by popping the return address from the stack and jumping back.
+- PUSH_ARG: Pushes an argument onto the stack.
+- POP_ARG: Pops an argument from the stack.
+
+Input/Output operations:
+- IN: Inputs data from a port or device.
+- OUT: Outputs data to a port or device.
+
+Flags and Status operations:
+- PUSHF: Pushes the flags register onto the stack.
+- POPF: Pops the flags register from the stack.
+
+Memory operations:
+- LEA: Loads an effective address, useful for pointer arithmetic.
+- SWAP: Swaps the values of two registers.
+
+Conditional jumps for more granularity:
+- JC / JNC: Jump if carry or no carry.
+- JO / JNO: Jump if overflow or no overflow.
+- JG, JL, JGE, JLE: Jump if greater, less, greater or equal, or less or equal (for both signed and unsigned comparisons).
+
+Additionally, virtual storage will be added at a low level, including:
+- Virtual storage types such as RAM, ROM, and VHDD.
+- A virtual storage controller, bus, interface, driver, and manager.
+- A virtual storage API.
+- Support for virtual files and directories.
