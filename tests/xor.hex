@@ -1,0 +1,2 @@
+# Bitwise XOR: R0 = 0xAA, R1 = 0xFF, R0 = R0 ^ R1, HALT
+01 00 AA 01 01 FF 16 00 01 FF

@@ -1,0 +1,2 @@
+# Bitwise NOT: R0 = 0x0F, R0 = ~R0, HALT
+01 00 0F 17 00 FF

@@ -1,0 +1,2 @@
+# Shift Left: R0 = 1, SHL R0 by 2, HALT
+01 00 01 18 00 02 FF

@@ -1,0 +1,2 @@
+# Compare and jump if zero: R0 = 5, R1 = 5, CMP R0 R1, JZ to HALT
+01 00 05 01 01 05 0A 00 01 0B 0B FF

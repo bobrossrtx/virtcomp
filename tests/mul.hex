@@ -1,0 +1,2 @@
+# Multiplication: R0 = 4, R1 = 6, R0 = R0 * R1, HALT
+01 00 04 01 01 06 10 00 01 FF

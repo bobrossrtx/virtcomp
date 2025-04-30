@@ -1,0 +1,2 @@
+# Push and pop: R0 = 42, PUSH R0, POP R1, HALT
+01 00 2A 08 00 09 01 FF
