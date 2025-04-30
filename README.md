@@ -90,7 +90,11 @@ Tests passed: 16 / 18
 
 ---
 
-## Writing Test Programs
+## Writing Programs
+
+Disclaimer: This is a work in progress and the assembly language may change.
+Currently, the assembly language is a simple hex-encoded format. and a program has to be written in a specific way.
+Support for an actual assembly language is planned for the future (and even support for the [Demi](https://demi-website.fly.dev/) Language).
 
 - Test programs are `.hex` files in the `tests/` directory.
 - Each file can start with a comment line (beginning with `#`) describing the test.
