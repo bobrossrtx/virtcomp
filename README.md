@@ -24,7 +24,7 @@ VirtComp simulates a virtual computer running its own custom architecture. The g
 To build the project, simply run:
 
 ```bash
-make
+make clean prereqs test
 ```
 
 This will compile the source code and place the binary in the `bin/` directory.

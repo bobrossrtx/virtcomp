@@ -54,4 +54,15 @@ clean:
 test: $(TARGET)
 	./$(TARGET) -t -d
 
-.PHONY: all clean test
+prereqs:
+	@echo "Installing system dependencies..."
+	sudo apt-get update
+	sudo apt-get install -y libglfw3-dev libglew-dev libgl1-mesa-dev xorg-dev
+	@if [ ! -d extern/imgui ]; then \
+		echo "Cloning Dear ImGui..."; \
+		git clone https://github.com/ocornut/imgui.git extern/imgui; \
+	else \
+		echo "Dear ImGui already present."; \
+	fi
+
+.PHONY: all clean test prereqs
