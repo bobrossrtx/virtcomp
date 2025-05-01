@@ -1,5 +1,6 @@
 CXX := g++
-CXXFLAGS := -Wall -Wextra -std=c++17
+CXXFLAGS := -Wall -Wextra -std=c++17 -g
+LDFLAGS += -lstdc++fs
 SRC_DIR := src
 BUILD_DIR := build
 BIN_DIR := bin
