@@ -14,14 +14,39 @@ TARGET := $(BIN_DIR)/virtcomp
 
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	@mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) -o $@ $^
+# ImGui/GLFW/OpenGL3 sources
+IMGUI_DIR := extern/imgui
+IMGUI_BACKEND := $(IMGUI_DIR)/backends
+IMGUI_SRCS = \
+    $(IMGUI_DIR)/imgui.cpp \
+    $(IMGUI_DIR)/imgui_draw.cpp \
+    $(IMGUI_DIR)/imgui_tables.cpp \
+    $(IMGUI_DIR)/imgui_widgets.cpp \
+    $(IMGUI_DIR)/imgui_demo.cpp \
+    $(IMGUI_BACKEND)/imgui_impl_glfw.cpp \
+    $(IMGUI_BACKEND)/imgui_impl_opengl3.cpp
+
+IMGUI_OBJS = $(patsubst $(IMGUI_DIR)/%.cpp,$(BUILD_DIR)/imgui/%.o,$(filter $(IMGUI_DIR)/%.cpp,$(IMGUI_SRCS))) \
+             $(patsubst $(IMGUI_BACKEND)/%.cpp,$(BUILD_DIR)/imgui/backends/%.o,$(filter $(IMGUI_BACKEND)/%.cpp,$(IMGUI_SRCS)))
+GL_LIBS = -lglfw -lGLEW -lGLU -lGL -ldl
 
 # Pattern rule to build .o files in build/ mirroring src/ structure
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) -Iextern/imgui -Iextern/imgui/backends -c $< -o $@
+
+# Pattern rule for ImGui sources
+$(BUILD_DIR)/imgui/%.o: $(IMGUI_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -Iextern/imgui -Iextern/imgui/backends -c $< -o $@
+
+$(BUILD_DIR)/imgui/backends/%.o: $(IMGUI_BACKEND)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -Iextern/imgui -Iextern/imgui/backends -c $< -o $@
+
+$(TARGET): $(OBJS) $(IMGUI_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(GL_LIBS) $(LDFLAGS)
 
 clean:
 	rm -rf $(BUILD_DIR) $(BIN_DIR)
@@ -29,4 +54,4 @@ clean:
 test: $(TARGET)
 	./$(TARGET) -t -d
 
-.PHONY: all clean
+.PHONY: all clean test
