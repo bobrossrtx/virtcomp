@@ -16,7 +16,11 @@ namespace fs = std::experimental::filesystem;
 #include "config.hpp"
 #include "vhardware/cpu.hpp"
 
+// Include the debug framework
 #include "debug/logger.hpp"
+#include "debug/gui.hpp"
+
+// Include the test framework
 #include "test/test.hpp"
 
 enum class ArgType { Value, Action };
@@ -113,6 +117,31 @@ bool run_tests() {
     exit(0);
 }
 
+void run_gui(std::string program_file) {
+    std::vector<uint8_t> program;
+    if (!program_file.empty()) {
+        std::ifstream file(program_file);
+        if (!file) {
+            std::cerr << "Failed to load program file: " << program_file << std::endl;
+            exit(1);
+        }
+        std::string token;
+        while (file >> token) {
+            if (token[0] == '#') { file.ignore(std::numeric_limits<std::streamsize>::max(), '\n'); continue; }
+            try {
+                uint8_t byte = static_cast<uint8_t>(std::stoul(token, nullptr, 16));
+                program.push_back(byte);
+            } catch (...) {
+                std::cerr << "Invalid hex byte in program file: " << token << std::endl;
+                exit(1);
+            }
+        }
+    }
+    Gui gui("VirtComp Debugger");
+    gui.run_vm(program);
+    exit(0);
+}
+
 class VirtComp {
   public:
     VirtComp(int argc, char *argv[]) {
@@ -135,6 +164,10 @@ class VirtComp {
         // Run tests argument
         parser.add_action_arg("test", "--test", "-t", "Run tests",
             [this]() { run_tests(); });
+
+        // Gui argument
+        parser.add_action_arg("gui", "--gui", "-g", "Enable debug GUI",
+            [this]() { run_gui(program_file); });
         
 
         parser.parse(argc, argv);
