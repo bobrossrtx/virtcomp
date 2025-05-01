@@ -12,9 +12,11 @@ enum class Opcode : uint8_t {
     JMP = 0x05,         // Jump to address
     LOAD = 0x06,        // Load value from memory to reg
     STORE = 0x07,       // Store value from reg to memory
+
     PUSH = 0x08,        // Push reg onto stack
     POP = 0x09,         // Pop value from stack to reg
     CMP = 0x0A,         // Compare reg1, reg2
+
     JZ  = 0x0B,         // Jump if zero flag set
     JNZ = 0x0C,         // Jump if zero flag not set
     JS  = 0x0D,         // Jump if sign flag set
