@@ -4,6 +4,7 @@
 #include <iostream>
 #include <filesystem>
 #include <fstream>
+#include <fmt/core.h>
 #include "../vhardware/cpu.hpp"
 
 class TestRunner {
@@ -21,8 +22,8 @@ public:
         for (const auto& entry : std::filesystem::directory_iterator(test_dir_)) {
             if (entry.path().extension() == ".hex") {
                 std::string test_name = entry.path().filename().string();
-                Logger::instance().running() << std::right << std::setw(23) << std::setfill(' ')
-                                             << "[RUN] | " << test_name << std::endl;
+                Logger::instance().running() 
+                    << fmt::format("{:>14} [RUN] │ {}", "", test_name) << std::endl;
                 TestResult result = run_test(entry.path());
                 std::ostringstream oss;
 
@@ -30,9 +31,9 @@ public:
                 if (!result.passed) buffer_size += 2;
 
                 oss << std::right << std::setw(buffer_size) << std::setfill(' ') << 
-                "[" << (result.passed ? "PASS" : "FAIL") << "] | " << test_name;
+                "[" << (result.passed ? "PASS" : "FAIL") << "] │ " << test_name;
                 if (!result.passed && !result.message.empty())
-                    oss << " -- " << result.message;
+                    oss << " ── " << result.message;
                     
                 if (result.passed) {
                     Logger::instance().success() << oss.str() << std::endl;
@@ -72,7 +73,7 @@ private:
         }
 
         if (!comment.empty()) {
-            Logger::instance().info() << std::right << std::setw(23) << std::setfill('-') << " [COMMENT]" << " |" << comment << std::endl;
+            Logger::instance().info() << fmt::format("{:>13} [COMMENT] │{}", "", comment) << std::endl;
         }
 
         CPU cpu;

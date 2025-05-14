@@ -96,15 +96,24 @@ private:
 };
 
 bool run_tests() {
+
+    // Print a header
+    // Print a colored ASCII art header (cyan)
+    // If debug mode is on, use orange (ANSI 38;5;208), else cyan (36)
+    const char* color = Config::debug ? "\033[38;5;208m" : "\033[36m";
+    std::cout << color << "┌──────────────────────────────────────────────────────┐\033[0m" << std::endl;
+    std::cout << color << "│     Running VirtComp Tests                           │\033[0m" << std::endl;
+    std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
     
     // Use TestRunner to run all .hex files in tests/
     TestRunner runner("tests");
     auto results = runner.run_all();
     int passed = 0, failed = 0;
-    // Print header
-    std::cout << std::string(125, '-') << std::endl;
-    std::cout << "VirtComp Test Results" << std::endl;
-    std::cout << std::string(125, '-') << std::endl;
+    // Print result header
+    fmt::print("\033[36m{:─>55}┴{:─<69}\033[0m\n", "", "");
+    // Cyan color for header
+    std::cout << "\033[36mVirtComp Test Results\033[0m" << std::endl;
+    fmt::print("\033[36m{:─^{}}\033[0m\n", "", 125);
 
     for (const auto& result : results) {
         // Print test result with neat spacing (fixed width for name)
@@ -206,23 +215,23 @@ class VirtComp {
         // Print a colored ASCII art header (cyan)
         // If debug mode is on, use orange (ANSI 38;5;208), else cyan (36)
         const char* color = Config::debug ? "\033[38;5;208m" : "\033[36m";
-        std::cout << color << "_______________________________________________________\033[0m" << std::endl;
-        std::cout << color << R"(|                                                      |
-|     __      ___      _                               |
-|     \ \    / (_)    | |                              |
-|      \ \  / / _ _ __| |_ ___ ___  _ __ ___  _ __     |
-|       \ \/ / | | '__| __/ __/ _ \| '_ ` _ \| '_ \    |
-|        \  /  | | |  | || (_| (_) | | | | | | |_) |   |
-|         \/   |_|_|   \__\___\___/|_| |_| |_| .__/    |
-|                                            | |       |
-|                                            |_|       |
-|                                                      |)" << "\033[0m" << std::endl;
-        std::cout << color << "|______________________________________________________|\033[0m" << std::endl;
+        std::cout << color << "┌──────────────────────────────────────────────────────┐\033[0m" << std::endl;
+        std::cout << color << R"(│                                                      │
+│     __      ___      _                               │
+│     \ \    / (_)    | |                              │
+│      \ \  / / _ _ __| |_ ___ ___  _ __ ___  _ __     │
+│       \ \/ / | | '__| __/ __/ _ \| '_ ` _ \| '_ \    │
+│        \  /  | | |  | || (_| (_) | | | | | | |_) |   │
+│         \/   |_|_|   \__\___\___/|_| |_| |_| .__/    │
+│                                            | |       │
+│                                            |_|       │
+│                                                      │)" << "\033[0m" << std::endl;
+        std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
 
         cpu.execute(program);
-
-        std::cout << "\033[36m|______________________________________________________|\033[0m" << std::endl;
         
+        // Print CPU state
+        cpu.print_state("Final State");
         cpu.print_registers();
         cpu.print_memory();
 
