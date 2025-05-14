@@ -65,6 +65,23 @@
         "variant": "cpp",
         "cstring": "cpp",
         "cinttypes": "cpp",
-        "set": "cpp"
-    }
+        "set": "cpp",
+        "any": "cpp",
+        "bitset": "cpp",
+        "cfenv": "cpp",
+        "complex": "cpp",
+        "list": "cpp",
+        "map": "cpp",
+        "expected": "cpp",
+        "source_location": "cpp",
+        "ranges": "cpp",
+        "typeindex": "cpp"
+    },
+    "terminal.integrated.defaultProfile.windows": "kali-linux (WSL)",
+    "remote.WSL.fileWatcher.polling": true,
+    "C_Cpp.default.configurationProvider": "ms-vscode.makefile-tools",
+    "C_Cpp.default.intelliSenseMode": "linux-gcc-x64",
+    "C_Cpp.default.cppStandard": "c++17",
+    "C_Cpp.default.compilerPath": "/usr/bin/g++",
+    "cmake.sourceDirectory": "/mnt/e/VirtComp/extern/fmt"
 }
