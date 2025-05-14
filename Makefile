@@ -56,13 +56,22 @@ test: $(TARGET)
 
 prereqs:
 	@echo "Installing system dependencies..."
-	sudo apt-get update
-	sudo apt-get install -y libglfw3-dev libglew-dev libgl1-mesa-dev xorg-dev
+	if ! dpkg -s libglfw3-dev libglew-dev libgl1-mesa-dev xorg-dev >/dev/null 2>&1; then \
+		sudo apt-get update; \
+		sudo apt-get install -y libglfw3-dev libglew-dev libgl1-mesa-dev xorg-dev; \
+	else \
+		echo "All required system libraries are already installed."; \
+	fi
 	@if [ ! -d extern/imgui ]; then \
 		echo "Cloning Dear ImGui..."; \
-		git clone https://github.com/ocornut/imgui.git extern/imgui; \
+		git clone https://github.com/ocornut/imgui extern/imgui; \
+		cd extern/imgui && git checkout docking; \
 	else \
 		echo "Dear ImGui already present."; \
 	fi
 
-.PHONY: all clean test prereqs
+build: prereqs $(TARGET)
+	@echo "Build complete. Run './$(TARGET)' to start the application."
+	@echo "Run 'make clean' to remove build artifacts."
+
+.PHONY: clean build prereqs test

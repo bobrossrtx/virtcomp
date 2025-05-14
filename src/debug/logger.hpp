@@ -6,9 +6,11 @@
 #include <mutex>
 #include <iomanip>
 #include <filesystem>
+#include <vector>
+
 #include "../config.hpp"
 
-enum class LogLevel { SUCCESS, ERRORINFO, INFO, WARNING, ERROR, DEBUG };
+enum class LogLevel { SUCCESS, ERRORINFO, INFO, WARNING, ERROR, DEBUG, RUNNING };
 
 class Logger {
 public:
@@ -41,10 +43,15 @@ public:
     }
 
     void log(LogLevel level, const std::string& msg) {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::lock_guard<std::recursive_mutex> lock(mutex_);
         std::ostream& out = (level == LogLevel::ERROR) ? std::cerr : std::cout;
         std::string color = level_to_color(level);
         std::string reset = "\033[0m";
+
+        // Final debug guard
+        if (level == LogLevel::DEBUG && !Config::debug) {
+            return;
+        }
 
         // Get current date and time with milliseconds
         auto now = std::chrono::system_clock::now();
@@ -57,7 +64,7 @@ public:
         localtime_r(&t, &tm);
     #endif
         char datetime[40];
-        std::strftime(datetime, sizeof(datetime), "%y-%m-%d | %H:%M:%S", &tm);
+        std::strftime(datetime, sizeof(datetime), "%y-%m-%d %H:%M:%S", &tm);
         std::ostringstream datetime_with_ms;
         datetime_with_ms << datetime << "." << std::setfill('0') << std::setw(3) << ms.count();
         std::string datetime_str = datetime_with_ms.str();
@@ -71,6 +78,14 @@ public:
             file_ << log_line << std::endl;
             file_.flush();
         }
+
+        // Add to GUI buffer
+        {
+            std::lock_guard<std::recursive_mutex> lock(gui_log_mutex_);
+            gui_log_buffer_.push_back(log_line);
+            if (gui_log_buffer_.size() > gui_log_buffer_max_)
+                gui_log_buffer_.erase(gui_log_buffer_.begin());
+        }
     }
 
     // Convenience methods
@@ -78,7 +93,7 @@ public:
     Logger& info()    { return level(LogLevel::INFO); }
     Logger& warn()    { return level(LogLevel::WARNING); }
     Logger& error(const std::string& extra_info = "") {
-        error_count++;
+        Config::error_count++;
 
         if (!extra_info.empty()) {
             buffer_ << " (" << extra_info << ")";
@@ -86,18 +101,33 @@ public:
         return level(LogLevel::ERROR);
     }
     Logger& debug()   { return level(LogLevel::DEBUG); }
+    Logger& running() { return level(LogLevel::RUNNING); }
+
+    std::vector<std::string> get_gui_log_buffer() {
+        std::lock_guard<std::recursive_mutex> lock(gui_log_mutex_);
+        return gui_log_buffer_;
+    }
+
+    void clear_gui_log_buffer() {
+        std::lock_guard<std::recursive_mutex> lock(gui_log_mutex_);
+        gui_log_buffer_.clear();
+    }
 
 private:
     Logger() {
         // Open debug_file from config.hpp, clear contents if exists
-        if (!debug_file.empty()) {
-            file_.open(debug_file, std::ios::out | std::ios::trunc);
+        if (!Config::debug_file.empty()) {
+            file_.open(Config::debug_file, std::ios::out | std::ios::trunc);
         }
     }
     std::ostringstream buffer_;
     LogLevel current_level_ = LogLevel::INFO;
     std::ofstream file_;
-    std::mutex mutex_;
+    std::recursive_mutex mutex_;
+
+    std::vector<std::string> gui_log_buffer_;
+    static constexpr size_t gui_log_buffer_max_ = 500;
+    std::recursive_mutex gui_log_mutex_;
 
     std::string level_to_string(LogLevel level) {
         switch (level) {
@@ -106,6 +136,7 @@ private:
             case LogLevel::WARNING: return "WARNING";
             case LogLevel::ERROR:   return "ERROR";
             case LogLevel::DEBUG:   return "DEBUG";
+            case LogLevel::RUNNING: return "RUNNING";
             default:                return "LOG";
         }
     }
@@ -118,6 +149,7 @@ private:
             case LogLevel::ERROR:       return "\033[1;31m";     // Bright Red
             case LogLevel::ERRORINFO:   return "\033[1;36m";     // Bright Cyan
             case LogLevel::DEBUG:       return "\033[38;5;208m"; // Orange (ANSI 256-color)
+            case LogLevel::RUNNING:     return "\033[1;34m";     // Bright Blue
             default:                    return "\033[0m";
         }
     }

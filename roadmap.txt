@@ -28,3 +28,7 @@ Additionally, virtual storage will be added at a low level, including:
 - A virtual storage controller, bus, interface, driver, and manager.
 - A virtual storage API.
 - Support for virtual files and directories.
+
+GUI Current Issues:
+- Log output auto scrolling is not working properly.
+- Programs not executing properly in the debug gui.
