@@ -47,23 +47,32 @@ public:
 
     void reset();
     void execute(const std::vector<uint8_t>& program);
+    void run(const std::vector<uint8_t>& program); // resets and runs whole program
+    bool step(const std::vector<uint8_t>& program); // executes one instruction, returns false if halted or error
     void print_state(const std::string& info) const;
     void print_registers() const;
     void print_memory(std::size_t start = 0, std::size_t end = 0x20) const; // Print first 32 bytes by default
 
     // Add these getters for testing
     const std::vector<uint32_t>& get_registers() const { return registers; }
-    const std::vector<uint8_t>& get_memory() const { return memory; }
+    std::vector<uint8_t>& get_memory() { return memory; }
     uint32_t get_flags() const { return flags; }
     uint32_t get_pc() const { return pc; }
     uint32_t get_sp() const { return sp; }
     uint32_t get_fp() const { return fp; }
+
+    void set_pc(uint32_t value) { pc = value; }
+    void set_sp(uint32_t value) { sp = value; }
+    void set_fp(uint32_t value) { fp = value; }
 
     uint8_t fetch_operand();
     void write_mem32(uint32_t addr, uint32_t value);
     uint32_t read_mem32(uint32_t addr) const;
 
     void print_stack_frame(const std::string& label) const;
+
+    uint32_t get_last_accessed_addr() const { return last_accessed_addr; }
+    uint32_t get_last_modified_addr() const { return last_modified_addr; }
 
 private:
     std::vector<uint32_t> registers;
@@ -73,4 +82,8 @@ private:
     uint32_t fp; // Frame Pointer
     uint32_t flags; // Status Flags
     int arg_offset; // Offset for arguments
+
+    // Add these:
+    mutable uint32_t last_accessed_addr = static_cast<uint32_t>(-1);
+    uint32_t last_modified_addr = static_cast<uint32_t>(-1);
 };

@@ -96,33 +96,46 @@ private:
 };
 
 bool run_tests() {
+    
     // Use TestRunner to run all .hex files in tests/
     TestRunner runner("tests");
     auto results = runner.run_all();
     int passed = 0, failed = 0;
+    // Print header
+    std::cout << std::string(125, '-') << std::endl;
+    std::cout << "VirtComp Test Results" << std::endl;
+    std::cout << std::string(125, '-') << std::endl;
+
     for (const auto& result : results) {
         // Print test result with neat spacing (fixed width for name)
         constexpr int name_width = 24;
-        std::cout << "[" << (result.passed ? "/" : "X") << "] ";
+        // ANSI color codes: green for pass, red for fail
+        const char* color = result.passed ? "\033[32m" : "\033[31m";
+        const char* reset = "\033[0m";
+        std::cout << color << "[" << (result.passed ? "/" : "X") << "] " << reset;
         std::cout.width(name_width);
         std::cout << std::left << result.name;
         std::cout << std::right;
+        std::cout << std::setw(4) << std::setfill(' ') << "";
         if ((&result - &results[0] + 1) % 4 == 0)
             std::cout << std::endl;
         else
             std::cout << "    ";
         if (result.passed) ++passed; else ++failed;
-    } std::cout << std::endl;
-    std::cout << "Tests passed: " << passed << " / " << results.size() << std::endl;
+    }
+    std::cout << std::endl;
+    // Summary: green if all passed, yellow if some failed
+    const char* summary_color = (failed == 0) ? "\033[32m" : "\033[33m";
+    std::cout << summary_color << "Tests passed: " << passed << " / " << results.size() << "\033[0m" << std::endl;
     exit(0);
 }
 
-void run_gui(std::string program_file) {
+void run_gui() {
     std::vector<uint8_t> program;
-    if (!program_file.empty()) {
-        std::ifstream file(program_file);
+    if (!Config::program_file.empty()) {
+        std::ifstream file(Config::program_file);
         if (!file) {
-            std::cerr << "Failed to load program file: " << program_file << std::endl;
+            std::cerr << "Failed to load program file: " << Config::program_file << std::endl;
             exit(1);
         }
         std::string token;
@@ -151,15 +164,15 @@ class VirtComp {
 
         // Debug argument
         parser.add_bool_arg("debug", "--debug", "-d", "Enable debug mode",
-            [this](bool value) { ::debug = value; });
+            [this](bool value) { Config::debug = value; });
 
         // Debug File argument
         parser.add_value_arg("debug_file", "--debug-file", "-f", "Debug file path",
-            [this](const std::string& value) { debug_file = value; });
+            [this](const std::string& value) { Config::debug_file = value; });
 
         // Program file argument
         parser.add_value_arg("program", "--program", "-p", "Path to program file (hex bytes, space or newline separated)",
-            [this](const std::string& value) { program_file = value; });
+            [this](const std::string& value) { Config::program_file = value; });
 
         // Run tests argument
         parser.add_action_arg("test", "--test", "-t", "Run tests",
@@ -167,7 +180,7 @@ class VirtComp {
 
         // Gui argument
         parser.add_action_arg("gui", "--gui", "-g", "Enable debug GUI",
-            [this]() { run_gui(program_file); });
+            [this]() { run_gui(); });
         
 
         parser.parse(argc, argv);
@@ -179,9 +192,9 @@ class VirtComp {
         cpu.reset();
 
         std::vector<uint8_t> program;
-        if (!program_file.empty()) {
-            if (!load_program_file(program_file, program)) {
-                std::cerr << "Failed to load program file: " << program_file << std::endl;
+        if (!Config::program_file.empty()) {
+            if (!load_program_file(Config::program_file, program)) {
+                std::cerr << "Failed to load program file: " << Config::program_file << std::endl;
                 return;
             }
         } else {
@@ -189,12 +202,32 @@ class VirtComp {
             return;
         }
 
+        // Print a header
+        // Print a colored ASCII art header (cyan)
+        // If debug mode is on, use orange (ANSI 38;5;208), else cyan (36)
+        const char* color = Config::debug ? "\033[38;5;208m" : "\033[36m";
+        std::cout << color << "_______________________________________________________\033[0m" << std::endl;
+        std::cout << color << R"(|                                                      |
+|     __      ___      _                               |
+|     \ \    / (_)    | |                              |
+|      \ \  / / _ _ __| |_ ___ ___  _ __ ___  _ __     |
+|       \ \/ / | | '__| __/ __/ _ \| '_ ` _ \| '_ \    |
+|        \  /  | | |  | || (_| (_) | | | | | | |_) |   |
+|         \/   |_|_|   \__\___\___/|_| |_| |_| .__/    |
+|                                            | |       |
+|                                            |_|       |
+|                                                      |)" << "\033[0m" << std::endl;
+        std::cout << color << "|______________________________________________________|\033[0m" << std::endl;
+
         cpu.execute(program);
+
+        std::cout << "\033[36m|______________________________________________________|\033[0m" << std::endl;
+        
         cpu.print_registers();
         cpu.print_memory();
 
-        if (error_count > 0) {
-            std::cerr << "Execution failed with " << error_count << " errors." << std::endl;
+        if (Config::error_count > 0) {
+            std::cerr << "Execution failed with " << Config::error_count << " errors." << std::endl;
         } else {
             std::cout << "Execution completed successfully." << std::endl;
         }
@@ -204,7 +237,6 @@ class VirtComp {
     ArgParser parser;
     std::string data;
     bool show_help = false;
-    std::string program_file;
 
     // Helper to load hex bytes from file
     bool load_program_file(const std::string& path, std::vector<uint8_t>& out) {
@@ -218,6 +250,7 @@ class VirtComp {
                 out.push_back(byte);
             } catch (...) {
                 std::cerr << "Invalid hex byte in program file: " << token << std::endl;
+                Config::error_count++;
                 return false;
             }
         }

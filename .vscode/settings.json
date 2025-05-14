@@ -52,6 +52,19 @@
         "mutex": "cpp",
         "thread": "cpp",
         "unordered_set": "cpp",
-        "codecvt": "cpp"
+        "codecvt": "cpp",
+        "charconv": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "format": "cpp",
+        "numbers": "cpp",
+        "semaphore": "cpp",
+        "span": "cpp",
+        "stop_token": "cpp",
+        "text_encoding": "cpp",
+        "variant": "cpp",
+        "cstring": "cpp",
+        "cinttypes": "cpp",
+        "set": "cpp"
     }
 }

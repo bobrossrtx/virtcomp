@@ -16,23 +16,27 @@ constexpr uint32_t FLAG_SIGN = 1 << 1;
 
 // CPU constructor
 CPU::CPU()
-    : registers(4, 0), memory(256, 0), pc(0), sp(256), flags(0) {} // Stack grows down from top of memory
+    : registers(4, 0), memory(256, 0), pc(0), sp(256), flags(0), last_accessed_addr(static_cast<uint32_t>(-1)), last_modified_addr(static_cast<uint32_t>(-1)) {} // Stack grows down from top of memory
 
 CPU::~CPU() = default;
 
 // Reset the CPU state
 void CPU::reset() {
     std::fill(registers.begin(), registers.end(), 0);
+    std::fill(memory.begin(), memory.end(), 0); // Clear memory
     pc = 0;
     sp = memory.size();
+    fp = sp;
     flags = 0;
+    last_accessed_addr = static_cast<uint32_t>(-1); // Clear highlight
+    last_modified_addr = static_cast<uint32_t>(-1); // Clear highlight
 }
 
 // Print the CPU state (debugging information)
 void CPU::print_state(const std::string& info) const {
 
     // If debug is not enabled, do not print the state
-    if (!debug) return;
+    if (!Config::debug) return;
 
     // Get current time
     auto now = std::chrono::system_clock::now();
@@ -42,7 +46,7 @@ void CPU::print_state(const std::string& info) const {
     std::ostringstream pc_ss;
     pc_ss << "PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc;
     oss << "[" << pc_ss.str() << "] "
-        << std::right << std::setw(10) << std::setfill(' ') << info << " | ";
+        << std::right << std::setw(10) << std::setfill(' ') << std::string("(" + info + ")") << " | ";
     for (size_t i = 0; i < registers.size(); ++i) {
         oss << "R" << i << "=0x" << std::setw(2) << std::setfill('0') << std::hex << std::uppercase << static_cast<int>(registers[i]) << " ";
     }
@@ -53,10 +57,10 @@ void CPU::print_state(const std::string& info) const {
     // Optionally print a small memory window around SP, with date and time
     if (sp < memory.size()) {
         std::ostringstream stack_oss;
-        stack_oss << std::right << std::setw(22) << std::setfill(' ') << "Stack top" << " | memory[SP..SP+3]: ";
+        stack_oss << std::right << std::setw(43) << std::setfill(' ') << "(Stack top) | memory[SP..SP+3]: ";
         for (size_t i = sp; i < std::min(static_cast<size_t>(sp + 4), memory.size()); ++i) {
             stack_oss << "[" << std::setw(3) << std::setfill(' ') << i << "]="
-                      << std::setw(3) << std::setfill(' ') << static_cast<int>(memory[i]) << " ";
+                      << std::left << std::setw(3) << static_cast<int>(memory[i]) << std::setfill(' ');
         }
         Logger::instance().debug() << stack_oss.str() << std::endl;
     }
@@ -64,7 +68,7 @@ void CPU::print_state(const std::string& info) const {
 
 void CPU::print_stack_frame(const std::string& label) const {
     std::ostringstream oss;
-    oss << "[Stack frame]" << std::right << std::setw(9) << label << " | ";
+    oss << "[Stack frame]" << std::right << std::setw(9) << std::string("(" + label + ")") << " | ";
     for (size_t i = 0; i < registers.size(); ++i) {
         oss << "R" << i << ": " << registers[i] << " ";
     }
@@ -118,6 +122,7 @@ uint8_t CPU::fetch_operand() {
 
 // Reads a 32-bit value from memory at the given address (little-endian)
 uint32_t CPU::read_mem32(uint32_t addr) const {
+    last_accessed_addr = addr;
     if (addr + 3 < memory.size()) {
         return (static_cast<uint32_t>(memory[addr])      ) |
                (static_cast<uint32_t>(memory[addr + 1]) << 8 ) |
@@ -131,6 +136,7 @@ uint32_t CPU::read_mem32(uint32_t addr) const {
 
 // Writes a 32-bit value to memory at the given address (little-endian)
 void CPU::write_mem32(uint32_t addr, uint32_t value) {
+    last_modified_addr = addr;
     if (addr + 3 < memory.size()) {
         memory[addr    ] = static_cast<uint8_t>(value      );
         memory[addr + 1] = static_cast<uint8_t>(value >> 8 );
@@ -180,13 +186,15 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                 if (pc + 2 < program.size()) {
                     uint8_t reg1 = program[pc + 1];
                     uint8_t reg2 = program[pc + 2];
-                    Logger::instance().debug() << "[ADD]" << std::right << std::setw(23) << std::setfill(' ')
-                                               << "| PC=" << pc << " R" << (int)reg1 << " += R" << (int)reg2 << std::endl;
+                    Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                               << pc << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                               << "[ADD] | PC=" << pc << " R" << (int)reg1 << " += R" << (int)reg2 << std::endl;
                     uint8_t before = registers[reg1];
                     registers[reg1] += registers[reg2];
-                    Logger::instance().debug() << "[ADD]" << std::right << std::setw(21) << std::setfill(' ')
-                                                << "| R" << (int)reg1 << ": " << (int)before << " + "
-                                                << (int)registers[reg2] << " = " << (int)registers[reg1] << std::endl;
+                    Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                               << pc << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                               << "[ADD] | R" << (int)reg1 << ": " << (int)before << " + "
+                                               << (int)registers[reg2] << " = " << (int)registers[reg1] << std::endl;
                 }
                 pc += 3;
                 print_state("ADD");
@@ -196,13 +204,15 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                 if (pc + 2 < program.size()) {
                     uint8_t reg1 = program[pc + 1];
                     uint8_t reg2 = program[pc + 2];
-                    Logger::instance().debug() << "[SUB]" << std::right << std::setw(23) << std::setfill(' ')
-                                               << "| PC=" << pc << " R" << (int)reg1 << " -= R" << (int)reg2 << std::endl;
+                    Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                               << pc << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                               << "[SUB] | PC=" << pc << " R" << (int)reg1 << " -= R" << (int)reg2 << std::endl;
                     if (reg1 < registers.size() && reg2 < registers.size()) {
                         uint8_t before = registers[reg1];
                         registers[reg1] -= registers[reg2];
-                        Logger::instance().debug() << "[SUB]" << std::right << std::setw(21) << std::setfill(' ')
-                                                   << "| R" << (int)reg1 << ": " << (int)before << " - "
+                        Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                                   << pc << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                                   << "[SUB] | R" << (int)reg1 << ": " << (int)before << " - "
                                                    << (int)registers[reg2] << " = " << (int)registers[reg1] << std::endl;
                     }
                     pc += 3;
@@ -406,13 +416,15 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                 if (pc + 2 < program.size()) {
                     uint8_t reg1 = program[pc + 1];
                     uint8_t reg2 = program[pc + 2];
-                    Logger::instance().debug() << "[MUL]" << std::right << std::setw(23) << std::setfill(' ')
-                                               << "| PC=" << pc << " R" << (int)reg1 << " *= R" << (int)reg2 << std::endl;
+                    Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                               << pc << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                               << "[MUL] | PC=" << pc << " R" << (int)reg1 << " *= R" << (int)reg2 << std::endl;
                     if (reg1 < registers.size() && reg2 < registers.size()) {
                         uint8_t before = registers[reg1];
                         registers[reg1] *= registers[reg2];
-                        Logger::instance().debug() << "[MUL]" << std::right << std::setw(23) << std::setfill(' ')
-                                                   << "| R" << (int)reg1 << ": " << (int)before << " * "
+                        Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                                   << pc << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                                   << "[MUL] | R" << (int)reg1 << ": " << (int)before << " * "
                                                    << (int)registers[reg2] << " = " << (int)registers[reg1] << std::endl;
                     }
                     pc += 3;
@@ -426,19 +438,22 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                 if (pc + 2 < program.size()) {
                     uint8_t reg1 = program[pc + 1];
                     uint8_t reg2 = program[pc + 2];
-                    Logger::instance().debug() << "[DIV]" << std::right << std::setw(21) << std::setfill(' ')
-                                               << "| PC=" << pc << " R" << (int)reg1 << " /= R" << (int)reg2 << std::endl;
+                    Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                               << pc << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                               << "[DIV] | PC=" << pc << " R" << (int)reg1 << " /= R" << (int)reg2 << std::endl;
                     if (reg1 < registers.size() && reg2 < registers.size()) {
                         if (registers[reg2] == 0) {
-                            Logger::instance().error() << std::right << std::setw(24) << std::setfill(' ')
-                                                        << "Division by zero |" << std::endl;
+                            Logger::instance().error() << std::right << std::setw(41) << std::setfill(' ')
+                                                        << "Invalid Division | Division by zero" << std::endl;
                             running = false;
                             break;
                         }
                         uint8_t before = registers[reg1];
                         registers[reg1] /= registers[reg2];
-                        Logger::instance().debug() << "[DIV] R" << (int)reg1 << ": " << (int)before << " / " 
-                                                    << (int)registers[reg2] << " = " << (int)registers[reg1] << std::endl;
+                        Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                                   << pc << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                                   << "[DIV] | R" << (int)reg1 << ": " << (int)before << " / "
+                                                   << (int)registers[reg2] << " = " << (int)registers[reg1] << std::endl;
                     }
                     pc += 3;
                 } else {
@@ -450,13 +465,16 @@ void CPU::execute(const std::vector<uint8_t>& program) {
             case Opcode::INC: {
                 if (pc + 1 < program.size()) {
                     uint8_t reg = program[pc + 1];
-                    Logger::instance().debug() << "[INC]" << std::right << std::setw(22) << std::setfill(' ')
-                                               << "| PC=" << pc << " R" << (int)reg << std::endl;
+                    Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                               << pc << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                               << "[INC] | PC=" << pc << " R" << (int)reg << std::endl;
                     if (reg < registers.size()) {
                         uint8_t before = registers[reg];
                         ++registers[reg];
-                        Logger::instance().debug() << "[INC] R" << (int)reg << ": " << (int)before << " + 1 = "
-                                                    << (int)registers[reg] << std::endl;
+                        Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                                   << pc << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                                   << "[INC] | R" << (int)reg << ": " << (int)before << " + 1 = "
+                                                   << (int)registers[reg] << std::endl;
                     }
                     pc += 2;
                 } else {
@@ -468,13 +486,18 @@ void CPU::execute(const std::vector<uint8_t>& program) {
             case Opcode::DEC: {
                 if (pc + 1 < program.size()) {
                     uint8_t reg = program[pc + 1];
-                    Logger::instance().debug() << "[DEC]" << std::right << std::setw(22) << std::setfill(' ')
-                                               << "| PC=" << pc << " R" << (int)reg << std::endl;
+                    Logger::instance().debug() << "[PC=0x"
+                                               << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc
+                                               << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                               << "[DEC] | PC=" << std::dec << pc << " R" << (int)reg << std::endl;
                     if (reg < registers.size()) {
                         uint8_t before = registers[reg];
                         --registers[reg];
-                        Logger::instance().debug() << "[DEC] R" << (int)reg << ": " << (int)before << " - 1 = "
-                                                    << (int)registers[reg] << std::endl;
+                        Logger::instance().debug() << "[PC=0x"
+                                                   << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc
+                                                   << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                                   << "[DEC] | R" << (int)reg << ": " << std::dec << (int)before << " - 1 = "
+                                                   << (int)registers[reg] << std::endl;
                     }
                     pc += 2;
                 } else {
@@ -569,10 +592,12 @@ void CPU::execute(const std::vector<uint8_t>& program) {
             case Opcode::CALL: {
                 arg_offset = 8; // Reset offset at each call
                 uint32_t addr = fetch_operand();
-                Logger::instance().debug() << "[CALL]" << std::right << std::setw(24) << std::setfill(' ') << "| PC=0x"
-                    << std::hex << std::uppercase << pc << "->addr=0x" << addr
-                    << " return address 0x" << (pc + 1)
-                    << " and FP 0x" << fp << " to stack at SP=0x" << sp << std::dec << std::endl;
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0')
+                                           << std::hex << std::uppercase << pc << "]"
+                                           << std::right << std::setw(19) << std::setfill(' ') << "[Call] | PC=0x"
+                                           << std::hex << std::uppercase << pc << "->addr=0x" << addr
+                                           << " ret 0x" << (pc + 1)
+                                           << " and FP 0x" << fp << " to stack at SP=0x" << sp << std::dec << std::endl;
                 // Push old FP
                 sp -= 4;
                 write_mem32(sp, fp);
@@ -583,13 +608,18 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                 fp = sp;
                 print_stack_frame("CALL");
                 pc = addr;
-                Logger::instance().debug() << "[CALL]" << std::right << std::setw(33) << std::setfill(' ')
-                                            << "| After jump PC=" << pc << std::endl;
+                Logger::instance().debug() << "[PC=0x" << std::setw(4)
+                                           << std::setfill('0') << std::hex << std::uppercase << pc << "]"
+                                           << std::right << std::setw(30) << std::setfill(' ')
+                                           << "[CALL] | After jump PC=0x" << pc << std::dec << std::endl;
                 print_state("CALL");
                 break;
             }
             case Opcode::RET: {
-                Logger::instance().debug() << "[RET]" << std::right << std::setw(23) << std::setfill(' ') <<  "| SP=" << sp << " Restoring FP and popping return address" << std::endl;
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0')
+                                           << std::hex << std::uppercase << pc << "]" 
+                                           << std::right << std::setw(17) << std::setfill(' ')
+                                           <<  "[RET] | SP=" << sp << " Restoring FP and popping return address" << std::endl;
                 // Save return value before unwinding stack
                 uint32_t ret_val = read_mem32(sp); // return value is at sp
                 uint32_t ret_addr = read_mem32(sp + 4);
@@ -610,7 +640,9 @@ void CPU::execute(const std::vector<uint8_t>& program) {
             }
             case Opcode::PUSH_ARG: {
                 uint8_t reg = fetch_operand();
-                Logger::instance().debug() << "[PUSH_ARG]" << std::right << std::setw(18) << std::setfill(' ') << "| SP=" << sp << " Pushing R" << (int)reg << "=" << registers[reg] << std::endl;
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc << "]"
+                                            << std::right << std::setw(17) << std::setfill(' ')
+                                            << "[PUSH_ARG] | SP=" << sp << " Pushing R" << (int)reg << "=" << registers[reg] << std::endl;
                 sp -= 4;
                 write_mem32(sp, registers[reg]);
                 pc++;
@@ -620,8 +652,9 @@ void CPU::execute(const std::vector<uint8_t>& program) {
             case Opcode::POP_ARG: {
                 uint8_t reg = fetch_operand();
                 registers[reg] = read_mem32(fp + arg_offset);
-                Logger::instance().debug() << "[POP_ARG]" << std::right << std::setw(19) << std::setfill(' ')
-                                           << "| FP=" << fp << " arg_offset=" << arg_offset
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc << "]"
+                                           << std::right << std::setw(17) << std::setfill(' ')
+                                           << "[POP_ARG] | FP=" << fp << " arg_offset=" << arg_offset
                                            << " addr=" << (fp + arg_offset)
                                            << " value=" << registers[reg] << std::endl;
                 arg_offset += 4;
@@ -630,7 +663,8 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                 break;
             }
             case Opcode::HALT:
-                Logger::instance().debug() << "[HALT]" << std::right << std::setw(22) << std::setfill(' ') << "| PC=" << pc << std::endl;
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc << "]"
+                    << std::right << std::setw(17) << std::setfill(' ') << "[HALT] | PC=" << pc << std::endl;
                 running = false;
                 ++pc;
                 print_state("HALT");
@@ -677,9 +711,10 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                     << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode)
                     << " | is not defined" << std::dec << std::endl;
                 std::ostringstream buf;
-                buf << std::right << std::setw(23) << std::setfill(' ') << "Stack top " << "| Memory[PC..PC+3] : ";
-                for (size_t i = pc; i < std::min(static_cast<size_t>(pc + 4), program.size()); ++i) {
-                    buf << "[" << i << "]=" << static_cast<int>(program[i]) << " ";
+                buf << std::right << std::setw(22) << std::setfill(' ') << "Stack top" << " | memory[SP..SP+3]: ";
+                for (size_t i = sp; i < std::min(static_cast<size_t>(sp + 4), memory.size()); ++i) {
+                    buf << "[" << std::setw(3) << std::setfill(' ') << i << "]="
+                            << std::left << std::setw(3) << static_cast<int>(memory[i]) << std::setfill(' ');
                 }
                 Logger::instance().error() << buf.str() << std::endl;
                 running = false;
@@ -697,7 +732,7 @@ void CPU::print_registers() const {
         oss << "R" << i << ": " << registers[i] << " ";
     } oss << std::endl;
     
-    oss << std::right << std::setw(57) << "Memory " << "| ";
+    oss << std::right << std::setw(55) << "Memory " << "| ";
     oss << "PC: " << pc << ", SP: " << sp << ", Flags: " << flags;
     Logger::instance().info() << oss.str() << std::endl;
 }
@@ -713,4 +748,589 @@ void CPU::print_memory(std::size_t start, std::size_t end) const {
     }
     oss << std::endl;
     Logger::instance().info() << oss.str() << std::endl;
+}
+
+// Run the whole program (reset and step until done)
+void CPU::run(const std::vector<uint8_t>& program) {
+    reset();
+    std::copy(program.begin(), program.end(), memory.begin());
+    pc = 0;
+    sp = memory.size() - 4;
+    fp = sp;
+    bool running = true;
+    auto valid_instr_starts = compute_valid_instruction_starts(program);
+    while (running && pc < program.size()) {
+        running = step(program);
+    }
+}
+
+// Step a single instruction. Returns false if halted or error, true if can continue
+bool CPU::step(const std::vector<uint8_t>& program) {
+    if (pc >= program.size()) return false;
+    Opcode opcode = static_cast<Opcode>(program[pc]);
+    bool running = true;
+    auto valid_instr_starts = compute_valid_instruction_starts(program);
+
+    // Copy of the main switch from execute()
+    switch (opcode) {
+        case Opcode::NOP:
+            Logger::instance().debug() << "[NOP]" << std::right << std::setw(23) << std::setfill(' ')
+                                       << "| PC=" << pc << std::endl;
+            ++pc;
+            print_state("NOP");
+            break;
+        case Opcode::LOAD_IMM: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t imm = program[pc + 2];
+                Logger::instance().debug() << "[LOAD_IMM]" << std::right << std::setw(18) << std::setfill(' ')
+                                           << "| PC=" << pc << " reg=" << (int)reg << " imm=" << (int)imm << std::endl;
+                if (reg < registers.size()) {
+                    registers[reg] = imm;
+                    Logger::instance().debug() << "[LOAD_IMM]" << std::right << std::setw(20) << std::setfill(' ')
+                                               << "| Set R" << (int)reg << " = " << (int)imm << std::endl;
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("LOAD_IMM");
+            break;
+        }
+        case Opcode::ADD: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg1 = program[pc + 1];
+                uint8_t reg2 = program[pc + 2];
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                           << pc << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                           << "[ADD] | PC=" << pc << " R" << (int)reg1 << " += R" << (int)reg2 << std::endl;
+                uint8_t before = registers[reg1];
+                registers[reg1] += registers[reg2];
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                           << pc << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                           << "[ADD] | R" << (int)reg1 << ": " << (int)before << " + "
+                                           << (int)registers[reg2] << " = " << (int)registers[reg1] << std::endl;
+            }
+            pc += 3;
+            print_state("ADD");
+            break;
+        }
+        case Opcode::SUB: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg1 = program[pc + 1];
+                uint8_t reg2 = program[pc + 2];
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                           << pc << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                           << "[SUB] | PC=" << pc << " R" << (int)reg1 << " -= R" << (int)reg2 << std::endl;
+                if (reg1 < registers.size() && reg2 < registers.size()) {
+                    uint8_t before = registers[reg1];
+                    registers[reg1] -= registers[reg2];
+                    Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                               << pc << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                               << "[SUB] | R" << (int)reg1 << ": " << (int)before << " - "
+                                               << (int)registers[reg2] << " = " << (int)registers[reg1] << std::endl;
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("SUB");
+            break;
+        }
+        case Opcode::MOV: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg1 = program[pc + 1];
+                uint8_t reg2 = program[pc + 2];
+                if (reg1 < registers.size() && reg2 < registers.size()) {
+                    registers[reg1] = registers[reg2];
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("MOV");
+            break;
+        }
+        case Opcode::JMP: {
+            if (pc + 1 < program.size()) {
+                uint8_t addr = program[pc + 1];
+                if (valid_instr_starts.find(addr) == valid_instr_starts.end()) {
+                    Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                    << "Invalid jump address " << "| (JMP): "
+                    << static_cast<int>(addr) << " at PC=" << pc << std::endl;
+                    running = false;
+                    break;
+                }
+                pc = addr;
+            } else {
+                running = false;
+            }
+            print_state("JMP");
+            break;
+        }
+        case Opcode::LOAD: {
+            // LOAD reg, addr
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t addr = program[pc + 2];
+                if (reg < registers.size() && addr < memory.size()) {
+                    registers[reg] = memory[addr];
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("LOAD");
+            break;
+        }
+        case Opcode::STORE: {
+            // STORE reg, addr
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t addr = program[pc + 2];
+                if (reg < registers.size() && addr < memory.size()) {
+                    memory[addr] = registers[reg];
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("STORE");
+            break;
+        }
+        case Opcode::PUSH: {
+            if (pc + 1 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                Logger::instance().debug() << "[PUSH]" << std::right << std::setw(22) << std::setfill(' ')
+                                           << "| PC=" << pc << " Pushing R" << (int)reg << "=" << registers[reg] << std::endl;
+                sp -= 4;
+                write_mem32(sp, registers[reg]);
+                pc += 2;
+            } else {
+                running = false;
+            }
+            print_state("PUSH");
+            break;
+        }
+        case Opcode::POP: {
+            if (pc + 1 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                registers[reg] = read_mem32(sp);
+                Logger::instance().debug() << "[POP]" << std::right << std::setw(23) << std::setfill(' ')
+                                           << "| PC=" << pc << " Popping to R" << (int)reg << "=" << registers[reg] << std::endl;
+                sp += 4;
+                pc += 2;
+            } else {
+                running = false;
+            }
+            print_state("POP");
+            break;
+        }
+        case Opcode::CMP: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg1 = program[pc + 1];
+                uint8_t reg2 = program[pc + 2];
+                if (reg1 < registers.size() && reg2 < registers.size()) {
+                    int32_t result = static_cast<int32_t>(registers[reg1]) - static_cast<int32_t>(registers[reg2]);
+                    flags = 0;
+                    if (result == 0) flags |= FLAG_ZERO;
+                    if (result < 0)  flags |= FLAG_SIGN;
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("CMP");
+            break;
+        }
+        case Opcode::JZ: {
+            if (pc + 1 < program.size()) {
+                uint8_t addr = program[pc + 1];
+                if (flags & FLAG_ZERO) {
+                    if (valid_instr_starts.find(addr) == valid_instr_starts.end()) {
+                        Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                            << "Invalid jump address " << "| (JZ): "
+                            << static_cast<int>(addr) << " at PC=" << pc << std::endl;
+                        running = false;
+                        break;
+                    }
+                    pc = addr;
+                } else {
+                    pc += 2;
+                }
+            } else {
+                running = false;
+            }
+            print_state("JZ");
+            break;
+        }
+        case Opcode::JNZ: {
+            if (pc + 1 < program.size()) {
+                uint8_t addr = program[pc + 1];
+                if (!(flags & FLAG_ZERO)) {
+                    if (valid_instr_starts.find(addr) == valid_instr_starts.end()) {
+                        Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                            << "Invalid jump address " << "| (JNZ): "
+                            << static_cast<int>(addr) << " at PC=" << pc << std::endl;
+                        running = false;
+                        break;
+                    }
+                    pc = addr;
+                } else {
+                    pc += 2;
+                }
+            } else {
+                running = false;
+            }
+            print_state("JNZ");
+            break;
+        }
+        case Opcode::JS: {
+            if (pc + 1 < program.size()) {
+                uint8_t addr = program[pc + 1];
+                if (flags & FLAG_SIGN) {
+                    if (valid_instr_starts.find(addr) == valid_instr_starts.end()) {
+                        Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                            << "Invalid jump address " << "| (JS): "
+                            << static_cast<int>(addr) << " at PC=" << pc << std::endl;
+                        running = false;
+                        break;
+                    }
+                    pc = addr;
+                } else {
+                    pc += 2;
+                }
+            } else {
+                running = false;
+            }
+            print_state("JS");
+            break;
+        }
+        case Opcode::JNS: {
+            if (pc + 1 < program.size()) {
+                uint8_t addr = program[pc + 1];
+                if (!(flags & FLAG_SIGN)) {
+                    if (valid_instr_starts.find(addr) == valid_instr_starts.end()) {
+                        Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                            << "Invalid jump address " << "| (JNS): "
+                            << static_cast<int>(addr) << " at PC=" << pc << std::endl;
+                        running = false;
+                        break;
+                    }
+                    pc = addr;
+                } else {
+                    pc += 2;
+                }
+            } else {
+                running = false;
+            }
+            print_state("JNS");
+            break;
+        }
+        case Opcode::MUL: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg1 = program[pc + 1];
+                uint8_t reg2 = program[pc + 2];
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                           << pc << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                           << "[MUL] | PC=" << pc << " R" << (int)reg1 << " *= R" << (int)reg2 << std::endl;
+                if (reg1 < registers.size() && reg2 < registers.size()) {
+                    uint8_t before = registers[reg1];
+                    registers[reg1] *= registers[reg2];
+                    Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                               << pc << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                               << "[MUL] | R" << (int)reg1 << ": " << (int)before << " * "
+                                               << (int)registers[reg2] << " = " << (int)registers[reg1] << std::endl;
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("MUL");
+            break;
+        }
+        case Opcode::DIV: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg1 = program[pc + 1];
+                uint8_t reg2 = program[pc + 2];
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                           << pc << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                           << "[DIV] | PC=" << pc << " R" << (int)reg1 << " /= R" << (int)reg2 << std::endl;
+                if (reg1 < registers.size() && reg2 < registers.size()) {
+                    if (registers[reg2] == 0) {
+                        Logger::instance().error() << std::right << std::setw(41) << std::setfill(' ')
+                                                    << "Invalid Division | Division by zero" << std::endl;
+                        running = false;
+                        break;
+                    }
+                    uint8_t before = registers[reg1];
+                    registers[reg1] /= registers[reg2];
+                    Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                               << pc << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                               << "[DIV] | R" << (int)reg1 << ": " << (int)before << " / "
+                                               << (int)registers[reg2] << " = " << (int)registers[reg1] << std::endl;
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("DIV");
+            break;
+        }
+        case Opcode::INC: {
+            if (pc + 1 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                           << pc << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                           << "[INC] | PC=" << pc << " R" << (int)reg << std::endl;
+                if (reg < registers.size()) {
+                    uint8_t before = registers[reg];
+                    ++registers[reg];
+                    Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase 
+                                               << pc << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                               << "[INC] | R" << (int)reg << ": " << (int)before << " + 1 = "
+                                               << (int)registers[reg] << std::endl;
+                }
+                pc += 2;
+            } else {
+                running = false;
+            }
+            print_state("INC");
+            break;
+        }
+        case Opcode::DEC: {
+            if (pc + 1 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                Logger::instance().debug() << "[PC=0x"
+                                           << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc
+                                           << "]" << std::right << std::setw(17) << std::setfill(' ')
+                                           << "[DEC] | PC=" << std::dec << pc << " R" << (int)reg << std::endl;
+                if (reg < registers.size()) {
+                    uint8_t before = registers[reg];
+                    --registers[reg];
+                    Logger::instance().debug() << "[PC=0x"
+                                               << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc
+                                               << "]" << std::right << std::setw(15) << std::setfill(' ')
+                                               << "[DEC] | R" << (int)reg << ": " << std::dec << (int)before << " - 1 = "
+                                               << (int)registers[reg] << std::endl;
+                }
+                pc += 2;
+            } else {
+                running = false;
+            }
+            print_state("DEC");
+            break;
+        }
+        case Opcode::AND: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg1 = program[pc + 1];
+                uint8_t reg2 = program[pc + 2];
+                if (reg1 < registers.size() && reg2 < registers.size()) {
+                    registers[reg1] &= registers[reg2];
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("AND");
+            break;
+        }
+        case Opcode::OR: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg1 = program[pc + 1];
+                uint8_t reg2 = program[pc + 2];
+                if (reg1 < registers.size() && reg2 < registers.size()) {
+                    registers[reg1] |= registers[reg2];
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("OR");
+            break;
+        }
+        case Opcode::XOR: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg1 = program[pc + 1];
+                uint8_t reg2 = program[pc + 2];
+                if (reg1 < registers.size() && reg2 < registers.size()) {
+                    registers[reg1] ^= registers[reg2];
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("XOR");
+            break;
+        }
+        case Opcode::NOT: {
+            if (pc + 1 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                if (reg < registers.size()) {
+                    registers[reg] = ~registers[reg];
+                }
+                pc += 2;
+            } else {
+                running = false;
+            }
+            print_state("NOT");
+            break;
+        }
+        case Opcode::SHL: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t imm = program[pc + 2];
+                if (reg < registers.size()) {
+                    registers[reg] <<= imm;
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("SHL");
+            break;
+        }
+        case Opcode::SHR: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t imm = program[pc + 2];
+                if (reg < registers.size()) {
+                    registers[reg] >>= imm;
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("SHR");
+            break;
+        }
+        case Opcode::CALL: {
+            arg_offset = 8; // Reset offset at each call
+            uint32_t addr = fetch_operand();
+            Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc << "]"
+                << std::right << std::setw(19) << std::setfill(' ') << "[Call] | PC=0x"
+                << std::hex << std::uppercase << pc << "->addr=0x" << addr
+                << " ret 0x" << (pc + 2)
+                << " and FP 0x" << fp << " to stack at SP=0x" << sp << std::dec << std::endl;
+            // Push old FP
+            sp -= 4;
+            write_mem32(sp, fp);
+            // Push return address (pc + 1)
+            sp -= 4;
+            write_mem32(sp, pc + 2);
+            // Set new FP
+            fp = sp;
+            print_stack_frame("CALL");
+            pc = addr;
+            Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc << "]"
+                                        << std::right << std::setw(30) << std::setfill(' ')
+                                        << "[CALL] | After jump PC=0x" << pc << std::dec << std::endl;
+            print_state("CALL");
+            break;
+        }
+        case Opcode::RET: {
+            Logger::instance().debug() << "[RET]" << std::right << std::setw(23) << std::setfill(' ') <<  "| SP=" << sp << " Restoring FP and popping return address" << std::endl;
+            // Save return value before unwinding stack
+            uint32_t ret_val = read_mem32(sp); // return value is at sp
+            uint32_t ret_addr = read_mem32(sp + 4);
+            uint32_t old_fp = read_mem32(sp + 8);
+
+            // Unwind stack
+            sp += 12;
+            fp = old_fp;
+
+            // Write return value to caller's stack frame (at fp + 8)
+            write_mem32(fp + 0, ret_val);
+
+            print_stack_frame("RET");
+            pc = ret_addr;
+            arg_offset = 0; // Reset offset at each return
+            print_state("RET");
+            break;
+        }
+        case Opcode::PUSH_ARG: {
+            uint8_t reg = fetch_operand();
+            Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc << "]"
+                                        << std::right << std::setw(17) << std::setfill(' ')
+                                        << "[PUSH_ARG] | SP=" << sp << " Pushing R" << (int)reg << "=" << registers[reg] << std::endl;
+            sp -= 4;
+            write_mem32(sp, registers[reg]);
+            pc++;
+            print_state("PUSH_ARG");
+            break;
+        }
+        case Opcode::POP_ARG: {
+            uint8_t reg = fetch_operand();
+            registers[reg] = read_mem32(fp + arg_offset);
+            Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc << "]"
+                                       << std::right << std::setw(17) << std::setfill(' ')
+                                       << "[POP_ARG] | FP=" << fp << " arg_offset=" << arg_offset
+                                       << " addr=" << (fp + arg_offset)
+                                       << " value=" << registers[reg] << std::endl;
+            arg_offset += 4;
+            pc++;
+            print_state("POP_ARG");
+            break;
+        }
+        case Opcode::HALT:
+            Logger::instance().debug() << "[PC=0x" << std::setw(4) << std::setfill('0') << std::hex << std::uppercase << pc << "]"
+                << std::right << std::setw(17) << std::setfill(' ') << "[HALT] | PC=" << pc << std::endl;
+            running = false;
+            ++pc;
+            print_state("HALT");
+            break;
+        default: {
+            // Print opcode name if possible
+            std::string opcode_name;
+            switch (opcode) {
+                case Opcode::NOP: opcode_name = "NOP"; break;
+                case Opcode::LOAD_IMM: opcode_name = "LOAD_IMM"; break;
+                case Opcode::ADD: opcode_name = "ADD"; break;
+                case Opcode::SUB: opcode_name = "SUB"; break;
+                case Opcode::MOV: opcode_name = "MOV"; break;
+                case Opcode::JMP: opcode_name = "JMP"; break;
+                case Opcode::LOAD: opcode_name = "LOAD"; break;
+                case Opcode::STORE: opcode_name = "STORE"; break;
+                case Opcode::PUSH: opcode_name = "PUSH"; break;
+                case Opcode::POP: opcode_name = "POP"; break;
+                case Opcode::CMP: opcode_name = "CMP"; break;
+                case Opcode::JZ: opcode_name = "JZ"; break;
+                case Opcode::JNZ: opcode_name = "JNZ"; break;
+                case Opcode::JS: opcode_name = "JS"; break;
+                case Opcode::JNS: opcode_name = "JNS"; break;
+                case Opcode::MUL: opcode_name = "MUL"; break;
+                case Opcode::DIV: opcode_name = "DIV"; break;
+                case Opcode::INC: opcode_name = "INC"; break;
+                case Opcode::DEC: opcode_name = "DEC"; break;
+                case Opcode::AND: opcode_name = "AND"; break;
+                case Opcode::OR: opcode_name = "OR"; break;
+                case Opcode::XOR: opcode_name = "XOR"; break;
+                case Opcode::NOT: opcode_name = "NOT"; break;
+                case Opcode::SHL: opcode_name = "SHL"; break;
+                case Opcode::SHR: opcode_name = "SHR"; break;
+                case Opcode::CALL: opcode_name = "CALL"; break;
+                case Opcode::RET: opcode_name = "RET"; break;
+                case Opcode::PUSH_ARG: opcode_name = "PUSH_ARG"; break;
+                case Opcode::POP_ARG: opcode_name = "POP_ARG"; break;
+                case Opcode::HALT: opcode_name = "HALT"; break;
+                default: opcode_name = "UNKNOWN"; break;
+            }
+            Logger::instance().error()
+                << std::right << std::setw(23) << std::setfill(' ') << "Invalid opcode " << "| "
+                << "opcode: 0x"
+                << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode)
+                << " | is not defined" << std::dec << std::endl;
+            std::ostringstream buf;
+            buf << std::right << std::setw(22) << std::setfill(' ') << "Stack top" << " | memory[SP..SP+3]: ";
+            for (size_t i = sp; i < std::min(static_cast<size_t>(sp + 4), memory.size()); ++i) {
+                buf << "[" << std::setw(3) << std::setfill(' ') << i << "]="
+                        << std::left << std::setw(3) << static_cast<int>(memory[i]) << std::setfill(' ');
+            }
+            Logger::instance().error() << buf.str() << std::endl;
+            running = false;
+            print_state(opcode_name);
+            break;
+        }
+    }
+    return running && pc < program.size();
 }

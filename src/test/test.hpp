@@ -21,7 +21,8 @@ public:
         for (const auto& entry : std::filesystem::directory_iterator(test_dir_)) {
             if (entry.path().extension() == ".hex") {
                 std::string test_name = entry.path().filename().string();
-                Logger::instance().info() << std::right << std::setw(26) << std::setfill(' ') << "[RUN] | " << test_name << std::endl;
+                Logger::instance().running() << std::right << std::setw(23) << std::setfill(' ')
+                                             << "[RUN] | " << test_name << std::endl;
                 TestResult result = run_test(entry.path());
                 std::ostringstream oss;
 
@@ -71,12 +72,12 @@ private:
         }
 
         if (!comment.empty()) {
-            Logger::instance().info() << std::right << std::setw(23) << std::setfill('-') << " Comment" << " |" << comment << std::endl;
+            Logger::instance().info() << std::right << std::setw(23) << std::setfill('-') << " [COMMENT]" << " |" << comment << std::endl;
         }
 
         CPU cpu;
         cpu.reset();
-        error_count = 0; // Reset error count before running
+        Config::error_count = 0; // Reset error count before running
         try {
             cpu.execute(prog);
         } catch (const std::exception& e) {
@@ -84,7 +85,7 @@ private:
         } catch (...) {
             return {path.filename().string(), false, "Unknown exception"};
         }
-        if (error_count > 0) {
+        if (Config::error_count > 0) {
             return {path.filename().string(), false, "Runtime errors detected"};
         }
         return {path.filename().string(), true, ""};

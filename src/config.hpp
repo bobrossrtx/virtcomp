@@ -1,8 +1,10 @@
 #pragma once
 
-inline bool debug = false; // C++17 and later
-inline bool running_tests = false; // C++17 and later
-
-inline std::string debug_file = "debug.log"; // C++17 and later
-
-inline int error_count = 0;
+class Config {
+public:
+    inline static bool debug = false;
+    inline static bool running_tests = false;
+    inline static std::string debug_file = "debug.log";
+    inline static std::string program_file = "";
+    inline static int error_count = 0;
+};
