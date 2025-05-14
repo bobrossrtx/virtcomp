@@ -30,6 +30,14 @@ IMGUI_OBJS = $(patsubst $(IMGUI_DIR)/%.cpp,$(BUILD_DIR)/imgui/%.o,$(filter $(IMG
              $(patsubst $(IMGUI_BACKEND)/%.cpp,$(BUILD_DIR)/imgui/backends/%.o,$(filter $(IMGUI_BACKEND)/%.cpp,$(IMGUI_SRCS)))
 GL_LIBS = -lglfw -lGLEW -lGLU -lGL -ldl
 
+# Fmt library
+FMT_DIR := extern/fmt
+FMT_SRCS = $(FMT_DIR)/src/format.cc
+FMT_OBJS = $(patsubst $(FMT_DIR)/src/%.cc,$(BUILD_DIR)/fmt/%.o,$(FMT_SRCS))
+
+# Add fmt include path to all compile rules
+CXXFLAGS += -Iextern/fmt/include
+
 # Pattern rule to build .o files in build/ mirroring src/ structure
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
@@ -44,7 +52,12 @@ $(BUILD_DIR)/imgui/backends/%.o: $(IMGUI_BACKEND)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -Iextern/imgui -Iextern/imgui/backends -c $< -o $@
 
-$(TARGET): $(OBJS) $(IMGUI_OBJS)
+# Pattern rule for fmt sources
+$(BUILD_DIR)/fmt/%.o: $(FMT_DIR)/src/%.cc
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(TARGET): $(OBJS) $(IMGUI_OBJS) $(FMT_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(GL_LIBS) $(LDFLAGS)
 
@@ -55,10 +68,11 @@ test: $(TARGET)
 	./$(TARGET) -t -d
 
 prereqs:
-	@echo "Installing system dependencies..."
-	if ! dpkg -s libglfw3-dev libglew-dev libgl1-mesa-dev xorg-dev >/dev/null 2>&1; then \
-		sudo apt-get update; \
-		sudo apt-get install -y libglfw3-dev libglew-dev libgl1-mesa-dev xorg-dev; \
+	@if ! dpkg -s libglfw3-dev libglew-dev libgl1-mesa-dev xorg-dev >/dev/null 2>&1; then \
+		echo "Installing required system libraries..."; \
+		echo "This may take a while..."; \
+		sudo apt-get -qq update; \
+		sudo apt-get -qq install -y libglfw3-dev libglew-dev libgl1-mesa-dev xorg-dev; \
 	else \
 		echo "All required system libraries are already installed."; \
 	fi
@@ -68,6 +82,12 @@ prereqs:
 		cd extern/imgui && git checkout docking; \
 	else \
 		echo "Dear ImGui already present."; \
+	fi
+	@if [ ! -d extern/fmt ]; then \
+		echo "Cloning fmt..."; \
+		git clone https://github.com/fmtlib/fmt.git extern/fmt; \
+	else \
+		echo "fmt already present."; \
 	fi
 
 build: prereqs $(TARGET)
