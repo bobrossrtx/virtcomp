@@ -216,8 +216,172 @@ public:
         parser.add_action_arg("gui", "--gui", "-g", "Enable debug GUI",
             [this]() { run_gui(); });
 
+        // Compile argument
+        parser.add_bool_arg("compile", "--compile", "-c", "Compile program into a standalone executable",
+            [this](bool value) { Config::compile_only = value; });
 
         parser.parse(argc, argv);
+    }
+
+    // Run in compiled mode (create a standalone executable)
+    void run_compiled(std::vector<uint8_t>& program) {
+        // Create a standalone executable instead of running the program
+        std::string output_name = generate_executable_name(Config::program_file);
+
+        if (create_standalone_executable(Config::program_file, program, output_name)) {
+            std::cout << "Successfully compiled to executable: " << output_name << std::endl;
+            std::cout << "You can run it with: ./" << output_name << std::endl;
+        }
+    }
+
+    // Generate a suitable executable name from the program file path
+    std::string generate_executable_name(const std::string& program_file) {
+        fs::path path(program_file);
+        std::string name = path.stem().string();  // Get filename without extension
+
+        // Make sure we have the bin directory
+        fs::path bin_dir("bin");
+        if (!fs::exists(bin_dir)) {
+            fs::create_directory(bin_dir);
+        }
+
+        return (bin_dir / name).string();
+    }
+
+    // Create a standalone executable with the program embedded
+    bool create_standalone_executable(const std::string& program_file,
+                                     const std::vector<uint8_t>& program,
+                                     const std::string& output_name) {
+        // 1. Generate program_data.hpp with the program bytes
+        if (!generate_program_data_header(program)) {
+            std::cerr << "Failed to generate program data header" << std::endl;
+            return false;
+        }
+
+        // 2. Compile the standalone main
+        if (!compile_standalone_main(output_name)) {
+            std::cerr << "Failed to compile standalone executable" << std::endl;
+            return false;
+        }
+
+        return true;
+    }
+
+    // Generate program_data.hpp with the program bytes
+    bool generate_program_data_header(const std::vector<uint8_t>& program) {
+        std::ofstream outfile("src/program_data.hpp");
+        if (!outfile) {
+            std::cerr << "Error: Cannot create program_data.hpp" << std::endl;
+            return false;
+        }
+
+        // Get current time for timestamp
+        auto now = std::chrono::system_clock::now();
+        auto in_time_t = std::chrono::system_clock::to_time_t(now);
+        std::stringstream timestamp;
+        timestamp << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %H:%M:%S");
+
+        // Write the header file
+        outfile << "// Auto-generated from program file\n";
+        outfile << "// Generated on: " << timestamp.str() << "\n\n";
+        outfile << "#ifndef PROGRAM_DATA_HPP\n";
+        outfile << "#define PROGRAM_DATA_HPP\n\n";
+        outfile << "#include <vector>\n";
+        outfile << "#include <cstdint>\n\n";
+        outfile << "// Program binary data\n";
+        outfile << "const std::vector<uint8_t> PROGRAM_DATA = {\n    ";
+
+        // Write the program bytes in a nicely formatted array
+        const int ITEMS_PER_LINE = 12;
+        for (size_t i = 0; i < program.size(); ++i) {
+            outfile << "0x" << std::hex << std::setw(2) << std::setfill('0')
+                    << static_cast<int>(program[i]);
+
+            if (i < program.size() - 1) {
+                outfile << ", ";
+                if ((i + 1) % ITEMS_PER_LINE == 0) {
+                    outfile << "\n    ";
+                }
+            }
+        }
+
+        outfile << "\n};\n\n";
+        outfile << "#endif // PROGRAM_DATA_HPP\n";
+
+        return true;
+    }    // Compile standalone executable
+    bool compile_standalone_main(const std::string& output_name) {
+        // First, let's create a simplified standalone main that doesn't include imgui
+        std::string temp_file = "build/tmp_standalone.cpp";
+
+        // Write a simplified version of standalone_main.cpp to a temporary file
+        std::ofstream outfile(temp_file);
+        if (!outfile) {
+            std::cerr << "Error: Cannot create temporary file" << std::endl;
+            return false;
+        }
+
+        outfile << "#include <iostream>\n";
+        outfile << "#include <vector>\n";
+        outfile << "#include <cstdint>\n";
+        outfile << "#include \"config.hpp\"\n";
+        outfile << "#include \"vhardware/cpu.hpp\"\n";
+        outfile << "#include \"vhardware/device_factory.hpp\"\n\n";
+        outfile << "// Include the generated program data\n";
+        outfile << "#include \"program_data.hpp\"\n\n";
+        outfile << "// Basic device initialization without logging\n";
+        outfile << "void silent_initialize_devices() {\n";
+        outfile << "    using namespace vhw;\n";
+        outfile << "    auto console = DeviceFactory::createConsoleDevice(0x01);\n";
+        outfile << "    auto counter = DeviceFactory::createCounterDevice(0x02);\n";
+        outfile << "    auto file = DeviceFactory::createFileDevice(\"virtual_storage/vhd.dat\", 0x04);\n";
+        outfile << "    auto ramdisk = DeviceFactory::createRamDiskDevice(8192, 0x05, 0x06);\n";
+        outfile << "}\n\n";
+        outfile << "int main(int, char**) {\n";
+        outfile << "    // No debug mode by default\n";
+        outfile << "    Config::debug = false;\n";
+        outfile << "    Config::verbose = false;\n\n";
+        outfile << "    // Initialize CPU\n";
+        outfile << "    CPU cpu;\n";
+        outfile << "    cpu.reset();\n\n";
+        outfile << "    // Initialize devices silently\n";
+        outfile << "    silent_initialize_devices();\n\n";
+        outfile << "    // Execute the program\n";
+        outfile << "    cpu.execute(PROGRAM_DATA);\n\n";
+        outfile << "    // Handle errors if any\n";
+        outfile << "    if (Config::error_count > 0) {\n";
+        outfile << "        std::cerr << \"Execution failed with \" << Config::error_count << \" errors.\" << std::endl;\n";
+        outfile << "        return 1;\n";
+        outfile << "    }\n";
+        outfile << "    return 0;\n";
+        outfile << "}\n";
+        outfile.close();
+
+        // Create bin directory if it doesn't exist
+        fs::path bin_dir("bin");
+        if (!fs::exists(bin_dir)) {
+            fs::create_directory(bin_dir);
+        }        // Compile directly to an executable
+        // Find the CPU implementation file which we know exists
+        std::string compile_cmd = "g++ -std=c++17 -I./src"
+                                  " -o " + output_name +
+                                  " " + temp_file +
+                                  " src/vhardware/cpu.cpp"
+                                  " -lfmt";
+
+        std::cout << "Building standalone executable..." << std::endl;
+        int compile_result = std::system(compile_cmd.c_str());
+        if (compile_result != 0) {
+            std::cerr << "Failed to compile standalone executable" << std::endl;
+            return false;
+        }
+
+        // Make the executable file executable
+        fs::permissions(output_name,
+            fs::perms::owner_exec | fs::perms::group_exec | fs::perms::others_exec,
+            fs::perm_options::add);
+
+        return true;
     }    void run() {
         if (show_help) return;
 
@@ -232,6 +396,12 @@ public:
             }
         } else {
             std::cerr << "No program file specified. Use --program or -p to specify a program file." << std::endl;
+            return;
+        }
+
+        // Check if we should compile instead of run
+        if (Config::compile_only) {
+            run_compiled(program);
             return;
         }
 
