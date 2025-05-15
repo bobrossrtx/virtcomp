@@ -136,7 +136,7 @@ void Gui::run_vm(const std::vector<uint8_t>& program) {
     // Use the default font for the GUI
     io.FontDefault = defaultFont;
     io.Fonts->Build();
-    
+
     ImGui::StyleColorsDark();
     ImGuiStyle& style = ImGui::GetStyle();
     style.WindowRounding = 8.0f;
@@ -239,13 +239,13 @@ void Gui::run_vm(const std::vector<uint8_t>& program) {
             ImGui::SetNextWindowSize(ImVec2(735, 300), ImGuiCond_Always);
             ImGui::Begin(window_title.c_str(), nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration);
 
-            
+
             if (largeFont) {
                 ImGui::PushFont(largeFont);
                 ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "VirtComp Debugger");
                 ImGui::PopFont(); // Pop largeFont
             }
-            
+
             ImGui::Separator();
 
             if (defaultFont) {
@@ -287,7 +287,7 @@ void Gui::run_vm(const std::vector<uint8_t>& program) {
                 mem_offset += bytes_per_page;
             }
             ImGui::SameLine();
-            ImGui::Text("Offset: %d", mem_offset);          
+            ImGui::Text("Offset: %d", mem_offset);
 
             // Now the table, with fixed column width
             // Static variables for memory edit popup
@@ -598,7 +598,7 @@ void Gui::run_vm(const std::vector<uint8_t>& program) {
         ImGui::Begin("Program Hex Editor", nullptr, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoBackground | ImGuiWindowFlags_NoDecoration);
         ImGui::Text("Hex Editor:");
         ImGui::Separator();
-        
+
         static int hex_cols = 16;
         static int hex_rows = 16;
         static std::vector<uint8_t> edited_program;
