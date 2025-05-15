@@ -13,7 +13,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: make
+    - name: Installing Prerequisites 
+      run: make prereqs
+    - name: Building Virtcomp
       run: make
-    - name: make test
+    - name: Running Tests
       run: make test
