@@ -156,8 +156,8 @@ void CPU::execute(const std::vector<uint8_t>& program) {
     auto valid_instr_starts = compute_valid_instruction_starts(program);
     while (pc < program.size() && running) {
         Opcode opcode = static_cast<Opcode>(program[pc]);
-        // Slow down execution for debugging
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        // // Slow down execution for debugging
+        // std::this_thread::sleep_for(std::chrono::milliseconds(100));
         switch (opcode) {
             case Opcode::NOP:
                 Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[NOP] │ PC={}", pc, "", pc) << std::endl;
@@ -618,6 +618,38 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                 arg_offset += 4;
                 pc++;
                 print_state("POP_ARG");
+                break;
+            }
+            case Opcode::IN: {
+                if (pc + 2 < program.size()) {
+                    uint8_t reg = program[pc + 1];
+                    uint8_t port = program[pc + 2];
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[IN] │ PC={} R{} <- port {}", pc, "", pc, reg, port) << std::endl;
+                    if (reg < registers.size()) {
+                        uint8_t value = readPort(port);
+                        registers[reg] = value;
+                        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[IN] │ R{} = {}", pc, "", reg, value) << std::endl;
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("IN");
+                break;
+            }
+            case Opcode::OUT: {
+                if (pc + 2 < program.size()) {
+                    uint8_t reg = program[pc + 1];
+                    uint8_t port = program[pc + 2];
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[OUT] │ PC={} port {} <- R{}={}", pc, "", pc, port, reg, registers[reg]) << std::endl;
+                    if (reg < registers.size()) {
+                        writePort(port, registers[reg]);
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("OUT");
                 break;
             }
             case Opcode::HALT:
@@ -1194,6 +1226,38 @@ bool CPU::step(const std::vector<uint8_t>& program) {
             print_state("POP_ARG");
             break;
         }
+        case Opcode::IN: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t port = program[pc + 2];
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[IN] │ PC={} R{} <- port {}", pc, "", pc, reg, port) << std::endl;
+                if (reg < registers.size()) {
+                    uint8_t value = readPort(port);
+                    registers[reg] = value;
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[IN] │ R{} = {}", pc, "", reg, value) << std::endl;
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("IN");
+            break;
+        }
+        case Opcode::OUT: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t port = program[pc + 2];
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[OUT] │ PC={} port {} <- R{}={}", pc, "", pc, port, reg, registers[reg]) << std::endl;
+                if (reg < registers.size()) {
+                    writePort(port, registers[reg]);
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("OUT");
+            break;
+        }
         case Opcode::HALT:
             Logger::instance().debug() << fmt::format(
                 "[PC=0x{:04X}]{:>5}[HALT] │ PC={}",
@@ -1257,4 +1321,12 @@ bool CPU::step(const std::vector<uint8_t>& program) {
         }
     }
     return running && pc < program.size();
+}
+
+uint8_t CPU::readPort(uint8_t port) {
+    return vhw::DeviceManager::instance().readPort(port);
+}
+
+void CPU::writePort(uint8_t port, uint8_t value) {
+    vhw::DeviceManager::instance().writePort(port, value);
 }

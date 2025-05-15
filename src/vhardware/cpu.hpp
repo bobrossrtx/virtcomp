@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <string>
 
+#include "device_manager.hpp"
+
 enum class Opcode : uint8_t {
     NOP = 0x00,         // No operation
     LOAD_IMM = 0x01,    // Load immediate value into reg
@@ -36,6 +38,9 @@ enum class Opcode : uint8_t {
     RET  = 0x1B,        // Return from subroutine
     PUSH_ARG = 0x1C,    // Push argument onto stack
     POP_ARG  = 0x1D,    // Pop argument from stack
+
+    IN = 0x30,          // Input from port/device to register
+    OUT = 0x31,         // Output from register to port/device
 
     HALT = 0xFF         // Halt execution
 };
@@ -86,4 +91,7 @@ private:
     // Add these:
     mutable uint32_t last_accessed_addr = static_cast<uint32_t>(-1);
     uint32_t last_modified_addr = static_cast<uint32_t>(-1);
+
+    uint8_t readPort(uint8_t port);
+    void writePort(uint8_t port, uint8_t value);
 };

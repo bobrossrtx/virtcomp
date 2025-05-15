@@ -40,16 +40,19 @@ public:
             buffer_.str("");
         }
         return *this;
-    }
-
-    void log(LogLevel level, const std::string& msg) {
+    }    void log(LogLevel level, const std::string& msg) {
         std::lock_guard<std::recursive_mutex> lock(mutex_);
         std::ostream& out = (level == LogLevel::ERROR) ? std::cerr : std::cout;
         std::string color = level_to_color(level);
         std::string reset = "\033[0m";
 
-        // Final debug guard
+        // Debug mode guard
         if (level == LogLevel::DEBUG && !Config::debug) {
+            return;
+        }
+
+        // Verbose mode guard for info messages
+        if (level == LogLevel::INFO && !Config::verbose) {
             return;
         }
 

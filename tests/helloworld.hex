@@ -1,0 +1,56 @@
+# Hello World Program
+# This program outputs "Hello World" followed by a newline to the console
+
+# ASCII values: H (72), e (101), l (108), l (108), o (111), space (32),
+#               W (87), o (111), r (114), l (108), d (100), newline (10)
+
+# Load and output 'H'
+01 00 48    # LOAD_IMM R0, 72   (ASCII 'H')
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output 'e'
+01 00 65    # LOAD_IMM R0, 101  (ASCII 'e')
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output 'l'
+01 00 6C    # LOAD_IMM R0, 108  (ASCII 'l')
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output 'l'
+01 00 6C    # LOAD_IMM R0, 108  (ASCII 'l')
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output 'o'
+01 00 6F    # LOAD_IMM R0, 111  (ASCII 'o')
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output space
+01 00 20    # LOAD_IMM R0, 32   (ASCII space)
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output 'W'
+01 00 57    # LOAD_IMM R0, 87   (ASCII 'W')
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output 'o'
+01 00 6F    # LOAD_IMM R0, 111  (ASCII 'o')
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output 'r'
+01 00 72    # LOAD_IMM R0, 114  (ASCII 'r')
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output 'l'
+01 00 6C    # LOAD_IMM R0, 108  (ASCII 'l')
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output 'd'
+01 00 64    # LOAD_IMM R0, 100  (ASCII 'd')
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Load and output newline
+01 00 0A    # LOAD_IMM R0, 10   (ASCII newline)
+31 00 01    # OUT R0, 0x01      (Output to console)
+
+# Halt the program
+00          # HALT

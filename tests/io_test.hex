@@ -1,0 +1,5 @@
+01 00 42 # LOAD_IMM R0, 0x42    - Load value 0x42 into R0
+31 00 01 # OUT R0, 1            - Output R0 to port 1
+30 01 02 # IN R1, 2             - Input from port 2 to R1
+31 01 03 # OUT R1, 3            - Output R1 to port 3
+00       # HALT                 - End execution

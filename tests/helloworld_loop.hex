@@ -1,0 +1,63 @@
+# Hello World Program (Optimized Version)
+# This program outputs "Hello World" followed by a newline, 3 times
+
+# Initialize loop counter and limit
+01 00 00   # LOAD_IMM R0, 0    (loop counter starts at 0)
+01 02 05   # LOAD_IMM R2, 5    (print Hello World 5 times)
+
+# Start of loop at address 0x06:
+# 'H'
+01 01 48   # LOAD_IMM R1, 72   (ASCII 'H')
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# 'e'
+01 01 65   # LOAD_IMM R1, 101  (ASCII 'e')
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# 'l'
+01 01 6C   # LOAD_IMM R1, 108  (ASCII 'l')
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# 'l'
+01 01 6C   # LOAD_IMM R1, 108  (ASCII 'l')
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# 'o'
+01 01 6F   # LOAD_IMM R1, 111  (ASCII 'o')
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# ' ' (space)
+01 01 20   # LOAD_IMM R1, 32   (ASCII space)
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# 'W'
+01 01 57   # LOAD_IMM R1, 87   (ASCII 'W')
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# 'o'
+01 01 6F   # LOAD_IMM R1, 111  (ASCII 'o')
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# 'r'
+01 01 72   # LOAD_IMM R1, 114  (ASCII 'r')
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# 'l'
+01 01 6C   # LOAD_IMM R1, 108  (ASCII 'l')
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# 'd'
+01 01 64   # LOAD_IMM R1, 100  (ASCII 'd')
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# '\n' (newline)
+01 01 0A   # LOAD_IMM R1, 10   (ASCII newline)
+31 01 01   # OUT R1, 0x01      (Output to console)
+
+# Increment counter and check loop condition
+12 00      # INC R0            (Increment the counter)
+0A 00 02   # CMP R0, R2        (Compare counter with loop limit)
+0C 06      # JNZ 0x06          (Jump to loop start if not equal)
+
+# Halt the program
+00          # HALT
