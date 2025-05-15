@@ -47,3 +47,9 @@ libexec/
 
 # executable files
 *.exe
+
+# cache files
+*.cache
+*.pyc
+*.pyo
+*.pyd
