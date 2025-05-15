@@ -15,6 +15,7 @@ namespace fs = std::experimental::filesystem;
 
 #include "config.hpp"
 #include "vhardware/cpu.hpp"
+#include "vhardware/device_factory.hpp"
 
 // Include the debug framework
 #include "debug/logger.hpp"
@@ -22,6 +23,30 @@ namespace fs = std::experimental::filesystem;
 
 // Include the test framework
 #include "test/test.hpp"
+
+// Function to initialize the device system
+void initialize_devices() {
+    using namespace vhw;
+
+    // Create and register standard devices
+    auto console = DeviceFactory::createConsoleDevice(0x01);  // Console on port 0x01
+    auto counter = DeviceFactory::createCounterDevice(0x02);  // Counter on port 0x02
+
+    // Set up initial counter value (optional)
+    counter->setCounter(42);
+
+    // Create a file device for virtual file I/O
+    auto file = DeviceFactory::createFileDevice("virtual_storage/vhd.dat", 0x04);
+
+    // Create a RAM disk device for block storage
+    auto ramdisk = DeviceFactory::createRamDiskDevice(8192, 0x05, 0x06);
+
+    // Optionally, create a real serial port device if available
+    // Uncomment and modify the port name as needed for your system
+    // auto serial = DeviceFactory::createSerialPortDevice("/dev/ttyUSB0", 0x03);
+
+    Logger::instance().info() << "Device system initialized with standard and storage devices" << std::endl;
+}
 
 enum class ArgType { Value, Action };
 
@@ -169,11 +194,11 @@ public:
     VirtComp(int argc, char *argv[]) {
         // Help argument
         parser.add_action_arg("help", "--help", "-h", "Shows help information",
-            [this]() { parser.print_help(); show_help = true; });
-
-        // Debug argument
+            [this]() { parser.print_help(); show_help = true; });        // Debug argument
         parser.add_bool_arg("debug", "--debug", "-d", "Enable debug mode",
-            [this](bool value) { Config::debug = value; });
+            [this](bool value) { Config::debug = value; Config::verbose = value; });        // Verbose argument
+        parser.add_bool_arg("verbose", "--verbose", "-v", "Show informational messages (use --verbose=false to disable)",
+            [this](bool value) { Config::verbose = value; });
 
         // Debug File argument
         parser.add_value_arg("debug_file", "--debug-file", "-f", "Debug file path",
@@ -193,10 +218,9 @@ public:
 
 
         parser.parse(argc, argv);
-    }
-
-    void run() {
+    }    void run() {
         if (show_help) return;
+
         CPU cpu;
         cpu.reset();
 
@@ -226,19 +250,22 @@ public:
 │                                            | |       │
 │                                            |_|       │
 │                                                      │)" << "\033[0m" << std::endl;
-        std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
+std::cout << color << "└──────────────────────────────────────────────────────┘\033[0m" << std::endl;
+
+        // Initialize the device system after displaying the logo
+        initialize_devices();
 
         cpu.execute(program);
 
         // Print CPU state
-        cpu.print_state("Final State");
+        cpu.print_state("End");
         cpu.print_registers();
         cpu.print_memory();
 
         if (Config::error_count > 0) {
-            std::cerr << "Execution failed with " << Config::error_count << " errors." << std::endl;
+            Logger::instance().error() << fmt::format("Execution failed with {} errors.", Config::error_count) << std::endl;
         } else {
-            std::cout << "Execution completed successfully." << std::endl;
+            Logger::instance().success() << "Execution completed successfully." << std::endl;
         }
     }
 

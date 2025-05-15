@@ -1,0 +1,73 @@
+# Hello World Program (Advanced Version with String in Memory)
+# This program outputs "Hello World" followed by a newline using memory and a loop
+
+# Memory layout:
+# 0x40-0x4A: "Hello World" string
+# 0x4B: Newline character (10)
+
+# Store "Hello World" string in memory
+# 'H'
+01 03 48   # LOAD_IMM R3, 72   (ASCII 'H')
+07 03 40   # STORE R3, 0x40
+# 'e'
+01 03 65   # LOAD_IMM R3, 101  (ASCII 'e')
+07 03 41   # STORE R3, 0x41
+# 'l'
+01 03 6C   # LOAD_IMM R3, 108  (ASCII 'l')
+07 03 42   # STORE R3, 0x42
+# 'l'
+01 03 6C   # LOAD_IMM R3, 108  (ASCII 'l')
+07 03 43   # STORE R3, 0x43
+# 'o'
+01 03 6F   # LOAD_IMM R3, 111  (ASCII 'o')
+07 03 44   # STORE R3, 0x44
+# ' '
+01 03 20   # LOAD_IMM R3, 32   (ASCII space)
+07 03 45   # STORE R3, 0x45
+# 'W'
+01 03 57   # LOAD_IMM R3, 87   (ASCII 'W')
+07 03 46   # STORE R3, 0x46
+# 'o'
+01 03 6F   # LOAD_IMM R3, 111  (ASCII 'o')
+07 03 47   # STORE R3, 0x47
+# 'r'
+01 03 72   # LOAD_IMM R3, 114  (ASCII 'r')
+07 03 48   # STORE R3, 0x48
+# 'l'
+01 03 6C   # LOAD_IMM R3, 108  (ASCII 'l')
+07 03 49   # STORE R3, 0x49
+# 'd'
+01 03 64   # LOAD_IMM R3, 100  (ASCII 'd')
+07 03 4A   # STORE R3, 0x4A
+# '\n'
+01 03 0A   # LOAD_IMM R3, 10   (ASCII newline)
+07 03 4B   # STORE R3, 0x4B
+
+# Print "Hello World" directly without a loop
+06 03 40   # LOAD R3, 0x40     ('H')
+31 03 01   # OUT R3, 0x01
+06 03 41   # LOAD R3, 0x41     ('e')
+31 03 01   # OUT R3, 0x01
+06 03 42   # LOAD R3, 0x42     ('l')
+31 03 01   # OUT R3, 0x01
+06 03 43   # LOAD R3, 0x43     ('l')
+31 03 01   # OUT R3, 0x01
+06 03 44   # LOAD R3, 0x44     ('o')
+31 03 01   # OUT R3, 0x01
+06 03 45   # LOAD R3, 0x45     (' ')
+31 03 01   # OUT R3, 0x01
+06 03 46   # LOAD R3, 0x46     ('W')
+31 03 01   # OUT R3, 0x01
+06 03 47   # LOAD R3, 0x47     ('o')
+31 03 01   # OUT R3, 0x01
+06 03 48   # LOAD R3, 0x48     ('r')
+31 03 01   # OUT R3, 0x01
+06 03 49   # LOAD R3, 0x49     ('l')
+31 03 01   # OUT R3, 0x01
+06 03 4A   # LOAD R3, 0x4A     ('d')
+31 03 01   # OUT R3, 0x01
+06 03 4B   # LOAD R3, 0x4B     (newline)
+31 03 01   # OUT R3, 0x01
+
+# Halt the program
+00          # HALT

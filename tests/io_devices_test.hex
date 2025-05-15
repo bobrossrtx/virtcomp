@@ -1,0 +1,56 @@
+# I/O Device Test Program
+#
+# This test program interacts with each of our virtual devices:
+# Port 0x01: Console Device
+# Port 0x02: Counter Device
+# Port 0x04: File Device
+# Port 0x05/0x06: RAM Disk (Data/Control)
+
+# First, load a test value to write to devices
+01 00 42    # LOAD_IMM R0, 0x42 (66 decimal, ASCII 'B')
+
+# Test Console Device (port 0x01)
+# Output the letter 'B' to the console
+31 00 01    # OUT R0, 0x01
+
+# Test Counter Device (port 0x02)
+# Read the initial counter value into R1 (should be 42)
+30 01 02    # IN R1, 0x02
+# Output the counter value to console for verification
+31 01 01    # OUT R1, 0x01
+# Add to the counter and read back
+31 00 02    # OUT R0, 0x02  (adds 66 to counter)
+30 01 02    # IN R1, 0x02   (read back new value, should be 108)
+31 01 01    # OUT R1, 0x01  (output to console)
+
+# Test File Device (port 0x04)
+# Write a value to the file
+31 00 04    # OUT R0, 0x04  (writes 'B' to the file)
+# Reset file position (by reading all data)
+30 02 04    # IN R2, 0x04   (read first byte from file)
+31 02 01    # OUT R2, 0x01  (output to console)
+
+# Test RAM Disk (ports 0x05/0x06)
+# Set address to 0x0000
+01 02 00    # LOAD_IMM R2, 0x00 (address low byte)
+31 02 06    # OUT R2, 0x06      (send to RAM disk control port)
+01 02 00    # LOAD_IMM R2, 0x00 (address high byte)
+31 02 06    # OUT R2, 0x06      (send to RAM disk control port)
+
+# Write a value to the RAM disk
+01 02 03    # LOAD_IMM R2, 0x03 (command: write)
+31 02 06    # OUT R2, 0x06      (send write command to control port)
+31 00 05    # OUT R0, 0x05      (write value to data port)
+
+# Read back the value from the RAM disk
+01 02 02    # LOAD_IMM R2, 0x02 (command: read)
+31 02 06    # OUT R2, 0x06      (send read command to control port)
+30 03 05    # IN R3, 0x05       (read value from data port)
+31 03 01    # OUT R3, 0x01      (output to console)
+
+# Output a newline character to console
+01 00 0A    # LOAD_IMM R0, 0x0A (newline character)
+31 00 01    # OUT R0, 0x01      (output to console)
+
+# Halt
+00          # HALT
