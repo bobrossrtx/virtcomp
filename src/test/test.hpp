@@ -30,11 +30,10 @@ public:
                 int buffer_size = 15;
                 if (!result.passed) buffer_size += 2;
 
-                oss << std::right << std::setw(buffer_size) << std::setfill(' ') << 
+                oss << std::right << std::setw(buffer_size) << std::setfill(' ') <<
                 "[" << (result.passed ? "PASS" : "FAIL") << "] │ " << test_name;
                 if (!result.passed && !result.message.empty())
                     oss << " ── " << result.message;
-                    
                 if (result.passed) {
                     Logger::instance().success() << oss.str() << std::endl;
                 } else {
