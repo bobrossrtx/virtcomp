@@ -38,7 +38,7 @@ struct ArgDef {
 class ArgParser {
 public:
     void add_value_arg(const std::string& name, const std::string& arg, const std::string& alias,
-                       const std::string& help, std::function<void(const std::string&)> value_action) {
+                    const std::string& help, std::function<void(const std::string&)> value_action) {
         args_.push_back({name, arg, alias, help, ArgType::Value, value_action, nullptr});
     }
     void add_action_arg(const std::string& name, const std::string& arg, const std::string& alias,
@@ -46,7 +46,7 @@ public:
         args_.push_back({name, arg, alias, help, ArgType::Action, nullptr, action});
     }
     void add_bool_arg(const std::string& name, const std::string& arg, const std::string& alias,
-                  const std::string& help, std::function<void(bool)> action) {
+                    const std::string& help, std::function<void(bool)> action) {
         args_.push_back({name, arg, alias, help, ArgType::Value,
             [action](const std::string& value) {
                 // If value is empty, treat as true (flag style)
@@ -84,7 +84,7 @@ public:
             }
         }
     }
-    
+
     void print_help() const {
         std::cout << "virtcomp Usage: virtcomp [options]" << std::endl;
         for (const auto& def : args_) {
@@ -104,7 +104,7 @@ bool run_tests() {
     std::cout << color << "┌──────────────────────────────────────────────────────┐\033[0m" << std::endl;
     std::cout << color << "│     Running VirtComp Tests                           │\033[0m" << std::endl;
     std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
-    
+
     // Use TestRunner to run all .hex files in tests/
     TestRunner runner("tests");
     auto results = runner.run_all();
@@ -165,7 +165,7 @@ void run_gui() {
 }
 
 class VirtComp {
-  public:
+public:
     VirtComp(int argc, char *argv[]) {
         // Help argument
         parser.add_action_arg("help", "--help", "-h", "Shows help information",
@@ -190,7 +190,7 @@ class VirtComp {
         // Gui argument
         parser.add_action_arg("gui", "--gui", "-g", "Enable debug GUI",
             [this]() { run_gui(); });
-        
+
 
         parser.parse(argc, argv);
     }
@@ -229,7 +229,7 @@ class VirtComp {
         std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
 
         cpu.execute(program);
-        
+
         // Print CPU state
         cpu.print_state("Final State");
         cpu.print_registers();
@@ -242,7 +242,7 @@ class VirtComp {
         }
     }
 
-  private:
+private:
     ArgParser parser;
     std::string data;
     bool show_help = false;

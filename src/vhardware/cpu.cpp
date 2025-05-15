@@ -61,7 +61,7 @@ void CPU::print_state(const std::string& info) const {
         stack_oss << std::right << std::setw(45) << std::setfill(' ') << "(Stack top) │ memory[SP..SP+3]: ";
         for (size_t i = sp; i < std::min(static_cast<size_t>(sp + 4), memory.size()); ++i) {
             stack_oss << "[" << std::setw(3) << std::setfill(' ') << i << "]="
-                      << std::left << std::setw(3) << static_cast<int>(memory[i]) << std::setfill(' ');
+                    << std::left << std::setw(3) << static_cast<int>(memory[i]) << std::setfill(' ');
         }
         Logger::instance().debug() << stack_oss.str() << std::endl;
     }
@@ -691,7 +691,7 @@ void CPU::print_registers() const {
     for (size_t i = 0; i < registers.size(); ++i) {
         oss << "R" << i << ": " << registers[i] << " ";
     } oss << std::endl;
-    
+
     oss << std::right << std::setw(55) << "Memory " << "│ ";
     oss << "PC: " << pc << ", SP: " << sp << ", Flags: " << flags;
     Logger::instance().info() << oss.str() << std::endl;
