@@ -50,8 +50,8 @@ public:
             if (currentAddress < storage.size()) {
                 uint8_t value = storage[currentAddress];
                 Logger::instance().debug() << fmt::format(
-                    "RamDisk: Read 0x{:02X} from address 0x{:04X}",
-                    value, currentAddress
+                    "{:22} │ RamDisk: Read 0x{:02X} from address 0x{:04X}",
+                    "", value, currentAddress
                 ) << std::endl;
                 return value;
             }
@@ -81,8 +81,8 @@ public:
             if (lastCommand == CMD_WRITE && currentAddress < storage.size()) {
                 storage[currentAddress] = value;
                 Logger::instance().debug() << fmt::format(
-                    "RamDisk: Wrote 0x{:02X} to address 0x{:04X}",
-                    value, currentAddress
+                    "{:22} │ RamDisk: Wrote 0x{:02X} to address 0x{:04X}",
+                    "", value, currentAddress
                 ) << std::endl;
             }
         }
@@ -137,16 +137,16 @@ private:
             case CMD_SET_ADDR_LOW:
                 currentAddress = (currentAddress & 0xFF00) | lastData;
                 Logger::instance().debug() << fmt::format(
-                    "RamDisk: Set address low byte to 0x{:02X}, address now 0x{:04X}",
-                    lastData, currentAddress
+                    "{:14} RamDisk │ Set address low byte to 0x{:02X}, address now 0x{:04X}",
+                    "", lastData, currentAddress
                 ) << std::endl;
                 break;
                 
             case CMD_SET_ADDR_HIGH:
                 currentAddress = (currentAddress & 0x00FF) | (static_cast<uint16_t>(lastData) << 8);
                 Logger::instance().debug() << fmt::format(
-                    "RamDisk: Set address high byte to 0x{:02X}, address now 0x{:04X}",
-                    lastData, currentAddress
+                    "{:14} RamDisk │ Set address high byte to 0x{:02X}, address now 0x{:04X}",
+                    "", lastData, currentAddress
                 ) << std::endl;
                 break;
                 

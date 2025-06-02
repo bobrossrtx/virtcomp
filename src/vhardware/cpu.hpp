@@ -41,6 +41,16 @@ enum class Opcode : uint8_t {
 
     IN = 0x30,          // Input from port/device to register
     OUT = 0x31,         // Output from register to port/device
+    INB = 0x32,         // Input byte from port/device to register
+    OUTB = 0x33,        // Output byte from register to port/device
+    INW = 0x34,         // Input word from port/device to register
+    OUTW = 0x35,        // Output word from register to port/device
+    INL = 0x36,         // Input long from port/device to register
+    OUTL = 0x37,        // Output long from register to port/device
+    INSTR = 0x38,       // Input instruction from port/device to register
+    OUTSTR = 0x39,      // Output string from register to port/device
+
+    DB = 0x40,          // Define byte
 
     HALT = 0xFF         // Halt execution
 };
@@ -90,8 +100,8 @@ private:
 
     // Add these:
     mutable uint32_t last_accessed_addr = static_cast<uint32_t>(-1);
-    uint32_t last_modified_addr = static_cast<uint32_t>(-1);
-
-    uint8_t readPort(uint8_t port);
+    uint32_t last_modified_addr = static_cast<uint32_t>(-1);    uint8_t readPort(uint8_t port);
     void writePort(uint8_t port, uint8_t value);
+    std::string readPortString(uint8_t port, uint8_t maxLength = 255);
+    void writePortString(uint8_t port, const std::string& str);
 };

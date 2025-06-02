@@ -110,7 +110,7 @@ public:
         
         uint8_t value = device->read();
         Logger::instance().debug() << fmt::format(
-            "{:>23}| Input from port {} ({}): {}",
+            "{:>23}│ Input from port {} ({}): {}",
             "", port, device->getName(), value
         ) << std::endl;
         
@@ -143,7 +143,7 @@ public:
         }
         
         Logger::instance().debug() << fmt::format(
-            "{:>23}| Output to port {} ({}): {}",
+            "{:>23}│ Output to port {} ({}): {}",
             "", port, device->getName(), value
         ) << std::endl;
         
@@ -171,6 +171,25 @@ public:
         }
         return ports;
     }
+
+    void reset() {
+        Logger::instance().info() << "Resetting DeviceManager..." << std::endl;
+        resetAllDevices();
+        devices.clear();
+        Logger::instance().info() << "DeviceManager reset complete." << std::endl;
+    }
+
+    // Port read/write methods for different data sizes
+    uint8_t readPortByte(uint8_t port);
+    void writePortByte(uint8_t port, uint8_t value);
+    uint16_t readPortWord(uint8_t port);
+    void writePortWord(uint8_t port, uint16_t value);
+    uint32_t readPortDWord(uint8_t port);
+    void writePortDWord(uint8_t port, uint32_t value);
+    
+    // String I/O methods
+    std::string readPortString(uint8_t port, uint8_t maxLength = 255);
+    void writePortString(uint8_t port, const std::string& str);
     
 private:
     DeviceManager() = default;

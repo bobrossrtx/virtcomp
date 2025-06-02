@@ -1,0 +1,16 @@
+# DB test - store "Hello!" and output using length-based approach
+# DB opcode format: DB target_addr, length, data_bytes...
+
+# Store "Hello" at memory address 0x50 (null-terminated for OUTSTR)
+40 50 07 48 65 6C 6C 6F 20 00  # DB 0x50, 7, "Hello " + null terminator
+
+# Store "World!\n" at memory address 0x58 (null-terminated for OUTSTR)
+40 58 08 57 6F 72 6C 64 21 0A 00  # DB 0x58, 8, "World!\n" + null terminator
+
+# Method 1: Use OUTSTR for entire string (simple approach)
+01 00 50  # LOAD_IMM R0, 0x50 (address of string)
+39 00 01  # OUTSTR R0, 1 (output null-terminated string from address in R0)
+01 00 58  # LOAD_IMM R0, 0x58 (address of second string)
+39 00 01  # OUTSTR R0, 1 (output null-terminated string from address in R0)
+
+FF        # HALT

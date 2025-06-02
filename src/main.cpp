@@ -28,8 +28,9 @@ namespace fs = std::experimental::filesystem;
 void initialize_devices() {
     using namespace vhw;
 
-    // Create and register standard devices
+    DeviceManager::instance().reset();  // Reset device manager to clear any previous state    // Create and register standard devices
     auto console = DeviceFactory::createConsoleDevice(0x01);  // Console on port 0x01
+
     auto counter = DeviceFactory::createCounterDevice(0x02);  // Counter on port 0x02
 
     // Set up initial counter value (optional)
@@ -113,7 +114,8 @@ public:
     void print_help() const {
         std::cout << "virtcomp Usage: virtcomp [options]" << std::endl;
         for (const auto& def : args_) {
-            std::cout << def.arg << ", " << def.alias << "\t" << def.help << std::endl;
+            // Use fmt to align arguments and help text
+            fmt::print("  {:<16} {:<6}  {}\n", def.arg, def.alias, def.help);
         }
     }
 private:
@@ -135,22 +137,17 @@ bool run_tests() {
     auto results = runner.run_all();
     int passed = 0, failed = 0;
     // Print result header
-    fmt::print("\033[36m{:─>55}┴{:─<69}\033[0m\n", "", "");
+    fmt::print("\033[36m┌{:─>54}┴{:─<83}┐\033[0m\n", "", "");
     // Cyan color for header
-    std::cout << "\033[36mVirtComp Test Results\033[0m" << std::endl;
-    fmt::print("\033[36m{:─^{}}\033[0m\n", "", 125);
-
+    fmt::print("\033[36m│{:>55}{}{:>62}│\033[0m\n", "", "VirtComp Test Results", "");
+    fmt::print("\033[36m└{:─^{}}┘\033[0m\n", "", 138);
     for (const auto& result : results) {
         // Print test result with neat spacing (fixed width for name)
         constexpr int name_width = 24;
         // ANSI color codes: green for pass, red for fail
         const char* color = result.passed ? "\033[32m" : "\033[31m";
         const char* reset = "\033[0m";
-        std::cout << color << "[" << (result.passed ? "/" : "X") << "] " << reset;
-        std::cout.width(name_width);
-        std::cout << std::left << result.name;
-        std::cout << std::right;
-        std::cout << std::setw(4) << std::setfill(' ') << "";
+        fmt::print("{}[{}]{} {:<28}", color, result.passed ? "/" : "X", reset, result.name);
         if ((&result - &results[0] + 1) % 4 == 0)
             std::cout << std::endl;
         else

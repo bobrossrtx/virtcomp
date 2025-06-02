@@ -6,9 +6,17 @@ Stack and Call operations: (COMPLETE)
 - PUSH_ARG: Pushes an argument onto the stack.
 - POP_ARG: Pops an argument from the stack.
 
-Input/Output operations:
-- IN: Inputs data from a port or device.
-- OUT: Outputs data to a port or device.
+Input/Output operations: (COMPLETE) (keep in mind that these are virtual I/O operations (serial ports can be used for this))
+-/ IN: Inputs data from a port or device.
+-/ OUT: Outputs data to a port or device.
+-/ INB: Inputs a byte from a port or device.
+-/ OUTB: Outputs a byte to a port or device.
+-/ INW: Inputs a word from a port or device.
+-/ OUTW: Outputs a word to a port or device.
+-/ INL: Inputs a long from a port or device.
+-/ OUTL: Outputs a long to a port or device.
+-/ INSTR: Inputs a string from a port or device.
+-/ OUTSTR: Outputs a string to a port or device.
 
 Flags and Status operations:
 - PUSHF: Pushes the flags register onto the stack.

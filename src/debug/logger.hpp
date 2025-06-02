@@ -8,6 +8,8 @@
 #include <filesystem>
 #include <vector>
 
+#include <fmt/core.h>
+
 #include "../config.hpp"
 
 enum class LogLevel { SUCCESS, ERRORINFO, INFO, WARNING, ERROR, DEBUG, RUNNING };
@@ -67,12 +69,16 @@ public:
         localtime_r(&t, &tm);
     #endif
         char datetime[40];
-        std::strftime(datetime, sizeof(datetime), "%y-%m-%d %H:%M:%S", &tm);
-        std::ostringstream datetime_with_ms;
+        std::strftime(datetime, sizeof(datetime), "%y-%m-%d %H:%M:%S", &tm);        std::ostringstream datetime_with_ms;
         datetime_with_ms << datetime << "." << std::setfill('0') << std::setw(3) << ms.count();
         std::string datetime_str = datetime_with_ms.str();
 
-        std::string log_line = "[" + datetime_str + "] [" + level_to_string(level) + "] " + msg;
+        std::string log_line;
+        if (level == LogLevel::WARNING) {
+            log_line = fmt::format("[{}] [{}] {:>20} │ {}", datetime_str, level_to_string(level), "", msg);
+        } else {
+            log_line = "[" + datetime_str + "] [" + level_to_string(level) + "] " + msg;
+        }
 
         out << color << log_line << reset << std::endl;
 

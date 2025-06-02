@@ -11,3 +11,6 @@ public:
     inline static std::string program_file = "";
     inline static int error_count = 0;
 };
+
+// Declare device initialization for use in tests and main
+void initialize_devices();

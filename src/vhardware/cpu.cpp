@@ -17,7 +17,7 @@ constexpr uint32_t FLAG_SIGN = 1 << 1;
 
 // CPU constructor
 CPU::CPU()
-    : registers(4, 0), memory(256, 0), pc(0), sp(256), flags(0), last_accessed_addr(static_cast<uint32_t>(-1)), last_modified_addr(static_cast<uint32_t>(-1)) {} // Stack grows down from top of memory
+    : registers(8, 0), memory(256, 0), pc(0), sp(256), flags(0), last_accessed_addr(static_cast<uint32_t>(-1)), last_modified_addr(static_cast<uint32_t>(-1)) {} // Stack grows down from top of memory
 
 CPU::~CPU() = default;
 
@@ -146,8 +146,7 @@ void CPU::write_mem32(uint32_t addr, uint32_t value) {
     }
 }
 
-void CPU::execute(const std::vector<uint8_t>& program) {
-    // Copy program into memory
+void CPU::execute(const std::vector<uint8_t>& program) {    // Copy program into memory
     std::copy(program.begin(), program.end(), memory.begin());
     pc = 0;
     sp = memory.size() - 4; // Stack pointer starts at the end of memory
@@ -652,6 +651,184 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                 print_state("OUT");
                 break;
             }
+            case Opcode::INW: {
+                if (pc + 2 < program.size()) {
+                    uint8_t reg = program[pc + 1];
+                    uint8_t port = program[pc + 2];
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[INW] │ PC={} R{} <- port {} (word)", pc, "", pc, reg, port) << std::endl;
+                    if (reg < registers.size()) {
+                        uint16_t value = vhw::DeviceManager::instance().readPortWord(port);
+                        // Store lower 8 bits in reg, upper 8 bits in next reg (if exists)
+                        registers[reg] = static_cast<uint8_t>(value & 0xFF);
+                        if (reg + 1 < registers.size()) {
+                            registers[reg + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);
+                        }
+                        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[INW] │ R{} = {}, R{} = {}", pc, "", reg, registers[reg], reg + 1, (reg + 1 < registers.size() ? registers[reg + 1] : 0)) << std::endl;
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("INW");
+                break;
+            }
+            case Opcode::OUTW: {
+                if (pc + 2 < program.size()) {
+                    uint8_t reg = program[pc + 1];
+                    uint8_t port = program[pc + 2];
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[OUTW] │ PC={} port {} <- R{} (word)", pc, "", pc, port, reg) << std::endl;
+                    if (reg < registers.size()) {
+                        uint16_t value = registers[reg];
+                        if (reg + 1 < registers.size()) {
+                            value |= (static_cast<uint16_t>(registers[reg + 1]) << 8);
+                        }
+                        vhw::DeviceManager::instance().writePortWord(port, value);
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("OUTW");
+                break;
+            }
+            case Opcode::INL: {
+                if (pc + 2 < program.size()) {
+                    uint8_t reg = program[pc + 1];
+                    uint8_t port = program[pc + 2];
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[INL] │ PC={} R{} <- port {} (dword)", pc, "", pc, reg, port) << std::endl;
+                    if (reg < registers.size()) {
+                        uint32_t value = vhw::DeviceManager::instance().readPortDWord(port);
+                        // Store bytes in reg, reg+1, reg+2, reg+3 if available
+                        for (int i = 0; i < 4 && (reg + i) < registers.size(); ++i) {
+                            registers[reg + i] = static_cast<uint8_t>((value >> (8 * i)) & 0xFF);
+                        }
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("INL");
+                break;
+            }
+            case Opcode::OUTL: {
+                if (pc + 2 < program.size()) {
+                    uint8_t reg = program[pc + 1];
+                    uint8_t port = program[pc + 2];
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[OUTL] │ PC={} port {} <- R{} (dword)", pc, "", pc, port, reg) << std::endl;
+                    if (reg < registers.size()) {
+                        uint32_t value = 0;
+                        for (int i = 0; i < 4 && (reg + i) < registers.size(); ++i) {
+                            value |= (static_cast<uint32_t>(registers[reg + i]) << (8 * i));
+                        }
+                        vhw::DeviceManager::instance().writePortDWord(port, value);
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("OUTL");
+                break;
+            }
+            case Opcode::INB: {
+                if (pc + 2 < program.size()) {
+                    uint8_t reg = program[pc + 1];
+                    uint8_t port = program[pc + 2];
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[INB] │ PC={} R{} <- port {}", pc, "", pc, reg, port) << std::endl;
+                    if (reg < registers.size()) {
+                        uint8_t value = readPort(port);
+                        registers[reg] = value;
+                        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[INB] │ R{} = {}", pc, "", reg, value) << std::endl;
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("INB");
+                break;
+            }
+            case Opcode::OUTB: {
+                if (pc + 2 < program.size()) {
+                    uint8_t reg = program[pc + 1];
+                    uint8_t port = program[pc + 2];
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[OUTB] │ PC={} port {} <- R{}={}", pc, "", pc, port, reg, registers[reg]) << std::endl;
+                    if (reg < registers.size()) {
+                        writePort(port, registers[reg]);
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("OUTB");
+                break;
+            }
+            case Opcode::INSTR: {
+                if (pc + 2 < program.size()) {
+                    uint8_t reg = program[pc + 1];
+                    uint8_t port = program[pc + 2];
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[INSTR] │ PC={} R{} <- port {} (string)", pc, "", pc, reg, port) << std::endl;
+                    if (reg < registers.size()) {
+                        uint8_t maxLength = registers[reg]; // Use register value as max length
+                        std::string value = readPortString(port, maxLength);
+                        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[INSTR] │ Read string: '{}'", pc, "", value) << std::endl;
+                        // Store string length in register
+                        registers[reg] = static_cast<uint8_t>(value.length());
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("INSTR");
+                break;
+            }
+            case Opcode::OUTSTR: {
+                if (pc + 2 < program.size()) {
+                    uint8_t reg = program[pc + 1];
+                    uint8_t port = program[pc + 2];
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>4}[OUTSTR] │ PC={} port {} <- string from memory", pc, "", pc, port) << std::endl;
+                    if (reg < registers.size()) {
+                        // Build string from memory starting at address in register
+                        uint8_t addr = registers[reg];
+                        std::string str;
+                        for (size_t i = addr; i < memory.size() && memory[i] != 0; ++i) {
+                            str += static_cast<char>(memory[i]);
+                        }
+                        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>4}[OUTSTR] │ Writing string: '{}'", pc, "", str) << std::endl;
+                        writePortString(port, str);
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("OUTSTR");
+                break;
+            }
+            case Opcode::DB: {
+                // DB opcode: Define bytes - copy data to specified address
+                if (pc + 2 < program.size()) {
+                    uint8_t target_addr = program[pc + 1]; // Target memory address
+                    uint8_t length = program[pc + 2]; // Number of data bytes
+                    Logger::instance().debug() << fmt::format(
+                        "[PC=0x{:04X}]{:>7}[DB] │ Copying {} data bytes to address 0x{:02X}",
+                        pc, "", length, target_addr
+                    ) << std::endl;
+                    
+                    // Copy data bytes to memory starting at target_addr
+                    for (uint8_t i = 0; i < length && (pc + 3 + i) < program.size() && (target_addr + i) < memory.size(); ++i) {
+                        memory[target_addr + i] = program[pc + 3 + i];
+                        Logger::instance().debug() << fmt::format(
+                            "[PC=0x{:04X}]{:>7}[DB] │ memory[0x{:02X}] = 0x{:02X} ('{}')",
+                            pc, "", target_addr + i, program[pc + 3 + i], 
+                            (program[pc + 3 + i] >= 32 && program[pc + 3 + i] <= 126) ? static_cast<char>(program[pc + 3 + i]) : '.'
+                        ) << std::endl;
+                    }
+                    
+                    pc += 3 + length; // Skip opcode + target_addr + length + data bytes
+                } else {
+                    running = false;
+                }
+                print_state("DB");
+                break;
+            }
             case Opcode::HALT:
                 Logger::instance().debug() << fmt::format(
                     "[PC=0x{:04X}]{:>5}[HALT] │ PC={}",
@@ -694,6 +871,17 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                     case Opcode::RET: opcode_name = "RET"; break;
                     case Opcode::PUSH_ARG: opcode_name = "PUSH_ARG"; break;
                     case Opcode::POP_ARG: opcode_name = "POP_ARG"; break;
+                    case Opcode::IN: opcode_name = "IN"; break;
+                    case Opcode::OUT: opcode_name = "OUT"; break;
+                    case Opcode::INW: opcode_name = "INW"; break;
+                    case Opcode::OUTW: opcode_name = "OUTW"; break;
+                    case Opcode::INL: opcode_name = "INL"; break;
+                    case Opcode::OUTL: opcode_name = "OUTL"; break;
+                    case Opcode::INB: opcode_name = "INB"; break;
+                    case Opcode::OUTB: opcode_name = "OUTB"; break;
+                    case Opcode::INSTR: opcode_name = "INSTR"; break;
+                    case Opcode::OUTSTR: opcode_name = "OUTSTR"; break;
+                    case Opcode::DB: opcode_name = "DB"; break;
                     case Opcode::HALT: opcode_name = "HALT"; break;
                     default: opcode_name = "UNKNOWN"; break;
                 }
@@ -704,7 +892,7 @@ void CPU::execute(const std::vector<uint8_t>& program) {
                     << " │ is not defined" << std::dec << std::endl;
                 std::ostringstream buf;
                 buf << std::right << std::setw(22) << std::setfill(' ') << "Stack top" << " │ memory[SP..SP+3]: ";
-                for (size_t i = sp; i < std::min(static_cast<size_t>(sp + 4), memory.size()); ++ i) {
+                for (size_t i = sp; i < std::min(static_cast<size_t>(sp + 4), memory.size()); ++i) {
                     buf << "[" << std::setw(3) << std::setfill(' ') << i << "]="
                             << std::left << std::setw(3) << static_cast<int>(memory[i]) << std::setfill(' ');
                 }
@@ -1046,11 +1234,11 @@ bool CPU::step(const std::vector<uint8_t>& program) {
         case Opcode::INC: {
             if (pc + 1 < program.size()) {
                 uint8_t reg = program[pc + 1];
-                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[INC] │ PC={} R{}", pc, "", pc, static_cast<int>(reg)) << std::endl;
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[INC] │ PC={} R{}", pc, "", pc, static_cast<int>(reg)) << std::endl;
                 if (reg < registers.size()) {
                     uint8_t before = registers[reg];
                     ++registers[reg];
-                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[INC] │ R{}: {} + 1 = {}", pc, "", static_cast<int>(reg), before, registers[reg]) << std::endl;
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[INC] │ R{}: {} + 1 = {}", pc, "", static_cast<int>(reg), before, registers[reg]) << std::endl;
                 }
                 pc += 2;
             } else {
@@ -1258,68 +1446,257 @@ bool CPU::step(const std::vector<uint8_t>& program) {
             print_state("OUT");
             break;
         }
-        case Opcode::HALT:
-            Logger::instance().debug() << fmt::format(
-                "[PC=0x{:04X}]{:>5}[HALT] │ PC={}",
-                pc, "", pc
-            ) << std::endl;
-            running = false;
-            ++pc;
-            print_state("HALT");
-            break;
-        default: {
-            // Print opcode name if possible
-            std::string opcode_name;
-            switch (opcode) {
-                case Opcode::NOP: opcode_name = "NOP"; break;
-                case Opcode::LOAD_IMM: opcode_name = "LOAD_IMM"; break;
-                case Opcode::ADD: opcode_name = "ADD"; break;
-                case Opcode::SUB: opcode_name = "SUB"; break;
-                case Opcode::MOV: opcode_name = "MOV"; break;
-                case Opcode::JMP: opcode_name = "JMP"; break;
-                case Opcode::LOAD: opcode_name = "LOAD"; break;
-                case Opcode::STORE: opcode_name = "STORE"; break;
-                case Opcode::PUSH: opcode_name = "PUSH"; break;
-                case Opcode::POP: opcode_name = "POP"; break;
-                case Opcode::CMP: opcode_name = "CMP"; break;
-                case Opcode::JZ: opcode_name = "JZ"; break;
-                case Opcode::JNZ: opcode_name = "JNZ"; break;
-                case Opcode::JS: opcode_name = "JS"; break;
-                case Opcode::JNS: opcode_name = "JNS"; break;
-                case Opcode::MUL: opcode_name = "MUL"; break;
-                case Opcode::DIV: opcode_name = "DIV"; break;
-                case Opcode::INC: opcode_name = "INC"; break;
-                case Opcode::DEC: opcode_name = "DEC"; break;
-                case Opcode::AND: opcode_name = "AND"; break;
-                case Opcode::OR: opcode_name = "OR"; break;
-                case Opcode::XOR: opcode_name = "XOR"; break;
-                case Opcode::NOT: opcode_name = "NOT"; break;
-                case Opcode::SHL: opcode_name = "SHL"; break;
-                case Opcode::SHR: opcode_name = "SHR"; break;
-                case Opcode::CALL: opcode_name = "CALL"; break;
-                case Opcode::RET: opcode_name = "RET"; break;
-                case Opcode::PUSH_ARG: opcode_name = "PUSH_ARG"; break;
-                case Opcode::POP_ARG: opcode_name = "POP_ARG"; break;
-                case Opcode::HALT: opcode_name = "HALT"; break;
-                default: opcode_name = "UNKNOWN"; break;
+        case Opcode::INW: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t port = program[pc + 2];
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[INW] │ PC={} R{} <- port {} (word)", pc, "", pc, reg, port) << std::endl;
+                if (reg < registers.size()) {
+                    uint16_t value = vhw::DeviceManager::instance().readPortWord(port);
+                    // Store lower 8 bits in reg, upper 8 bits in next reg (if exists)
+                    registers[reg] = static_cast<uint8_t>(value & 0xFF);
+                    if (reg + 1 < registers.size()) {
+                        registers[reg + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);
+                    }
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[INW] │ R{} = {}, R{} = {}", pc, "", reg, registers[reg], reg + 1, (reg + 1 < registers.size() ? registers[reg + 1] : 0)) << std::endl;
+                }
+                pc += 3;
+            } else {
+                running = false;
             }
-            Logger::instance().error()
-                << std::right << std::setw(23) << std::setfill(' ') << "Invalid opcode " << "│ "
-                << "opcode: 0x"
-                << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode)
-                << " │ is not defined" << std::dec << std::endl;
-            std::ostringstream buf;
-            buf << std::right << std::setw(22) << std::setfill(' ') << "Stack top" << " │ memory[SP..SP+3]: ";
-            for (size_t i = sp; i < std::min(static_cast<size_t>(sp + 4), memory.size()); ++i) {
-                buf << "[" << std::setw(3) << std::setfill(' ') << i << "]="
-                        << std::left << std::setw(3) << static_cast<int>(memory[i]) << std::setfill(' ');
-            }
-            Logger::instance().error() << buf.str() << std::endl;
-            running = false;
-            print_state(opcode_name);
+            print_state("INW");
             break;
         }
-    }
+        case Opcode::OUTW: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t port = program[pc + 2];
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[OUTW] │ PC={} port {} <- R{} (word)", pc, "", pc, port, reg) << std::endl;
+                if (reg < registers.size()) {
+                    uint16_t value = registers[reg];
+                    if (reg + 1 < registers.size()) {
+                        value |= (static_cast<uint16_t>(registers[reg + 1]) << 8);
+                    }
+                    vhw::DeviceManager::instance().writePortWord(port, value);
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("OUTW");
+            break;
+        }
+        case Opcode::INL: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t port = program[pc + 2];
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[INL] │ PC={} R{} <- port {} (dword)", pc, "", pc, reg, port) << std::endl;
+                if (reg < registers.size()) {
+                    uint32_t value = vhw::DeviceManager::instance().readPortDWord(port);
+                    // Store bytes in reg, reg+1, reg+2, reg+3 if available
+                    for (int i = 0; i < 4 && (reg + i) < registers.size(); ++i) {
+                        registers[reg + i] = static_cast<uint8_t>((value >> (8 * i)) & 0xFF);
+                    }
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("INL");
+            break;
+        }
+        case Opcode::OUTL: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t port = program[pc + 2];
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[OUTL] │ PC={} port {} <- R{} (dword)", pc, "", pc, port, reg) << std::endl;
+                if (reg < registers.size()) {
+                    uint32_t value = 0;
+                    for (int i = 0; i < 4 && (reg + i) < registers.size(); ++i) {
+                        value |= (static_cast<uint32_t>(registers[reg + i]) << (8 * i));
+                    }
+                    vhw::DeviceManager::instance().writePortDWord(port, value);
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("OUTL");
+            break;
+        }
+        case Opcode::INB: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t port = program[pc + 2];
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[INB] │ PC={} R{} <- port {}", pc, "", pc, reg, port) << std::endl;
+                if (reg < registers.size()) {
+                    uint8_t value = readPort(port);
+                    registers[reg] = value;
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[INB] │ R{} = {}", pc, "", reg, value) << std::endl;
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("INB");
+            break;
+        }
+        case Opcode::OUTB: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t port = program[pc + 2];
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[OUTB] │ PC={} port {} <- R{}={}", pc, "", pc, port, reg, registers[reg]) << std::endl;
+                if (reg < registers.size()) {
+                    writePort(port, registers[reg]);
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("OUTB");
+            break;
+        }
+        case Opcode::INSTR: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t port = program[pc + 2];
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[INSTR] │ PC={} R{} <- port {} (string)", pc, "", pc, reg, port) << std::endl;
+                if (reg < registers.size()) {
+                    uint8_t maxLength = registers[reg]; // Use register value as max length
+                    std::string value = readPortString(port, maxLength);
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[INSTR] │ Read string: '{}'", pc, "", value) << std::endl;
+                    // Store string length in register
+                    registers[reg] = static_cast<uint8_t>(value.length());
+                }
+                pc += 3;
+            } else {
+                running = false;
+            }
+            print_state("INSTR");
+            break;
+        }
+        case Opcode::OUTSTR: {
+            if (pc + 2 < program.size()) {
+                uint8_t reg = program[pc + 1];
+                uint8_t port = program[pc + 2];
+                Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>4}[OUTSTR] │ PC={} port {} <- string from memory", pc, "", pc, port) << std::endl;
+                if (reg < registers.size()) {
+                    // Build string from memory starting at address in register
+                    uint8_t addr = registers[reg];
+                    std::string str;
+                    for (size_t i = addr; i < memory.size() && memory[i] != 0; ++i) {
+                        str += static_cast<char>(memory[i]);
+                    }
+                    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>4}[OUTSTR] │ Writing string: '{}'", pc, "", str) << std::endl;
+                        writePortString(port, str);
+                    }
+                    pc += 3;
+                } else {
+                    running = false;
+                }
+                print_state("OUTSTR");
+                break;
+            }
+            case Opcode::DB: {
+                // DB opcode: Define bytes - copy data to specified address
+                if (pc + 2 < program.size()) {
+                    uint8_t target_addr = program[pc + 1]; // Target memory address
+                    uint8_t length = program[pc + 2]; // Number of data bytes
+                    Logger::instance().debug() << fmt::format(
+                        "[PC=0x{:04X}]{:>7}[DB] │ Copying {} data bytes to address 0x{:02X}",
+                        pc, "", length, target_addr
+                    ) << std::endl;
+                    
+                    // Copy data bytes to memory starting at target_addr
+                    for (uint8_t i = 0; i < length && (pc + 3 + i) < program.size() && (target_addr + i) < memory.size(); ++i) {
+                        memory[target_addr + i] = program[pc + 3 + i];
+                        Logger::instance().debug() << fmt::format(
+                            "[PC=0x{:04X}]{:>7}[DB] │ memory[0x{:02X}] = 0x{:02X} ('{}')",
+                            pc, "", target_addr + i, program[pc + 3 + i], 
+                            (program[pc + 3 + i] >= 32 && program[pc + 3 + i] <= 126) ? static_cast<char>(program[pc + 3 + i]) : '.'
+                        ) << std::endl;
+                    }
+                    
+                    pc += 3 + length; // Skip opcode + target_addr + length + data bytes
+                } else {
+                    running = false;
+                }
+                print_state("DB");
+                break;
+            }
+            case Opcode::HALT:
+                Logger::instance().debug() << fmt::format(
+                    "[PC=0x{:04X}]{:>5}[HALT] │ PC={}",
+                    pc, "", pc
+                ) << std::endl;
+                running = false;
+                ++pc;
+                print_state("HALT");
+                break;
+            default: {
+                // Print opcode name if possible
+                std::string opcode_name;
+                switch (opcode) {
+                    case Opcode::NOP: opcode_name = "NOP"; break;
+                    case Opcode::LOAD_IMM: opcode_name = "LOAD_IMM"; break;
+                    case Opcode::ADD: opcode_name = "ADD"; break;
+                    case Opcode::SUB: opcode_name = "SUB"; break;
+                    case Opcode::MOV: opcode_name = "MOV"; break;
+                    case Opcode::JMP: opcode_name = "JMP"; break;
+                    case Opcode::LOAD: opcode_name = "LOAD"; break;
+                    case Opcode::STORE: opcode_name = "STORE"; break;
+                    case Opcode::PUSH: opcode_name = "PUSH"; break;
+                    case Opcode::POP: opcode_name = "POP"; break;
+                    case Opcode::CMP: opcode_name = "CMP"; break;
+                    case Opcode::JZ: opcode_name = "JZ"; break;
+                    case Opcode::JNZ: opcode_name = "JNZ"; break;
+                    case Opcode::JS: opcode_name = "JS"; break;
+                    case Opcode::JNS: opcode_name = "JNS"; break;
+                    case Opcode::MUL: opcode_name = "MUL"; break;
+                    case Opcode::DIV: opcode_name = "DIV"; break;
+                    case Opcode::INC: opcode_name = "INC"; break;
+                    case Opcode::DEC: opcode_name = "DEC"; break;
+                    case Opcode::AND: opcode_name = "AND"; break;
+                    case Opcode::OR: opcode_name = "OR"; break;
+                    case Opcode::XOR: opcode_name = "XOR"; break;
+                    case Opcode::NOT: opcode_name = "NOT"; break;
+                    case Opcode::SHL: opcode_name = "SHL"; break;
+                    case Opcode::SHR: opcode_name = "SHR"; break;
+                    case Opcode::CALL: opcode_name = "CALL"; break;
+                    case Opcode::RET: opcode_name = "RET"; break;
+                    case Opcode::PUSH_ARG: opcode_name = "PUSH_ARG"; break;
+                    case Opcode::POP_ARG: opcode_name = "POP_ARG"; break;
+                    case Opcode::IN: opcode_name = "IN"; break;
+                    case Opcode::OUT: opcode_name = "OUT"; break;
+                    case Opcode::INW: opcode_name = "INW"; break;
+                    case Opcode::OUTW: opcode_name = "OUTW"; break;
+                    case Opcode::INL: opcode_name = "INL"; break;
+                    case Opcode::OUTL: opcode_name = "OUTL"; break;
+                    case Opcode::INB: opcode_name = "INB"; break;
+                    case Opcode::OUTB: opcode_name = "OUTB"; break;
+                    case Opcode::INSTR: opcode_name = "INSTR"; break;
+                    case Opcode::OUTSTR: opcode_name = "OUTSTR"; break;
+                    case Opcode::DB: opcode_name = "DB"; break;
+                    case Opcode::HALT: opcode_name = "HALT"; break;
+                    default: opcode_name = "UNKNOWN"; break;
+                }
+                Logger::instance().error()
+                    << std::right << std::setw(23) << std::setfill(' ') << "Invalid opcode " << "│ "
+                    << "opcode: 0x"
+                    << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode)
+                    << " │ is not defined" << std::dec << std::endl;
+                std::ostringstream buf;
+                buf << std::right << std::setw(22) << std::setfill(' ') << "Stack top" << " │ memory[SP..SP+3]: ";
+                for (size_t i = sp; i < std::min(static_cast<size_t>(sp + 4), memory.size()); ++i) {
+                    buf << "[" << std::setw(3) << std::setfill(' ') << i << "]="
+                            << std::left << std::setw(3) << static_cast<int>(memory[i]) << std::setfill(' ');
+                }
+                Logger::instance().error() << buf.str() << std::endl;
+                running = false;
+                print_state(opcode_name);
+                break;
+            }
+        }
     return running && pc < program.size();
 }
 
@@ -1329,4 +1706,12 @@ uint8_t CPU::readPort(uint8_t port) {
 
 void CPU::writePort(uint8_t port, uint8_t value) {
     vhw::DeviceManager::instance().writePort(port, value);
+}
+
+std::string CPU::readPortString(uint8_t port, uint8_t maxLength) {
+    return vhw::DeviceManager::instance().readPortString(port, maxLength);
+}
+
+void CPU::writePortString(uint8_t port, const std::string& str) {
+    vhw::DeviceManager::instance().writePortString(port, str);
 }

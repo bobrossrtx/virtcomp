@@ -1,0 +1,25 @@
+01 00 11       # LOAD_IMM R0, 0x11
+31 00 01       # OUT R0, 1          - OUT test
+
+30 01 02       # IN R1, 2           - IN test
+31 01 03       # OUT R1, 3          - Print IN result
+
+01 02 22       # LOAD_IMM R2, 0x22
+33 02 04       # OUTB R2, 4         - OUTB test
+
+32 03 05       # INB R3, 5          - INB test
+31 03 06       # OUT R3, 6          - Print INB result
+
+01 04 34       # LOAD_IMM R4, 0x34
+35 04 07       # OUTW R4, 7         - OUTW test
+
+34 05 08       # INW R5, 8          - INW test
+31 05 09       # OUT R5, 9          - Print INW result
+
+01 06 55       # LOAD_IMM R6, 0x55
+37 06 0A 03    # OUTSTR R6, 0x0A, 3  - OUTSTR test (3 bytes)
+
+36 07 0B 03    # INSTR R7, 0x0B, 3   - INSTR test (3 bytes)
+31 07 0C       # OUT R7, 0x0C        - Print INSTR result
+
+00             # HALT

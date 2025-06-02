@@ -133,13 +133,13 @@ private:
         if (file) {
             file.write(reinterpret_cast<const char*>(fileBuffer.data()), fileBuffer.size());
             Logger::instance().debug() << fmt::format(
-                "Wrote {} bytes to file '{}'",
-                fileBuffer.size(), filepath
+            "{:22} │ Wrote {} bytes to file '{}'",
+            "", fileBuffer.size(), filepath
             ) << std::endl;
         } else {
             Logger::instance().error() << fmt::format(
-                "Failed to write to file '{}'",
-                filepath
+            "{:22} │ Failed to write to file '{}'",
+            "", filepath
             ) << std::endl;
         }
     }
