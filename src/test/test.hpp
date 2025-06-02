@@ -77,6 +77,7 @@ private:
 
         CPU cpu;
         cpu.reset();
+        initialize_devices();
         Config::error_count = 0; // Reset error count before running
         try {
             cpu.execute(prog);
