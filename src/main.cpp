@@ -317,10 +317,11 @@ public:
             std::cerr << "Error: Cannot create temporary file" << std::endl;
             return false;
         }
-
         outfile << "#include <iostream>\n";
         outfile << "#include <vector>\n";
         outfile << "#include <cstdint>\n";
+        outfile << "#include <iomanip>\n";
+        outfile << "#include <fmt/core.h>\n";
         outfile << "#include \"config.hpp\"\n";
         outfile << "#include \"vhardware/cpu.hpp\"\n";
         outfile << "#include \"vhardware/device_factory.hpp\"\n\n";
@@ -359,12 +360,15 @@ public:
         if (!fs::exists(bin_dir)) {
             fs::create_directory(bin_dir);
         }        // Compile directly to an executable
-        // Find the CPU implementation file which we know exists
-        std::string compile_cmd = "g++ -std=c++17 -I./src"
-                                  " -o " + output_name +
-                                  " " + temp_file +
-                                  " src/vhardware/cpu.cpp"
-                                  " -lfmt";
+        // Explicitly list the required files to avoid shell expansion issues
+        std::string compile_cmd = "g++ -std=c++17 -I./src -Iextern/fmt/include -Iextern"
+                      " -o " + output_name +
+                      " " + temp_file +
+                      " src/vhardware/cpu.cpp"
+                      " src/vhardware/device_manager.cpp"
+                      " src/config.hpp"
+                      " src/debug/logger.hpp"
+                      " extern/fmt/src/format.cc";
 
         std::cout << "Building standalone executable..." << std::endl;
         int compile_result = std::system(compile_cmd.c_str());
