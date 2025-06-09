@@ -1,54 +1,73 @@
 # VirtComp
 
-**Virtual Computation**  
-*A project for simulating virtual environments on a custom architecture*
+**Virtual Computer Simulation**  
+*A complete virtual computer environment with custom 32-bit architecture*
 
----
+VirtComp provides a comprehensive virtual computer simulation featuring a custom CPU architecture, device-based I/O system, and visual debugger. Perfect for learning computer architecture, assembly programming, and system design.
 
-## Overview
+## Quick Start
 
-VirtComp simulates a virtual computer running its own custom architecture. The goal is to create a system that can execute instructions in a custom assembly language, providing a platform for experimentation and learning.
+```bash
+# Build the project
+make
 
----
+# Run a program
+./bin/virtcomp tests/helloworld.hex
+
+# Enable debug GUI
+./bin/virtcomp tests/helloworld.hex --gui
+```
+
+## Features
+
+- **Custom 32-bit CPU Architecture**: Complete instruction set with arithmetic, logic, memory, and I/O operations
+- **Device-Based I/O**: Modular device system supporting console, file access, serial ports, and more
+- **Visual Debugger**: ImGui-based interface for real-time debugging and system inspection
+- **Hex Programming**: Human-readable hex format with comments and documentation support
+- **Extensible Design**: Easy to add new devices and extend functionality
+
+## Documentation
+
+📚 **[Complete Documentation](docs/README.md)** - Start here for comprehensive guides
+
+### Quick Links
+- **[Usage Guide](docs/usage/README.md)** - Learn to write hex programs and use the system
+- **[Codebase Documentation](docs/codebase/README.md)** - Technical details for developers
+- **[Examples](tests/)** - Sample programs demonstrating various features
 
 ## Project Structure
 
-- **`src/`**: Source code for the virtual machine.
-- **`bin/`**: Compiled binary files.
-- **`tests/`**: Test programs for the virtual machine (in hex format).
-
----
+- **`src/`**: Source code for the virtual computer
+  - `vhardware/`: CPU, memory, and device implementations
+  - `debug/`: Visual debugger interface
+- **`docs/`**: Comprehensive documentation
+- **`tests/`**: Example programs in hex format
+- **`bin/`**: Compiled executables
 
 ## Building
 
-To build the project, simply run:
+Requirements: C++17 compiler, fmt library, OpenGL (for GUI mode)
 
 ```bash
-make clean prereqs test
+make          # Build release version
+make debug    # Build with debug symbols
+make clean    # Clean build artifacts
 ```
 
-This will compile the source code and place the binary in the `bin/` directory.
-
----
-
-## Running Programs
-
-To run a program file (hex format):
+## Command Line Usage
 
 ```bash
-./bin/virtcomp -p <program_filename>
+virtcomp [OPTIONS] [PROGRAM_FILE]
+
+Options:
+  --gui          Enable graphical debugger
+  --interactive  Start in interactive mode
+  --help         Show help message
+
+Examples:
+  virtcomp program.hex           # Run program
+  virtcomp program.hex --gui     # Run with debugger
 ```
-
-**Example:**
-
-```bash
-./bin/virtcomp -p tests/add.hex
-./bin/virtcomp -p tests/sub.hex
-./bin/virtcomp -p tests/mul.hex
-```
-
-> **Note:**  
-> Program files are located in the `tests/` directory and contain hex-encoded instructions for the virtual machine.
 
 ---
 
