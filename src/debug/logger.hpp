@@ -54,18 +54,21 @@ public:
         std::ostream& out = (level == LogLevel::ERROR) ? std::cerr : std::cout;
         std::string color = level_to_color(level);
         std::string reset = "\033[0m";
-
+        
         // Debug mode guard (bypass if forced)
         if (level == LogLevel::DEBUG && !Config::debug && !force_next_) {
             force_next_ = false; // Reset force flag
             return;
         }
-
+        
         // Verbose mode guard for info messages (bypass if forced)
         if (level == LogLevel::INFO && !Config::verbose && !force_next_) {
             force_next_ = false; // Reset force flag
             return;
         }
+
+        // VirtComp messages always print (no filtering)
+        // Note: VIRTCOMP level bypasses verbose/debug checks
 
         // Reset force flag after checking
         force_next_ = false;
@@ -152,14 +155,14 @@ private:
     static constexpr size_t gui_log_buffer_max_ = 500;
     std::recursive_mutex gui_log_mutex_;    std::string level_to_string(LogLevel level) {
         switch (level) {
-            case LogLevel::SUCCESS: return "SUCCESS";
-            case LogLevel::INFO:    return "INFO";
-            case LogLevel::WARNING: return "WARNING";
-            case LogLevel::ERROR:   return "ERROR";
-            case LogLevel::DEBUG:   return "DEBUG";
-            case LogLevel::RUNNING: return "RUNNING";
-            case LogLevel::VIRTCOMP: return "VIRTCOMP";
-            default:                return "LOG";
+            case LogLevel::SUCCESS:     return "SUCCESS";
+            case LogLevel::INFO:        return "INFO";
+            case LogLevel::WARNING:     return "WARNING";
+            case LogLevel::ERROR:       return "ERROR";
+            case LogLevel::DEBUG:       return "DEBUG";
+            case LogLevel::RUNNING:     return "RUNNING";
+            case LogLevel::VIRTCOMP:    return "VIRTCOMP";
+            default:                    return "LOG";
         }
     }    std::string level_to_color(LogLevel level) {
         switch (level) {
