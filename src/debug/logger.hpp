@@ -7,24 +7,31 @@
 #include <iomanip>
 #include <filesystem>
 #include <vector>
+#include <chrono>
 
 #include <fmt/core.h>
 
 #include "../config.hpp"
 
-enum class LogLevel { SUCCESS, ERRORINFO, INFO, WARNING, ERROR, DEBUG, RUNNING };
+enum class LogLevel { SUCCESS, ERRORINFO, INFO, WARNING, ERROR, DEBUG, RUNNING, VIRTCOMP };
 
 class Logger {
 public:
     static Logger& instance() {
         static Logger inst;
         return inst;
-    }
-
-    // Set log level for next message
+    } 
+    
+    // Set log level for next message    
     Logger& level(LogLevel lvl) {
         current_level_ = lvl;
         buffer_.str(""); // Clear buffer
+        return *this;
+    }
+
+    // Force next message to bypass filtering (verbose/debug checks)
+    Logger& force() {
+        force_next_ = true;
         return *this;
     }
 
@@ -48,15 +55,20 @@ public:
         std::string color = level_to_color(level);
         std::string reset = "\033[0m";
 
-        // Debug mode guard
-        if (level == LogLevel::DEBUG && !Config::debug) {
+        // Debug mode guard (bypass if forced)
+        if (level == LogLevel::DEBUG && !Config::debug && !force_next_) {
+            force_next_ = false; // Reset force flag
             return;
         }
 
-        // Verbose mode guard for info messages
-        if (level == LogLevel::INFO && !Config::verbose) {
+        // Verbose mode guard for info messages (bypass if forced)
+        if (level == LogLevel::INFO && !Config::verbose && !force_next_) {
+            force_next_ = false; // Reset force flag
             return;
         }
+
+        // Reset force flag after checking
+        force_next_ = false;
 
         // Get current date and time with milliseconds
         auto now = std::chrono::system_clock::now();
@@ -98,10 +110,13 @@ public:
     }
 
     // Convenience methods
-    Logger& success() { return level(LogLevel::SUCCESS); }
-    Logger& info()    { return level(LogLevel::INFO); }
-    Logger& warn()    { return level(LogLevel::WARNING); }
-    Logger& error(const std::string& extra_info = "") {
+    Logger& success()   { return level(LogLevel::SUCCESS);  }
+    Logger& info()      { return level(LogLevel::INFO);     }
+    Logger& warn()      { return level(LogLevel::WARNING);  }
+    Logger& debug()     { return level(LogLevel::DEBUG);    }
+    Logger& running()   { return level(LogLevel::RUNNING);  }
+    Logger& virtcomp()  { return level(LogLevel::VIRTCOMP); }
+    Logger& error(const std::string& extra_info = ""){
         Config::error_count++;
 
         if (!extra_info.empty()) {
@@ -109,8 +124,6 @@ public:
         }
         return level(LogLevel::ERROR);
     }
-    Logger& debug()   { return level(LogLevel::DEBUG); }
-    Logger& running() { return level(LogLevel::RUNNING); }
 
     std::vector<std::string> get_gui_log_buffer() {
         std::lock_guard<std::recursive_mutex> lock(gui_log_mutex_);
@@ -131,14 +144,13 @@ private:
     }
     std::ostringstream buffer_;
     LogLevel current_level_ = LogLevel::INFO;
+    bool force_next_ = false; // Flag to bypass filtering for next message
     std::ofstream file_;
     std::recursive_mutex mutex_;
 
     std::vector<std::string> gui_log_buffer_;
     static constexpr size_t gui_log_buffer_max_ = 500;
-    std::recursive_mutex gui_log_mutex_;
-
-    std::string level_to_string(LogLevel level) {
+    std::recursive_mutex gui_log_mutex_;    std::string level_to_string(LogLevel level) {
         switch (level) {
             case LogLevel::SUCCESS: return "SUCCESS";
             case LogLevel::INFO:    return "INFO";
@@ -146,11 +158,10 @@ private:
             case LogLevel::ERROR:   return "ERROR";
             case LogLevel::DEBUG:   return "DEBUG";
             case LogLevel::RUNNING: return "RUNNING";
+            case LogLevel::VIRTCOMP: return "VIRTCOMP";
             default:                return "LOG";
         }
-    }
-
-    std::string level_to_color(LogLevel level) {
+    }    std::string level_to_color(LogLevel level) {
         switch (level) {
             case LogLevel::SUCCESS:     return "\033[1;32m";     // Bright Green
             case LogLevel::INFO:        return "\033[1;36m";     // Bright Cyan
@@ -159,6 +170,7 @@ private:
             case LogLevel::ERRORINFO:   return "\033[1;36m";     // Bright Cyan
             case LogLevel::DEBUG:       return "\033[38;5;208m"; // Orange (ANSI 256-color)
             case LogLevel::RUNNING:     return "\033[1;34m";     // Bright Blue
+            case LogLevel::VIRTCOMP:    return "\033[1;35m";     // Bright Magenta (readable purple)
             default:                    return "\033[0m";
         }
     }

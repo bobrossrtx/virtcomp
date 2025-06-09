@@ -919,15 +919,21 @@ void CPU::print_registers() const {
 
 void CPU::print_memory(std::size_t start, std::size_t end) const {
     if (end > memory.size()) end = memory.size();
-    std::ostringstream oss;
-    oss << std::right << std::setw(16) << "Memory dump [" << start << "..." << end-1 << "] │" << std::endl;
+    Logger::instance().force().info() << std::right << std::setw(15) << "Memory dump [" << start << "..." << end-1 << "] │" << std::endl;
+    
+    std::ostringstream line;
     for (std::size_t i = start; i < end; ++i) {
-        oss << "[" << "0x" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << i << "]="
-            << "0x" << std::setw(2) << std::setfill('0') << static_cast<int>(memory[i]) << " ";
-        if ((i - start + 1) % 8 == 0) oss << std::endl;
+        line << "[" << "0x" << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << i << "]="
+             << "0x" << std::setw(2) << std::setfill('0') << static_cast<int>(memory[i]) << " ";
+        if ((i - start + 1) % 8 == 0) {
+            Logger::instance().force().info() << line.str() << std::endl;
+            line.str(""); // Clear the line buffer
+        }
     }
-    oss << std::endl;
-    Logger::instance().info() << oss.str() << std::endl;
+      // Print any remaining content if the last line wasn't complete
+    if (!line.str().empty()) {
+        Logger::instance().force().info() << line.str() << std::endl;
+    }
 }
 
 // Run the whole program (reset and step until done)
