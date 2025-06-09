@@ -211,11 +211,13 @@ public:
 
         // Gui argument
         parser.add_action_arg("gui", "--gui", "-g", "Enable debug GUI",
-            [this]() { run_gui(); });
-
-        // Compile argument
+            [this]() { run_gui(); });        // Compile argument
         parser.add_bool_arg("compile", "--compile", "-c", "Compile program into a standalone executable",
             [this](bool value) { Config::compile_only = value; });
+
+        // Memory dump argument
+        parser.add_bool_arg("memory_dump", "--memory-dump", "-md", "Show full memory dump after execution",
+            [this](bool value) { show_memory_dump = value; });
 
         parser.parse(argc, argv);
     }
@@ -424,14 +426,21 @@ public:
 std::cout << color << "└──────────────────────────────────────────────────────┘\033[0m" << std::endl;
 
         // Initialize the device system after displaying the logo
-        initialize_devices();
-
-        cpu.execute(program);
+        initialize_devices();        cpu.execute(program);
 
         // Print CPU state
         cpu.print_state("End");
         cpu.print_registers();
-        cpu.print_memory();
+        
+        // Handle memory dump based on flags
+        if (show_memory_dump) {
+            // Full memory dump when -md is specified
+            cpu.print_memory(0, cpu.get_memory().size());
+        } else if (Config::debug || Config::verbose) {
+            // Partial memory dump when only -d or --verbose is specified
+            cpu.print_memory(); // Uses default parameters (first 32 bytes)
+        }
+        // No memory dump if neither flag is set
 
         if (Config::error_count > 0) {
             Logger::instance().error() << fmt::format("Execution failed with {} errors.", Config::error_count) << std::endl;
@@ -444,6 +453,7 @@ private:
     ArgParser parser;
     std::string data;
     bool show_help = false;
+    bool show_memory_dump = false;
 
     // Helper to load hex bytes from file
     bool load_program_file(const std::string& path, std::vector<uint8_t>& out) {
