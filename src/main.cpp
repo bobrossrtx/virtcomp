@@ -5,6 +5,10 @@
 #include <unordered_map>
 #include <fstream>
 #include <filesystem>
+#include <iomanip>
+#include <sstream>
+#include <chrono>
+#include <memory>
 
 #if __cplusplus >= 201703L
 namespace fs = std::filesystem;
@@ -24,11 +28,17 @@ namespace fs = std::experimental::filesystem;
 // Include the test framework
 #include "test/test.hpp"
 
-// Function to initialize the device system
+// For POSIX process execution instead of system()
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+
+class ArgParser;
+
 void initialize_devices() {
     using namespace vhw;
 
-    DeviceManager::instance().reset();  // Reset device manager to clear any previous state    // Create and register standard devices
+    DeviceManager::instance().reset();  // Reset device manager to clear any previous state
     auto console = DeviceFactory::createConsoleDevice(0x01);  // Console on port 0x01
 
     auto counter = DeviceFactory::createCounterDevice(0x02);  // Counter on port 0x02
@@ -64,7 +74,7 @@ struct ArgDef {
 class ArgParser {
 public:
     void add_value_arg(const std::string& name, const std::string& arg, const std::string& alias,
-                    const std::string& help, std::function<void(const std::string&)> value_action) {
+                       const std::string& help, std::function<void(const std::string&)> value_action) {
         args_.push_back({name, arg, alias, help, ArgType::Value, value_action, nullptr});
     }
     void add_action_arg(const std::string& name, const std::string& arg, const std::string& alias,
@@ -72,7 +82,7 @@ public:
         args_.push_back({name, arg, alias, help, ArgType::Action, nullptr, action});
     }
     void add_bool_arg(const std::string& name, const std::string& arg, const std::string& alias,
-                    const std::string& help, std::function<void(bool)> action) {
+                      const std::string& help, std::function<void(bool)> action) {
         args_.push_back({name, arg, alias, help, ArgType::Value,
             [action](const std::string& value) {
                 // If value is empty, treat as true (flag style)
@@ -114,8 +124,8 @@ public:
     void print_help() const {
         std::cout << "virtcomp Usage: virtcomp [options]" << std::endl;
         for (const auto& def : args_) {
-            // Use fmt to align arguments and help text
-            fmt::print("  {:<16} {:<6}  {}\n", def.arg, def.alias, def.help);
+            // Use printf to align arguments and help text
+            printf("  %-16s %-6s  %s\n", def.arg.c_str(), def.alias.c_str(), def.help.c_str());
         }
     }
 private:
@@ -130,24 +140,24 @@ bool run_tests() {
     const char* color = Config::debug ? "\033[38;5;208m" : "\033[36m";
     std::cout << color << "┌──────────────────────────────────────────────────────┐\033[0m" << std::endl;
     std::cout << color << "│     Running VirtComp Tests                           │\033[0m" << std::endl;
-    std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
+    std::cout << color << "└──────────────────────────────────────────────────────┘\033[0m" << std::endl;
 
     // Use TestRunner to run all .hex files in tests/
     TestRunner runner("tests");
     auto results = runner.run_all();
     int passed = 0, failed = 0;
     // Print result header
-    fmt::print("\033[36m┌{:─>54}┴{:─<83}┐\033[0m\n", "", "");
+    printf("\033[36m┌%s┴%s┐\033[0m\n", std::string(54, '─').c_str(), std::string(83, '─').c_str());
     // Cyan color for header
-    fmt::print("\033[36m│{:>55}{}{:>62}│\033[0m\n", "", "VirtComp Test Results", "");
-    fmt::print("\033[36m└{:─^{}}┘\033[0m\n", "", 138);
+    printf("\033[36m│%55s%s%62s│\033[0m\n", "", "VirtComp Test Results", "");
+    printf("\033[36m└%s┘\033[0m\n", std::string(138, '─').c_str());
     for (const auto& result : results) {
         // Print test result with neat spacing (fixed width for name)
         constexpr int name_width = 24;
         // ANSI color codes: green for pass, red for fail
         const char* color = result.passed ? "\033[32m" : "\033[31m";
         const char* reset = "\033[0m";
-        fmt::print("{}[{}]{} {:<28}", color, result.passed ? "/" : "X", reset, result.name);
+        printf("%s[%s]%s %-28s", color, result.passed ? "/" : "X", reset, result.name.c_str());
         if ((&result - &results[0] + 1) % 4 == 0)
             std::cout << std::endl;
         else
@@ -189,48 +199,35 @@ void run_gui() {
 class VirtComp {
 public:
     VirtComp(int argc, char *argv[]) {
+        // Help argument
         parser.add_action_arg("help", "--help", "-h", "Shows help information",
-            [this]() { parser.print_help(); show_help = true; });        parser.add_bool_arg("debug", "--debug", "-d", "Enable debug mode",
-            [this](bool value) { 
-                Config::debug = value; 
-                Config::verbose = value; 
-                pending_virtcomp_messages.push_back("Debug mode set to: " + std::string(value ? "true" : "false"));
-            });
+            [this]() { parser.print_help(); show_help = true; });
+        // Debug argument
+        parser.add_bool_arg("debug", "--debug", "-d", "Enable debug mode",
+            [this](bool value) { Config::debug = value; Config::verbose = value; });
+        // Verbose argument
         parser.add_bool_arg("verbose", "--verbose", "-v", "Show informational messages (use --verbose=false to disable)",
-            [this](bool value) { 
-                Config::verbose = value; 
-                pending_virtcomp_messages.push_back("Verbose mode set to: " + std::string(value ? "true" : "false"));
-            });
+            [this](bool value) { Config::verbose = value; });
+
+        // Debug File argument
         parser.add_value_arg("debug_file", "--debug-file", "-f", "Debug file path",
-            [this](const std::string& value) { 
-                Config::debug_file = value; 
-                pending_virtcomp_messages.push_back("Debug file set to: " + value);
-            });
-        parser.add_value_arg("program", "--input", "-i", "Path to input file (hex bytes, space or newline separated)",
-            [this](const std::string& value) { 
-                Config::program_file = value; 
-                pending_virtcomp_messages.push_back("Input file set to: " + value);
-            });
+            [this](const std::string& value) { Config::debug_file = value; });
+
+        // Program file argument
+        parser.add_value_arg("program", "--program", "-p", "Path to program file (hex bytes, space or newline separated)",
+            [this](const std::string& value) { Config::program_file = value; });
+
+        // Run tests argument
         parser.add_action_arg("test", "--test", "-t", "Run tests",
-            [this]() { 
-                run_tests(); 
-                pending_virtcomp_messages.push_back("Running tests");
-            });
+            [this]() { run_tests(); });
+
+        // Gui argument
         parser.add_action_arg("gui", "--gui", "-g", "Enable debug GUI",
-            [this]() { 
-                run_gui(); 
-                pending_virtcomp_messages.push_back("Opening Debug Gui");
-            });        // Compile argument
+            [this]() { run_gui(); });
+
+        // Compile argument
         parser.add_bool_arg("compile", "--compile", "-c", "Compile program into a standalone executable",
-            [this](bool value) { 
-                Config::compile_only = value; 
-                pending_virtcomp_messages.push_back("Compile Mode Enabled");
-            });
-        parser.add_bool_arg("memory_dump", "--memory-dump", "-md", "Show full memory dump after execution",
-            [this](bool value) { 
-                show_memory_dump = value; 
-                pending_virtcomp_messages.push_back("Full Memory Dump Enabled");
-            });
+            [this](bool value) { Config::compile_only = value; });
 
         parser.parse(argc, argv);
     }
@@ -242,10 +239,7 @@ public:
 
         if (create_standalone_executable(Config::program_file, program, output_name)) {
             std::cout << "Successfully compiled to executable: " << output_name << std::endl;
-            if (Config::debug)
-                std::cout << "You can run it with: ./" << output_name << "_debug" << std::endl;
-            else
-                std::cout << "You can run it with: ./" << output_name << std::endl;
+            std::cout << "You can run it with: ./" << output_name << std::endl;
         }
     }
 
@@ -265,8 +259,8 @@ public:
 
     // Create a standalone executable with the program embedded
     bool create_standalone_executable(const std::string& program_file,
-                                     const std::vector<uint8_t>& program,
-                                     const std::string& output_name) {
+                                      const std::vector<uint8_t>& program,
+                                      const std::string& output_name) {
         // 1. Generate program_data.hpp with the program bytes
         if (!generate_program_data_header(program)) {
             std::cerr << "Failed to generate program data header" << std::endl;
@@ -324,9 +318,11 @@ public:
         outfile << "#endif // PROGRAM_DATA_HPP\n";
 
         return true;
-    }    // Compile standalone executable
+    }
+
+    // Securely compile standalone executable using execvp (no system())
     bool compile_standalone_main(const std::string& output_name) {
-        // First, let's create a simplified standalone main that doesn't include imgui
+        // Create a simplified standalone main that doesn't include imgui
         std::string temp_file = "build/tmp_standalone.cpp";
 
         // Write a simplified version of standalone_main.cpp to a temporary file
@@ -335,11 +331,10 @@ public:
             std::cerr << "Error: Cannot create temporary file" << std::endl;
             return false;
         }
+
         outfile << "#include <iostream>\n";
         outfile << "#include <vector>\n";
         outfile << "#include <cstdint>\n";
-        outfile << "#include <iomanip>\n";
-        outfile << "#include <fmt/core.h>\n";
         outfile << "#include \"config.hpp\"\n";
         outfile << "#include \"vhardware/cpu.hpp\"\n";
         outfile << "#include \"vhardware/device_factory.hpp\"\n\n";
@@ -378,26 +373,57 @@ public:
         if (!fs::exists(bin_dir)) {
             fs::create_directory(bin_dir);
         }
-        // Compile directly to an executable
-        // Explicitly list the required files to avoid shell expansion issues
-        std::string compile_cmd = "g++ -std=c++17 -I./src -Iextern/fmt/include -Iextern";
-        std::string output_file = output_name;  // Default output name
-        if (Config::debug) {
-            compile_cmd += " -g -O0";
-            output_file += "_debug";  // Append _debug to the output name
-            std::cout << "Debug mode enabled, compiling with debugging symbols" << std::endl;
-        }
-        compile_cmd += " -o " + output_file +
-                        " " + temp_file +
-                        " src/vhardware/cpu.cpp"
-                        " src/vhardware/device_manager.cpp"
-                        " src/config.hpp"
-                        " src/debug/logger.hpp"
-                        " extern/fmt/src/format.cc";
+
+        // Propietary files
+        // Note: fmt library is included in extern/fmt
+        // Note: imgui not included
+        std::vector<std::string> extra_files = {
+            "src/vhardware/cpu.cpp",
+            "src/vhardware/device_manager.cpp",
+            // "src/vhardware/device_factory.cpp",
+            // "src/vhardware/devices/console_device.cpp",
+            // "src/vhardware/devices/counter_device.cpp",
+            // "src/vhardware/devices/file_device.cpp",
+            // "src/vhardware/devices/ramdisk_device.cpp",
+            "extern/fmt/src/format.cc"
+        };
+        
+        // Prepare argument vector
+        std::vector<std::string> args = {
+            "g++", "-std=c++17", "-I./src",
+            "-Iextern/fmt/include", "-Iextern",
+            "-std=c++17",
+            "-o", output_name,
+            temp_file
+        };
+        // Add all extra source files
+        args.insert(args.end(), extra_files.begin(), extra_files.end());
+
+        // Convert args to char* array
+        std::vector<char*> c_args;
+        for (auto& arg : args) c_args.push_back(const_cast<char*>(arg.c_str()));
+        c_args.push_back(nullptr);
 
         std::cout << "Building standalone executable..." << std::endl;
-        int compile_result = std::system(compile_cmd.c_str());
-        if (compile_result != 0) {
+
+        pid_t pid = fork();
+        if (pid == -1) {
+            std::cerr << "Failed to fork for compile" << std::endl;
+            return false;
+        } else if (pid == 0) {
+            // child process
+            execvp("g++", c_args.data());
+            // If execvp fails
+            std::cerr << "Failed to execute g++" << std::endl;
+            _exit(127);
+        }
+        // parent process
+        int status = 0;
+        if (waitpid(pid, &status, 0) == -1) {
+            std::cerr << "Failed during waitpid" << std::endl;
+            return false;
+        }
+        if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
             std::cerr << "Failed to compile standalone executable" << std::endl;
             return false;
         }
@@ -408,7 +434,9 @@ public:
             fs::perm_options::add);
 
         return true;
-    }    void run() {
+    }
+
+    void run() {
         if (show_help) return;
 
         CPU cpu;
@@ -446,28 +474,20 @@ public:
 │                                            | |       │
 │                                            |_|       │
 │                                                      │)" << "\033[0m" << std::endl;
-std::cout << color << "└──────────────────────────────────────────────────────┘\033[0m" << std::endl;        // Initialize the device system after displaying the logo
+        std::cout << color << "└──────────────────────────────────────────────────────┘\033[0m" << std::endl;
+
+        // Initialize the device system after displaying the logo
         initialize_devices();
 
-        // Display any pending VIRTCOMP messages after the header
-        display_pending_virtcomp_messages();cpu.execute(program);
+        cpu.execute(program);
 
         // Print CPU state
         cpu.print_state("End");
         cpu.print_registers();
-        
-        // Handle memory dump based on flags
-        if (show_memory_dump) {
-            // Full memory dump when -md is specified
-            cpu.print_memory(0, cpu.get_memory().size());
-        } else if (Config::debug || Config::verbose) {
-            // Partial memory dump when only -d or --verbose is specified
-            cpu.print_memory(); // Uses default parameters (first 32 bytes)
-        }
-        // No memory dump if neither flag is set
+        cpu.print_memory();
 
         if (Config::error_count > 0) {
-            Logger::instance().error() << fmt::format("Execution failed with {} errors.", Config::error_count) << std::endl;
+            Logger::instance().error() << "Execution failed with " << Config::error_count << " errors." << std::endl;
         } else {
             Logger::instance().success() << "Execution completed successfully." << std::endl;
         }
@@ -477,16 +497,6 @@ private:
     ArgParser parser;
     std::string data;
     bool show_help = false;
-    bool show_memory_dump = false;
-    std::vector<std::string> pending_virtcomp_messages;
-
-    // Display any pending VIRTCOMP messages
-    void display_pending_virtcomp_messages() {
-        for (const auto& message : pending_virtcomp_messages) {
-            Logger::instance().virtcomp() << message << std::endl;
-        }
-        pending_virtcomp_messages.clear();
-    }
 
     // Helper to load hex bytes from file
     bool load_program_file(const std::string& path, std::vector<uint8_t>& out) {
