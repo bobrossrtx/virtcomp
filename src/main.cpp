@@ -91,20 +91,33 @@ public:
             }, nullptr});
     }
 
-    void parse(int argc, char* argv[]) {
-        for (int i = 1; i < argc; ++i) {
+    void parse(int argc, char* argv[]) {        for (int i = 1; i < argc; ++i) {
             std::string token = argv[i];
             bool matched = false;
             for (auto& def : args_) {
+                // Check for exact match or --arg=value / -a=value format
+                bool is_match = false;
+                std::string value;
+                
                 if (token == def.arg || token == def.alias) {
+                    is_match = true;
+                } else {
+                    // Check for --arg=value format
+                    auto eq = token.find('=');
+                    if (eq != std::string::npos) {
+                        std::string arg_part = token.substr(0, eq);
+                        if (arg_part == def.arg || arg_part == def.alias) {
+                            is_match = true;
+                            value = token.substr(eq + 1);
+                        }
+                    }
+                }
+                
+                if (is_match) {
                     matched = true;
                     if (def.type == ArgType::Value) {
-                        std::string value;
-                        // Support --arg=value or -a value
-                        auto eq = token.find('=');
-                        if (eq != std::string::npos) {
-                            value = token.substr(eq + 1);
-                        } else if (i + 1 < argc && argv[i + 1][0] != '-') {
+                        // If we didn't get value from =, try next argument
+                        if (value.empty() && i + 1 < argc && argv[i + 1][0] != '-') {
                             value = argv[++i];
                         }
                         // If no value, value remains empty
@@ -223,23 +236,56 @@ public:
 
         // Gui argument
         parser.add_action_arg("gui", "--gui", "-g", "Enable debug GUI",
-            [this]() { run_gui(); });
-
-        // Compile argument
-        parser.add_bool_arg("compile", "--compile", "-c", "Compile program into a standalone executable",
-            [this](bool value) { Config::compile_only = value; });
-
-        parser.parse(argc, argv);
+            [this]() { run_gui(); });        // Compile argument
+        parser.add_value_arg("compile", "--compile", "-o", "Compile program into a standalone executable (optionally specify output name)",
+            [this](const std::string& value) { 
+                Config::compile_only = true; 
+                Config::output_name = value;
+            });        parser.parse(argc, argv);
     }
 
     // Run in compiled mode (create a standalone executable)
     void run_compiled(std::vector<uint8_t>& program) {
         // Create a standalone executable instead of running the program
-        std::string output_name = generate_executable_name(Config::program_file);
-
+        std::string output_name;
+        
+        if (Config::output_name.empty()) {
+            // Generate a name if none provided
+            output_name = generate_executable_name(Config::program_file);
+        } else {
+            // Use provided name and sanitize it
+            output_name = sanitize_filename(Config::output_name);
+            if (output_name.empty()) {
+                std::cerr << "Error: Invalid output filename: " << Config::output_name << std::endl;
+                std::cerr << "Filename cannot contain: . at start, ../, or shell metacharacters ;|&`$()[]{}*?<>" << std::endl;
+                return;
+            }
+            
+            // Create directory if it doesn't exist
+            fs::path output_path(output_name);
+            if (output_path.has_parent_path()) {
+                fs::path dir = output_path.parent_path();
+                if (!fs::exists(dir)) {
+                    if (!fs::create_directories(dir)) {
+                        std::cerr << "Error: Failed to create directory: " << dir << std::endl;
+                        return;
+                    }
+                }
+            }
+        }
         if (create_standalone_executable(Config::program_file, program, output_name)) {
-            std::cout << "Successfully compiled to executable: " << output_name << std::endl;
-            std::cout << "You can run it with: ./" << output_name << std::endl;
+            std::string shown_name = output_name;
+            if (shown_name.substr(0, 2) != "./") {
+                shown_name = "./" + shown_name;
+            }
+            std::cout << "Successfully compiled to executable: " << shown_name << std::endl;
+            
+            // Don't add ./ prefix if output_name already starts with ./
+            std::string run_command = output_name;
+            if (run_command.substr(0, 2) != "./") {
+                run_command = "./" + run_command;
+            }
+            std::cout << "You can run it with: " << run_command << std::endl;
         }
     }
 
@@ -253,14 +299,47 @@ public:
         if (!fs::exists(bin_dir)) {
             fs::create_directory(bin_dir);
         }
-
+        
         return (bin_dir / name).string();
+    }
+
+    // Sanitize filename to prevent command injection
+    std::string sanitize_filename(const std::string& filename) {
+        // First check for completely invalid patterns
+        if (filename.empty() || 
+            filename.find("../") != std::string::npos ||
+            filename.find_first_of(";|&`$()[]{}*?<>") != std::string::npos) {
+            return "";
+        }
+        
+        // Check for hidden files (starting with . but not ./ which is current directory)
+        if (filename[0] == '.' && filename.length() > 1 && filename[1] != '/') {
+            return "";
+        }
+        
+        std::string sanitized;
+        sanitized.reserve(filename.length());
+        
+        for (char c : filename) {
+            // Allow alphanumeric, dots, hyphens, underscores, and forward slashes for paths
+            if (std::isalnum(c) || c == '.' || c == '-' || c == '_' || c == '/') {
+                sanitized += c;
+            }
+            // Replace other characters with underscore
+            else {
+                sanitized += '_';
+            }
+        }
+        
+        return sanitized;
     }
 
     // Create a standalone executable with the program embedded
     bool create_standalone_executable(const std::string& program_file,
                                       const std::vector<uint8_t>& program,
                                       const std::string& output_name) {
+        // Note: output_name is already sanitized by run_compiled()
+        
         // 1. Generate program_data.hpp with the program bytes
         if (!generate_program_data_header(program)) {
             std::cerr << "Failed to generate program data header" << std::endl;
