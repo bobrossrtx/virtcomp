@@ -22,7 +22,7 @@ public:
         static DeviceManager instance;
         return instance;
     }
-    
+
     /**
      * Register a device at a specific port
      * @param port The port number to register the device at
@@ -32,18 +32,18 @@ public:
     void registerDevice(uint8_t port, std::shared_ptr<Device> device) {
         if (devices.find(port) != devices.end()) {
             throw std::runtime_error(
-                fmt::format("Error: Port {} already has a device registered ({})", 
+                fmt::format("Error: Port {} already has a device registered ({})",
                 port, devices[port]->getName())
             );
         }
-        
+
         devices[port] = device;
         Logger::instance().info() << fmt::format(
             "Device '{}' registered at port {}",
             device->getName(), port
         ) << std::endl;
     }
-    
+
     /**
      * Unregister a device from a port
      * @param port The port to unregister the device from
@@ -54,22 +54,22 @@ public:
         if (it == devices.end()) {
             return false;
         }
-        
+
         Logger::instance().info() << fmt::format(
             "Device '{}' unregistered from port {}",
             it->second->getName(), port
         ) << std::endl;
-        
+
         // If it's a real device, make sure to disconnect it
         auto realDevice = std::dynamic_pointer_cast<RealDevice>(it->second);
         if (realDevice && realDevice->isConnected()) {
             realDevice->disconnect();
         }
-        
+
         devices.erase(it);
         return true;
     }
-    
+
     /**
      * Get a device at a specific port
      * @param port The port to get the device from
@@ -82,7 +82,7 @@ public:
         }
         return it->second;
     }
-    
+
     /**
      * Read a value from a device at a specific port
      * @param port The port to read from
@@ -97,7 +97,7 @@ public:
             ) << std::endl;
             return 0;
         }
-        
+
         // For real devices, check if they're connected
         auto realDevice = std::dynamic_pointer_cast<RealDevice>(device);
         if (realDevice && !realDevice->isConnected()) {
@@ -107,16 +107,16 @@ public:
             ) << std::endl;
             return 0;
         }
-        
+
         uint8_t value = device->read();
         Logger::instance().debug() << fmt::format(
             "{:>23}│ Input from port {} ({}): {}",
             "", port, device->getName(), value
         ) << std::endl;
-        
+
         return value;
     }
-    
+
     /**
      * Write a value to a device at a specific port
      * @param port The port to write to
@@ -131,7 +131,7 @@ public:
             ) << std::endl;
             return;
         }
-        
+
         // For real devices, check if they're connected
         auto realDevice = std::dynamic_pointer_cast<RealDevice>(device);
         if (realDevice && !realDevice->isConnected()) {
@@ -141,15 +141,15 @@ public:
             ) << std::endl;
             return;
         }
-        
+
         Logger::instance().debug() << fmt::format(
             "{:>23}│ Output to port {} ({}): {}",
             "", port, device->getName(), value
         ) << std::endl;
-        
+
         device->write(value);
     }
-    
+
     /**
      * Reset all registered devices
      */
@@ -159,7 +159,7 @@ public:
             device->reset();
         }
     }
-    
+
     /**
      * Get all registered device ports
      * @return A vector of port numbers that have registered devices
@@ -180,17 +180,18 @@ public:
     }
 
     // Port read/write methods for different data sizes
+    // Note: Multi-byte operations check for port overflow to prevent buffer issues
     uint8_t readPortByte(uint8_t port);
     void writePortByte(uint8_t port, uint8_t value);
-    uint16_t readPortWord(uint8_t port);
-    void writePortWord(uint8_t port, uint16_t value);
-    uint32_t readPortDWord(uint8_t port);
-    void writePortDWord(uint8_t port, uint32_t value);
-    
-    // String I/O methods
+    uint16_t readPortWord(uint8_t port);  // Requires ports [port, port+1]
+    void writePortWord(uint8_t port, uint16_t value);  // Requires ports [port, port+1]
+    uint32_t readPortDWord(uint8_t port);  // Requires ports [port, port+3]
+    void writePortDWord(uint8_t port, uint32_t value);  // Requires ports [port, port+3]
+
+    // String I/O methods with bounds checking
     std::string readPortString(uint8_t port, uint8_t maxLength = 255);
     void writePortString(uint8_t port, const std::string& str);
-    
+
 private:
     DeviceManager() = default;
     ~DeviceManager() {
@@ -202,11 +203,11 @@ private:
             }
         }
     }
-    
+
     // Delete copy constructor and assignment operator
     DeviceManager(const DeviceManager&) = delete;
     DeviceManager& operator=(const DeviceManager&) = delete;
-    
+
     std::unordered_map<uint8_t, std::shared_ptr<Device>> devices;
 };
 
