@@ -98,7 +98,7 @@ public:
                 // Check for exact match or --arg=value / -a=value format
                 bool is_match = false;
                 std::string value;
-                
+
                 if (token == def.arg || token == def.alias) {
                     is_match = true;
                 } else {
@@ -112,7 +112,7 @@ public:
                         }
                     }
                 }
-                
+
                 if (is_match) {
                     matched = true;
                     if (def.type == ArgType::Value) {
@@ -138,7 +138,7 @@ public:
         std::cout << "virtcomp Usage: virtcomp [options]" << std::endl;
         for (const auto& def : args_) {
             // Use printf to align arguments and help text
-            printf("  %-16s %-6s  %s\n", def.arg.c_str(), def.alias.c_str(), def.help.c_str());
+            std::cout << fmt::format("  {:<16} {:<6}  {}\n", def.arg, def.alias, def.help);
         }
     }
 private:
@@ -160,17 +160,17 @@ bool run_tests() {
     auto results = runner.run_all();
     int passed = 0, failed = 0;
     // Print result header
-    printf("\033[36m┌%s┴%s┐\033[0m\n", std::string(54, '─').c_str(), std::string(83, '─').c_str());
+    std::cout << fmt::format("\033[36m┌{}┴{}┐\033[0m", std::string(54, '─'), std::string(83, '─')) << std::endl;
     // Cyan color for header
-    printf("\033[36m│%55s%s%62s│\033[0m\n", "", "VirtComp Test Results", "");
-    printf("\033[36m└%s┘\033[0m\n", std::string(138, '─').c_str());
+    std::cout << fmt::format("\033[36m│{:>55}{}{:>62}│\033[0m", "", "VirtComp Test Results", "") << std::endl;
+    std::cout << fmt::format("\033[36m└{}┘\033[0m", std::string(138, '─')) << std::endl;
     for (const auto& result : results) {
         // Print test result with neat spacing (fixed width for name)
         constexpr int name_width = 24;
         // ANSI color codes: green for pass, red for fail
         const char* color = result.passed ? "\033[32m" : "\033[31m";
         const char* reset = "\033[0m";
-        printf("%s[%s]%s %-28s", color, result.passed ? "/" : "X", reset, result.name.c_str());
+        std::cout << fmt::format("{0}[{1}]{2} {3:<28}", color, result.passed ? "/" : "X", reset, result.name);
         if ((&result - &results[0] + 1) % 4 == 0)
             std::cout << std::endl;
         else
@@ -238,8 +238,8 @@ public:
         parser.add_action_arg("gui", "--gui", "-g", "Enable debug GUI",
             [this]() { run_gui(); });        // Compile argument
         parser.add_value_arg("compile", "--compile", "-o", "Compile program into a standalone executable (optionally specify output name)",
-            [this](const std::string& value) { 
-                Config::compile_only = true; 
+            [this](const std::string& value) {
+                Config::compile_only = true;
                 Config::output_name = value;
             });        parser.parse(argc, argv);
     }
@@ -248,7 +248,7 @@ public:
     void run_compiled(std::vector<uint8_t>& program) {
         // Create a standalone executable instead of running the program
         std::string output_name;
-        
+
         if (Config::output_name.empty()) {
             // Generate a name if none provided
             output_name = generate_executable_name(Config::program_file);
@@ -260,7 +260,7 @@ public:
                 std::cerr << "Filename cannot contain: . at start, ../, or shell metacharacters ;|&`$()[]{}*?<>" << std::endl;
                 return;
             }
-            
+
             // Create directory if it doesn't exist
             fs::path output_path(output_name);
             if (output_path.has_parent_path()) {
@@ -279,7 +279,7 @@ public:
                 shown_name = "./" + shown_name;
             }
             std::cout << "Successfully compiled to executable: " << shown_name << std::endl;
-            
+
             // Don't add ./ prefix if output_name already starts with ./
             std::string run_command = output_name;
             if (run_command.substr(0, 2) != "./") {
@@ -299,27 +299,27 @@ public:
         if (!fs::exists(bin_dir)) {
             fs::create_directory(bin_dir);
         }
-        
+
         return (bin_dir / name).string();
     }
 
     // Sanitize filename to prevent command injection
     std::string sanitize_filename(const std::string& filename) {
         // First check for completely invalid patterns
-        if (filename.empty() || 
+        if (filename.empty() ||
             filename.find("../") != std::string::npos ||
             filename.find_first_of(";|&`$()[]{}*?<>") != std::string::npos) {
             return "";
         }
-        
+
         // Check for hidden files (starting with . but not ./ which is current directory)
         if (filename[0] == '.' && filename.length() > 1 && filename[1] != '/') {
             return "";
         }
-        
+
         std::string sanitized;
         sanitized.reserve(filename.length());
-        
+
         for (char c : filename) {
             // Allow alphanumeric, dots, hyphens, underscores, and forward slashes for paths
             if (std::isalnum(c) || c == '.' || c == '-' || c == '_' || c == '/') {
@@ -330,7 +330,7 @@ public:
                 sanitized += '_';
             }
         }
-        
+
         return sanitized;
     }
 
@@ -339,7 +339,7 @@ public:
                                       const std::vector<uint8_t>& program,
                                       const std::string& output_name) {
         // Note: output_name is already sanitized by run_compiled()
-        
+
         // 1. Generate program_data.hpp with the program bytes
         if (!generate_program_data_header(program)) {
             std::cerr << "Failed to generate program data header" << std::endl;
@@ -466,7 +466,7 @@ public:
             // "src/vhardware/devices/ramdisk_device.cpp",
             "extern/fmt/src/format.cc"
         };
-        
+
         // Prepare argument vector
         std::vector<std::string> args = {
             "g++", "-std=c++17", "-I./src",
