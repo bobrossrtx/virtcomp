@@ -54,6 +54,11 @@ public:
                     "", value, currentAddress
                 ) << std::endl;
                 return value;
+            } else {
+                Logger::instance().warn() << fmt::format(
+                    "RamDisk: Attempted to read from out-of-bounds address 0x{:04X} (size: {})",
+                    currentAddress, storage.size()
+                ) << std::endl;
             }
             return 0;
         } 
@@ -78,12 +83,19 @@ public:
             handleCommand();
         } else {
             // This is the data port, and the last command was CMD_WRITE
-            if (lastCommand == CMD_WRITE && currentAddress < storage.size()) {
-                storage[currentAddress] = value;
-                Logger::instance().debug() << fmt::format(
-                    "{:22} │ RamDisk: Wrote 0x{:02X} to address 0x{:04X}",
-                    "", value, currentAddress
-                ) << std::endl;
+            if (lastCommand == CMD_WRITE) {
+                if (currentAddress < storage.size()) {
+                    storage[currentAddress] = value;
+                    Logger::instance().debug() << fmt::format(
+                        "{:22} │ RamDisk: Wrote 0x{:02X} to address 0x{:04X}",
+                        "", value, currentAddress
+                    ) << std::endl;
+                } else {
+                    Logger::instance().warn() << fmt::format(
+                        "RamDisk: Attempted to write to out-of-bounds address 0x{:04X} (size: {})",
+                        currentAddress, storage.size()
+                    ) << std::endl;
+                }
             }
         }
     }
@@ -136,6 +148,14 @@ private:
         switch (lastCommand) {
             case CMD_SET_ADDR_LOW:
                 currentAddress = (currentAddress & 0xFF00) | lastData;
+                // Validate address bounds
+                if (currentAddress >= storage.size()) {
+                    Logger::instance().warn() << fmt::format(
+                        "RamDisk: Address 0x{:04X} is out of bounds (size: {}), clamping to valid range",
+                        currentAddress, storage.size()
+                    ) << std::endl;
+                    currentAddress = std::min(static_cast<uint16_t>(storage.size() - 1), currentAddress);
+                }
                 Logger::instance().debug() << fmt::format(
                     "{:14} RamDisk │ Set address low byte to 0x{:02X}, address now 0x{:04X}",
                     "", lastData, currentAddress
@@ -144,6 +164,14 @@ private:
                 
             case CMD_SET_ADDR_HIGH:
                 currentAddress = (currentAddress & 0x00FF) | (static_cast<uint16_t>(lastData) << 8);
+                // Validate address bounds
+                if (currentAddress >= storage.size()) {
+                    Logger::instance().warn() << fmt::format(
+                        "RamDisk: Address 0x{:04X} is out of bounds (size: {}), clamping to valid range",
+                        currentAddress, storage.size()
+                    ) << std::endl;
+                    currentAddress = std::min(static_cast<uint16_t>(storage.size() - 1), currentAddress);
+                }
                 Logger::instance().debug() << fmt::format(
                     "{:14} RamDisk │ Set address high byte to 0x{:02X}, address now 0x{:04X}",
                     "", lastData, currentAddress
