@@ -20,9 +20,9 @@ public:
     static Logger& instance() {
         static Logger inst;
         return inst;
-    } 
-    
-    // Set log level for next message    
+    }
+
+    // Set log level for next message
     Logger& level(LogLevel lvl) {
         current_level_ = lvl;
         buffer_.str(""); // Clear buffer
@@ -54,13 +54,13 @@ public:
         std::ostream& out = (level == LogLevel::ERROR) ? std::cerr : std::cout;
         std::string color = level_to_color(level);
         std::string reset = "\033[0m";
-        
+
         // Debug mode guard (bypass if forced)
         if (level == LogLevel::DEBUG && !Config::debug && !force_next_) {
             force_next_ = false; // Reset force flag
             return;
         }
-        
+
         // Verbose mode guard for info messages (bypass if forced)
         if (level == LogLevel::INFO && !Config::verbose && !force_next_) {
             force_next_ = false; // Reset force flag
@@ -76,15 +76,21 @@ public:
         // Get current date and time with milliseconds
         auto now = std::chrono::system_clock::now();
         auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-        std::time_t t = std::chrono::system_clock::to_time_t(now);
-        std::tm tm;
+        std::time_t t = std::chrono::system_clock::to_time_t(now);        std::tm tm;
     #if defined(_WIN32)
         localtime_s(&tm, &t);
     #else
         localtime_r(&t, &tm);
     #endif
-        char datetime[40];
-        std::strftime(datetime, sizeof(datetime), "%y-%m-%d %H:%M:%S", &tm);        std::ostringstream datetime_with_ms;
+        // Use a safer buffer size and check for potential overflow
+        constexpr size_t datetime_buffer_size = 64;
+        char datetime[datetime_buffer_size];
+        size_t result = std::strftime(datetime, datetime_buffer_size, "%y-%m-%d %H:%M:%S", &tm);
+        if (result == 0) {
+            // strftime failed, use a fallback
+            std::strcpy(datetime, "00-00-00 00:00:00");
+        }
+        std::ostringstream datetime_with_ms;
         datetime_with_ms << datetime << "." << std::setfill('0') << std::setw(3) << ms.count();
         std::string datetime_str = datetime_with_ms.str();
 
