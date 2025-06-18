@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <limits.h>
 #include <stdexcept>
+#include <algorithm>
 
 namespace fs = std::filesystem;
 namespace vhw {
@@ -33,7 +34,7 @@ public:
         if (!validateFilePath(filepath)) {
             throw std::runtime_error("Invalid or unsafe file path: " + filepath);
         }
-        
+
         // Try to open the file for reading
         loadFromFile();
     }
@@ -46,6 +47,14 @@ public:
             return 0;
         }
 
+        // Additional safety check: ensure buffer is not empty
+        if (fileBuffer.empty()) {
+            Logger::instance().warn() << fmt::format(
+                "File device buffer is empty, cannot read"
+            ) << std::endl;
+            return 0;
+        }
+
         // Validate position before incrementing to prevent overflow
         if (position == SIZE_MAX) {
             Logger::instance().warn() << fmt::format(
@@ -55,20 +64,59 @@ public:
             return 0;
         }
 
+        // Double-check bounds before accessing (defense in depth)
+        if (position >= fileBuffer.size()) {
+            Logger::instance().warn() << fmt::format(
+                "File device position {} is beyond buffer size {}, returning 0",
+                position, fileBuffer.size()
+            ) << std::endl;
+            return 0;
+        }
+
         // Return byte at current position and advance
-        return fileBuffer[position++];
+        uint8_t value = fileBuffer[position];
+        ++position;
+        return value;
     }
 
     void write(uint8_t value) override {
         std::lock_guard<std::mutex> lock(mutex);
 
+        // Check for position overflow before any operations
+        if (position == SIZE_MAX) {
+            Logger::instance().error() << fmt::format(
+                "File device position overflow at maximum value, cannot write"
+            ) << std::endl;
+            return;
+        }
+
         // If writing at the current position or beyond the end, append
         if (position >= fileBuffer.size()) {
+            // Check for reasonable buffer size limits to prevent memory exhaustion
+            constexpr size_t MAX_BUFFER_SIZE = 100 * 1024 * 1024; // 100MB limit
+            if (fileBuffer.size() >= MAX_BUFFER_SIZE) {
+                Logger::instance().error() << fmt::format(
+                    "File device buffer size limit reached ({}), cannot append",
+                    MAX_BUFFER_SIZE
+                ) << std::endl;
+                return;
+            }
+
             fileBuffer.push_back(value);
             position = fileBuffer.size();
         } else {
-            // Otherwise update existing byte
-            fileBuffer[position++] = value;
+            // Double-check bounds before accessing (defense in depth)
+            if (position >= fileBuffer.size()) {
+                Logger::instance().error() << fmt::format(
+                    "File device position {} is beyond buffer size {}, cannot write",
+                    position, fileBuffer.size()
+                ) << std::endl;
+                return;
+            }
+
+            // Update existing byte and advance position safely
+            fileBuffer[position] = value;
+            ++position;
         }
 
         // Save to file
@@ -231,16 +279,36 @@ private:
 
             fileBuffer.resize(fileSize);
             if (fileSize > 0) {
+                // Initialize buffer to zeros for security
+                std::fill(fileBuffer.begin(), fileBuffer.end(), 0);
+
+                // Attempt to read the file
                 file.read(reinterpret_cast<char*>(fileBuffer.data()), fileSize);
 
-                // Check if the read was successful
-                if (!file || file.gcount() != static_cast<std::streamsize>(fileSize)) {
+                // Check if the read was successful and validate bytes read
+                std::streamsize bytesRead = file.gcount();
+                if (!file && !file.eof()) {
+                    // Read error occurred (not just EOF)
                     Logger::instance().error() << fmt::format(
-                        "Error reading file '{}': expected {} bytes, read {} bytes",
-                        filepath, fileSize, file.gcount()
+                        "Error reading file '{}': {}", filepath, "I/O error during read"
                     ) << std::endl;
                     fileBuffer.clear();
                     return;
+                }
+
+                if (bytesRead != static_cast<std::streamsize>(fileSize)) {
+                    Logger::instance().warn() << fmt::format(
+                        "File '{}': expected {} bytes, read {} bytes (file may have changed during read)",
+                        filepath, fileSize, bytesRead
+                    ) << std::endl;
+
+                    // Resize buffer to actual bytes read to prevent access to uninitialized memory
+                    if (bytesRead > 0 && bytesRead < static_cast<std::streamsize>(fileSize)) {
+                        fileBuffer.resize(static_cast<size_t>(bytesRead));
+                    } else if (bytesRead <= 0) {
+                        fileBuffer.clear();
+                        return;
+                    }
                 }
             }
 
