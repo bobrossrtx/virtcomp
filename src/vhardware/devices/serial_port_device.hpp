@@ -68,21 +68,12 @@ public:
             return false;
         }
 
-        // Additional security check: verify file descriptor points to character device
-        struct stat st;
-        if (fstat(fd, &st) != 0) {
+        // CRITICAL: Re-validate after opening to prevent TOCTOU race conditions
+        // An attacker could have changed the file between validation and opening
+        if (!validateOpenedSerialPort(fd, portName)) {
             Logger::instance().error() << fmt::format(
-                "Failed to stat opened serial port '{}': {}",
-                portName, strerror(errno)
-            ) << std::endl;
-            ::close(fd);
-            fd = -1;
-            return false;
-        }
-
-        if (!S_ISCHR(st.st_mode)) {
-            Logger::instance().error() << fmt::format(
-                "Opened file '{}' is not a character device (possible attack)", portName
+                "Serial port validation failed after opening (possible TOCTOU attack): '{}'",
+                portName
             ) << std::endl;
             ::close(fd);
             fd = -1;
@@ -217,6 +208,73 @@ public:
     }
 
 private:
+    /**
+     * Validate opened file descriptor for security (prevents TOCTOU race conditions)
+     * This function validates the already-opened file descriptor to ensure it matches
+     * our security requirements, preventing Time-of-Check-Time-of-Use attacks.
+     */
+    bool validateOpenedSerialPort(int fd, const std::string& path) {
+        #ifndef _WIN32
+        struct stat st;
+
+        // Use fstat on the opened file descriptor (not the path)
+        // This eliminates TOCTOU race conditions
+        if (fstat(fd, &st) != 0) {
+            Logger::instance().error() << fmt::format(
+                "Failed to stat opened serial port '{}': {}",
+                path, strerror(errno)
+            ) << std::endl;
+            return false;
+        }
+
+        // Verify it's still a character device
+        if (!S_ISCHR(st.st_mode)) {
+            Logger::instance().error() << fmt::format(
+                "Opened file '{}' is not a character device (possible TOCTOU attack)",
+                path
+            ) << std::endl;
+            return false;
+        }
+
+        // Additional security checks on the opened file descriptor
+
+        // Check if the device has reasonable permissions
+        // Most serial devices should be readable/writable by owner or group
+        mode_t perms = st.st_mode & 0777;
+        if ((perms & 0600) == 0) {  // At least owner read/write
+            Logger::instance().warn() << fmt::format(
+                "Serial port '{}' has unusual permissions: {:o}", path, perms
+            ) << std::endl;
+        }
+
+        // Check if the device is a block device (which would be suspicious)
+        if (S_ISBLK(st.st_mode)) {
+            Logger::instance().error() << fmt::format(
+                "Opened file '{}' is a block device (not allowed for serial ports)", path
+            ) << std::endl;
+            return false;
+        }
+
+        // Check if it's a regular file (which would be suspicious for a serial port)
+        if (S_ISREG(st.st_mode)) {
+            Logger::instance().error() << fmt::format(
+                "Opened file '{}' is a regular file (not allowed for serial ports)", path
+            ) << std::endl;
+            return false;
+        }
+
+        // For additional security, we could check the device major/minor numbers
+        // to ensure they match expected serial device ranges, but this is system-specific
+
+        return true;
+        #else
+        // Windows validation would go here
+        (void)fd;    // Suppress unused parameter warning
+        (void)path;  // Suppress unused parameter warning
+        return true;
+        #endif
+    }
+
     /**
      * Validate serial port path for security (prevents symlink attacks, device file attacks, etc.)
      */
