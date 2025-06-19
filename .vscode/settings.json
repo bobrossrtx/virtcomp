@@ -75,7 +75,15 @@
         "expected": "cpp",
         "source_location": "cpp",
         "ranges": "cpp",
-        "typeindex": "cpp"
+        "typeindex": "cpp",
+        "shared_mutex": "cpp",
+        "__nullptr": "cpp",
+        "ios": "cpp",
+        "__hash_table": "cpp",
+        "__split_buffer": "cpp",
+        "__tree": "cpp",
+        "queue": "cpp",
+        "stack": "cpp"
     },
     "terminal.integrated.defaultProfile.windows": "kali-linux (WSL)",
     "remote.WSL.fileWatcher.polling": true,
@@ -85,6 +93,10 @@
     "C_Cpp.default.compilerPath": "/usr/bin/g++",
     "cmake.sourceDirectory": "/mnt/e/VirtComp/extern/fmt",
     "cSpell.words": [
+        "glfw",
+        "Iextern",
+        "imgui",
+        "opengl",
         "ramdisk"
     ],
     "cmake.ignoreCMakeListsMissing": true
