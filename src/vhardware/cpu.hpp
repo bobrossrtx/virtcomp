@@ -38,6 +38,8 @@ enum class Opcode : uint8_t {
     RET  = 0x1B,        // Return from subroutine
     PUSH_ARG = 0x1C,    // Push argument onto stack
     POP_ARG  = 0x1D,    // Pop argument from stack
+    PUSH_FLAG = 0x1E,   // Push flags onto stack
+    POP_FLAG  = 0x1F,   // Pop flags from stack
 
     IN = 0x30,          // Input from port/device to register
     OUT = 0x31,         // Output from register to port/device
@@ -70,11 +72,15 @@ public:
 
     // Add these getters for testing
     const std::vector<uint32_t>& get_registers() const { return registers; }
+    std::vector<uint32_t>& get_registers() { return registers; } // Non-const version for opcodes
     std::vector<uint8_t>& get_memory() { return memory; }
     uint32_t get_flags() const { return flags; }
+    void set_flags(uint32_t value) { flags = value; }
     uint32_t get_pc() const { return pc; }
     uint32_t get_sp() const { return sp; }
     uint32_t get_fp() const { return fp; }
+    int get_arg_offset() const { return arg_offset; }
+    void set_arg_offset(int value) { arg_offset = value; }
 
     void set_pc(uint32_t value) { pc = value; }
     void set_sp(uint32_t value) { sp = value; }
@@ -89,6 +95,18 @@ public:
     uint32_t get_last_accessed_addr() const { return last_accessed_addr; }
     uint32_t get_last_modified_addr() const { return last_modified_addr; }
 
+    // I/O operations for opcode handlers
+    uint8_t read_port(uint8_t port) { return readPort(port); }
+    void write_port(uint8_t port, uint8_t value) { writePort(port, value); }
+    std::string read_port_string(uint8_t port, uint8_t maxLength = 255) { return readPortString(port, maxLength); }
+    void write_port_string(uint8_t port, const std::string& str) { writePortString(port, str); }
+
+    // Additional I/O methods for word and dword operations
+    uint16_t read_port_word(uint8_t port) { return vhw::DeviceManager::instance().readPortWord(port); }
+    void write_port_word(uint8_t port, uint16_t value) { vhw::DeviceManager::instance().writePortWord(port, value); }
+    uint32_t read_port_dword(uint8_t port) { return vhw::DeviceManager::instance().readPortDWord(port); }
+    void write_port_dword(uint8_t port, uint32_t value) { vhw::DeviceManager::instance().writePortDWord(port, value); }
+
 private:
     std::vector<uint32_t> registers;
     std::vector<uint8_t> memory;
@@ -96,11 +114,11 @@ private:
     uint32_t sp; // Stack Pointer
     uint32_t fp; // Frame Pointer
     uint32_t flags; // Status Flags
-    int arg_offset; // Offset for arguments
-
-    // Add these:
+    int arg_offset; // Offset for arguments    // Add these:
     mutable uint32_t last_accessed_addr = static_cast<uint32_t>(-1);
-    uint32_t last_modified_addr = static_cast<uint32_t>(-1);    uint8_t readPort(uint8_t port);
+    uint32_t last_modified_addr = static_cast<uint32_t>(-1);
+    
+    uint8_t readPort(uint8_t port);
     void writePort(uint8_t port, uint8_t value);
     std::string readPortString(uint8_t port, uint8_t maxLength = 255);
     void writePortString(uint8_t port, const std::string& str);
