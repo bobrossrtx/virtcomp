@@ -11,6 +11,8 @@
 #include <stdexcept>
 #include <vector>
 
+using Logging::Logger;
+
 namespace vhw {
 
 /**

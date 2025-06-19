@@ -13,6 +13,8 @@
 #include <cmath>
 #include <set>
 
+using Logging::Logger;
+
 // ImGui backends
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_opengl3.h>

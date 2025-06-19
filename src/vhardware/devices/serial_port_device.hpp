@@ -24,6 +24,8 @@
 #include <libgen.h>
 #endif
 
+using Logging::Logger;
+
 namespace vhw {
 
 /**

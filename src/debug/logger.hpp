@@ -1,186 +1,287 @@
 #pragma once
-#include <iostream>
+
 #include <fstream>
+#include <iostream>
+#include <mutex>
 #include <sstream>
 #include <string>
-#include <mutex>
-#include <iomanip>
-#include <filesystem>
 #include <vector>
-#include <chrono>
 
-#include <fmt/core.h>
+namespace Logging {
 
-#include "../config.hpp"
+/**
+ * @brief Enumeration of available log levels
+ *
+ * Log levels are ordered by severity, with SUCCESS being the lowest
+ * and ERROR being the highest. Special levels like VIRTCOMP bypass
+ * normal filtering rules.
+ */
+enum class LogLevel {
+    SUCCESS,    ///< Success messages (green)
+    INFO,       ///< Informational messages (cyan) - filtered by verbose mode
+    WARNING,    ///< Warning messages (yellow)
+    ERROR,      ///< Error messages (red) - always shown
+    DEBUG,      ///< Debug messages (orange) - filtered by debug mode
+    RUNNING,    ///< Process status messages (blue)
+    VIRTCOMP,   ///< VirtComp system messages (magenta) - always shown
+    ERRORINFO   ///< Error-related info (cyan) - always shown
+};
 
-enum class LogLevel { SUCCESS, ERRORINFO, INFO, WARNING, ERROR, DEBUG, RUNNING, VIRTCOMP };
-
+/**
+ * @brief Thread-safe singleton logger with multiple output targets
+ *
+ * The Logger class provides a centralized logging system that supports:
+ * - Multiple log levels with color-coded console output
+ * - File logging with automatic timestamping
+ * - GUI buffer for in-application log display
+ * - Thread-safe operations with mutex protection
+ * - Configurable filtering based on debug and verbose modes
+ *
+ * Usage examples:
+ * @code
+ * Logger::instance().info() << "Information message" << std::endl;
+ * Logger::instance().error("context") << "Error occurred" << std::endl;
+ * Logger::instance().force().debug() << "Forced debug message" << std::endl;
+ * @endcode
+ */
 class Logger {
 public:
-    static Logger& instance() {
-        static Logger inst;
-        return inst;
-    }
+    // Constants
+    static constexpr size_t GUI_LOG_BUFFER_MAX = 500;
+    static constexpr size_t DATETIME_BUFFER_SIZE = 64;
 
-    // Set log level for next message
-    Logger& level(LogLevel lvl) {
-        current_level_ = lvl;
-        buffer_.str(""); // Clear buffer
-        return *this;
-    }
+    /**
+     * @brief Get the singleton instance of the Logger
+     * @return Reference to the Logger instance
+     */
+    static Logger& instance();
 
-    // Force next message to bypass filtering (verbose/debug checks)
-    Logger& force() {
-        force_next_ = true;
-        return *this;
-    }
+    // Delete copy constructor and assignment operator
+    Logger(const Logger&) = delete;
+    Logger& operator=(const Logger&) = delete;
 
-    // Overload << for generic types
+    // ============================================================================
+    // Core Logging Interface
+    // ============================================================================
+
+    /**
+     * @brief Set the log level for the next message
+     * @param lvl The log level to set
+     * @return Reference to this Logger for method chaining
+     */
+    Logger& level(LogLevel lvl);
+
+    /**
+     * @brief Force the next message to bypass filtering rules
+     * @return Reference to this Logger for method chaining
+     */
+    Logger& force();
+
+    /**
+     * @brief Stream operator for logging arbitrary types
+     * @tparam T Type to be logged
+     * @param val Value to be logged
+     * @return Reference to this Logger for method chaining
+     */
     template<typename T>
     Logger& operator<<(const T& val) {
         buffer_ << val;
         return *this;
     }
 
-    // Overload << for std::endl and flush
-    Logger& operator<<(std::ostream& (*manip)(std::ostream&)) {
-        if (manip == static_cast<std::ostream& (*)(std::ostream&)>(std::endl)) {
-            log(current_level_, buffer_.str());
-            buffer_.str("");
-        }
-        return *this;
-    }    void log(LogLevel level, const std::string& msg) {
-        std::lock_guard<std::recursive_mutex> lock(mutex_);
-        std::ostream& out = (level == LogLevel::ERROR) ? std::cerr : std::cout;
-        std::string color = level_to_color(level);
-        std::string reset = "\033[0m";
+    /**
+     * @brief Stream operator for handling std::endl and other manipulators
+     * @param manip Stream manipulator function
+     * @return Reference to this Logger for method chaining
+     */
+    Logger& operator<<(std::ostream& (*manip)(std::ostream&));
 
-        // Debug mode guard (bypass if forced)
-        if (level == LogLevel::DEBUG && !Config::debug && !force_next_) {
-            force_next_ = false; // Reset force flag
-            return;
-        }
+    /**
+     * @brief Core logging function that handles message output
+     * @param level The log level of the message
+     * @param message The message content to log
+     */
+    void log(LogLevel level, const std::string& message);
 
-        // Verbose mode guard for info messages (bypass if forced)
-        if (level == LogLevel::INFO && !Config::verbose && !force_next_) {
-            force_next_ = false; // Reset force flag
-            return;
-        }
+    // ============================================================================
+    // Convenience Methods
+    // ============================================================================
 
-        // VirtComp messages always print (no filtering)
-        // Note: VIRTCOMP level bypasses verbose/debug checks
+    /**
+     * @brief Set log level to SUCCESS
+     * @return Reference to this Logger for method chaining
+     */
+    Logger& success();
 
-        // Reset force flag after checking
-        force_next_ = false;
+    /**
+     * @brief Set log level to INFO
+     * @return Reference to this Logger for method chaining
+     */
+    Logger& info();
 
-        // Get current date and time with milliseconds
-        auto now = std::chrono::system_clock::now();
-        auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-        std::time_t t = std::chrono::system_clock::to_time_t(now);        std::tm tm;
-    #if defined(_WIN32)
-        localtime_s(&tm, &t);
-    #else
-        localtime_r(&t, &tm);
-    #endif
-        // Use a safer buffer size and check for potential overflow
-        constexpr size_t datetime_buffer_size = 64;
-        char datetime[datetime_buffer_size];
-        size_t result = std::strftime(datetime, datetime_buffer_size, "%y-%m-%d %H:%M:%S", &tm);
-        if (result == 0) {
-            // strftime failed, use a fallback
-            std::strcpy(datetime, "00-00-00 00:00:00");
-        }
-        std::ostringstream datetime_with_ms;
-        datetime_with_ms << datetime << "." << std::setfill('0') << std::setw(3) << ms.count();
-        std::string datetime_str = datetime_with_ms.str();
+    /**
+     * @brief Set log level to WARNING
+     * @return Reference to this Logger for method chaining
+     */
+    Logger& warn();
 
-        std::string log_line;
-        if (level == LogLevel::WARNING) {
-            log_line = fmt::format("[{}] [{}] {:>20} │ {}", datetime_str, level_to_string(level), "", msg);
-        } else {
-            log_line = "[" + datetime_str + "] [" + level_to_string(level) + "] " + msg;
-        }
+    /**
+     * @brief Set log level to ERROR and increment error count
+     * @param extra_info Optional additional context information
+     * @return Reference to this Logger for method chaining
+     */
+    Logger& error(const std::string& extra_info = "");
 
-        out << color << log_line << reset << std::endl;
+    /**
+     * @brief Set log level to DEBUG
+     * @return Reference to this Logger for method chaining
+     */
+    Logger& debug();
 
-        // Write to file if enabled
-        if (file_.is_open()) {
-            file_ << log_line << std::endl;
-            file_.flush();
-        }
+    /**
+     * @brief Set log level to RUNNING
+     * @return Reference to this Logger for method chaining
+     */
+    Logger& running();
 
-        // Add to GUI buffer
-        {
-            std::lock_guard<std::recursive_mutex> lock(gui_log_mutex_);
-            gui_log_buffer_.push_back(log_line);
-            if (gui_log_buffer_.size() > gui_log_buffer_max_)
-                gui_log_buffer_.erase(gui_log_buffer_.begin());
-        }
-    }
+    /**
+     * @brief Set log level to VIRTCOMP
+     * @return Reference to this Logger for method chaining
+     */
+    Logger& virtcomp();
 
-    // Convenience methods
-    Logger& success()   { return level(LogLevel::SUCCESS);  }
-    Logger& info()      { return level(LogLevel::INFO);     }
-    Logger& warn()      { return level(LogLevel::WARNING);  }
-    Logger& debug()     { return level(LogLevel::DEBUG);    }
-    Logger& running()   { return level(LogLevel::RUNNING);  }
-    Logger& virtcomp()  { return level(LogLevel::VIRTCOMP); }
-    Logger& error(const std::string& extra_info = ""){
-        Config::error_count++;
+    // ============================================================================
+    // GUI Buffer Management
+    // ============================================================================
 
-        if (!extra_info.empty()) {
-            buffer_ << " (" << extra_info << ")";
-        }
-        return level(LogLevel::ERROR);
-    }
+    /**
+     * @brief Get a copy of the current GUI log buffer
+     * @return Vector containing all buffered log messages
+     */
+    std::vector<std::string> get_gui_log_buffer() const;
 
-    std::vector<std::string> get_gui_log_buffer() {
-        std::lock_guard<std::recursive_mutex> lock(gui_log_mutex_);
-        return gui_log_buffer_;
-    }
+    /**
+     * @brief Clear all messages from the GUI log buffer
+     */
+    void clear_gui_log_buffer();
 
-    void clear_gui_log_buffer() {
-        std::lock_guard<std::recursive_mutex> lock(gui_log_mutex_);
-        gui_log_buffer_.clear();
-    }
+    /**
+     * @brief Get the current size of the GUI log buffer
+     * @return Number of messages in the buffer
+     */
+    size_t get_gui_buffer_size() const;
+
+    // ============================================================================
+    // File Logging Control
+    // ============================================================================
+
+    /**
+     * @brief Enable or disable file logging
+     * @param enabled Whether file logging should be enabled
+     */
+    void set_file_logging_enabled(bool enabled);
+
+    /**
+     * @brief Check if file logging is currently enabled
+     * @return True if file logging is enabled, false otherwise
+     */
+    bool is_file_logging_enabled() const;
+
+    /**
+     * @brief Set a custom log file path
+     * @param file_path Path to the log file
+     * @return True if file was successfully opened, false otherwise
+     */
+    bool set_log_file(const std::string& file_path);
 
 private:
-    Logger() {
-        // Open debug_file from config.hpp, clear contents if exists
-        if (!Config::debug_file.empty()) {
-            file_.open(Config::debug_file, std::ios::out | std::ios::trunc);
-        }
-    }
-    std::ostringstream buffer_;
-    LogLevel current_level_ = LogLevel::INFO;
-    bool force_next_ = false; // Flag to bypass filtering for next message
-    std::ofstream file_;
-    std::recursive_mutex mutex_;
+    /**
+     * @brief Private constructor for singleton pattern
+     */
+    Logger();
 
-    std::vector<std::string> gui_log_buffer_;
-    static constexpr size_t gui_log_buffer_max_ = 500;
-    std::recursive_mutex gui_log_mutex_;    std::string level_to_string(LogLevel level) {
-        switch (level) {
-            case LogLevel::SUCCESS:     return "SUCCESS";
-            case LogLevel::INFO:        return "INFO";
-            case LogLevel::WARNING:     return "WARNING";
-            case LogLevel::ERROR:       return "ERROR";
-            case LogLevel::DEBUG:       return "DEBUG";
-            case LogLevel::RUNNING:     return "RUNNING";
-            case LogLevel::VIRTCOMP:    return "VIRTCOMP";
-            default:                    return "LOG";
-        }
-    }    std::string level_to_color(LogLevel level) {
-        switch (level) {
-            case LogLevel::SUCCESS:     return "\033[1;32m";     // Bright Green
-            case LogLevel::INFO:        return "\033[1;36m";     // Bright Cyan
-            case LogLevel::WARNING:     return "\033[1;33m";     // Bright Yellow
-            case LogLevel::ERROR:       return "\033[1;31m";     // Bright Red
-            case LogLevel::ERRORINFO:   return "\033[1;36m";     // Bright Cyan
-            case LogLevel::DEBUG:       return "\033[38;5;208m"; // Orange (ANSI 256-color)
-            case LogLevel::RUNNING:     return "\033[1;34m";     // Bright Blue
-            case LogLevel::VIRTCOMP:    return "\033[1;35m";     // Bright Magenta (readable purple)
-            default:                    return "\033[0m";
-        }
-    }
+    /**
+     * @brief Destructor ensures proper cleanup
+     */
+    ~Logger();
+
+    // ============================================================================
+    // Helper Methods
+    // ============================================================================
+
+    /**
+     * @brief Convert log level to string representation
+     * @param level The log level to convert
+     * @return String representation of the log level
+     */
+    std::string level_to_string(LogLevel level) const;
+
+    /**
+     * @brief Convert log level to ANSI color code
+     * @param level The log level to convert
+     * @return ANSI color code string
+     */
+    std::string level_to_color(LogLevel level) const;
+
+    /**
+     * @brief Generate formatted timestamp string with milliseconds
+     * @return Formatted timestamp string
+     */
+    std::string generate_timestamp() const;
+
+    /**
+     * @brief Format log message with appropriate styling
+     * @param level The log level
+     * @param message The message content
+     * @param timestamp The timestamp string
+     * @return Formatted log line
+     */
+    std::string format_log_line(LogLevel level, const std::string& message,
+                                const std::string& timestamp) const;
+
+    /**
+     * @brief Check if a message should be filtered based on current settings
+     * @param level The log level to check
+     * @return True if message should be filtered (not shown), false otherwise
+     */
+    bool should_filter_message(LogLevel level) const;
+
+    /**
+     * @brief Write message to console with appropriate coloring
+     * @param level The log level
+     * @param formatted_message The formatted message to output
+     */
+    void write_to_console(LogLevel level, const std::string& formatted_message) const;
+
+    /**
+     * @brief Write message to log file if enabled
+     * @param formatted_message The formatted message to write
+     */
+    void write_to_file(const std::string& formatted_message);
+
+    /**
+     * @brief Add message to GUI buffer with size management
+     * @param formatted_message The formatted message to add
+     */
+    void add_to_gui_buffer(const std::string& formatted_message);
+
+    // ============================================================================
+    // Member Variables
+    // ============================================================================
+
+    std::ostringstream buffer_;              ///< Buffer for building log messages
+    LogLevel current_level_;                 ///< Current log level for next message
+    bool force_next_;                        ///< Flag to bypass filtering for next message
+
+    std::ofstream log_file_;                 ///< Output file stream for file logging
+    bool file_logging_enabled_;              ///< Whether file logging is enabled
+    mutable std::recursive_mutex console_mutex_; ///< Mutex for console output synchronization
+
+    std::vector<std::string> gui_log_buffer_; ///< Buffer for GUI log display
+    mutable std::recursive_mutex gui_mutex_;  ///< Mutex for GUI buffer synchronization
+
+    // ANSI color codes
+    static constexpr const char* RESET_COLOR = "\033[0m";
 };
+
+} // namespace Logging

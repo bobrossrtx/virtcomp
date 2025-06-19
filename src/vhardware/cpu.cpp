@@ -8,8 +8,6 @@
 
 #include "cpu.hpp"
 #include "cpu_flags.hpp"
-#include "../config.hpp"
-#include "../debug/logger.hpp"
 #include "opcodes/opcode_dispatcher.hpp"
 
 // Constants for CPU configuration

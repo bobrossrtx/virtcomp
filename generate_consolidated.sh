@@ -1,54 +1,51 @@
+#!/bin/bash
+
+# Generate consolidated opcodes file
+OUTFILE="src/vhardware/opcodes/opcodes_consolidated.cpp"
+
+cat > "$OUTFILE" << 'HEADER'
+// Consolidated opcode implementations for standalone builds
+// This file includes all opcode implementations in a single compilation unit
+// to reduce compilation time for standalone executables
+
 #include "opcode_dispatcher.hpp"
 #include "../cpu.hpp"
+#include "../cpu_flags.hpp"
 #include "../../debug/logger.hpp"
 #include <fmt/core.h>
 #include <iomanip>
 
-// Include all opcode handlers
-#include "nop.hpp"
-#include "load_imm.hpp"
-#include "add.hpp"
-#include "sub.hpp"
-#include "mul.hpp"
-#include "div.hpp"
-#include "inc.hpp"
-#include "dec.hpp"
-#include "mov.hpp"
-#include "jmp.hpp"
-#include "jz.hpp"
-#include "jnz.hpp"
-#include "js.hpp"
-#include "jns.hpp"
-#include "load.hpp"
-#include "store.hpp"
-#include "push.hpp"
-#include "pop.hpp"
-#include "cmp.hpp"
-#include "push_flag.hpp"
-#include "pop_flag.hpp"
-#include "and.hpp"
-#include "or.hpp"
-#include "xor.hpp"
-#include "not.hpp"
-#include "shl.hpp"
-#include "shr.hpp"
-#include "call.hpp"
-#include "ret.hpp"
-#include "push_arg.hpp"
-#include "pop_arg.hpp"
-#include "in.hpp"
-#include "out.hpp"
-#include "inb.hpp"
-#include "outb.hpp"
-#include "inw.hpp"
-#include "outw.hpp"
-#include "inl.hpp"
-#include "outl.hpp"
-#include "instr.hpp"
-#include "outstr.hpp"
-#include "db.hpp"
-#include "halt.hpp"
+using Logging::Logger;
 
+// Include all opcode header files
+HEADER
+
+# Add all header includes
+for file in src/vhardware/opcodes/*.hpp; do
+    if [[ "$file" != *"opcode_dispatcher.hpp"* ]]; then
+        echo "#include \"$(basename "$file")\"" >> "$OUTFILE"
+    fi
+done
+
+cat >> "$OUTFILE" << 'MIDDLE'
+
+// Consolidated implementations of all opcodes
+MIDDLE
+
+# Add all implementations by copying from the .cpp files
+for file in src/vhardware/opcodes/*.cpp; do
+    if [[ "$file" != *"opcode_dispatcher.cpp"* ]] && [[ "$file" != *"opcodes_consolidated.cpp"* ]]; then
+        echo "" >> "$OUTFILE"
+        echo "// Implementation from $(basename "$file")" >> "$OUTFILE"
+        # Extract just the function implementation, skip includes and using declarations
+        sed -n '/^void handle_/,/^}$/p' "$file" >> "$OUTFILE"
+    fi
+done
+
+# Add the dispatcher function
+cat >> "$OUTFILE" << 'FOOTER'
+
+// Dispatcher function (copied from opcode_dispatcher.cpp)
 void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() >= program.size()) {
         running = false;
@@ -124,8 +121,6 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
         case Opcode::HALT:
             handle_halt(cpu, program, running);
             break;
-        
-        // Bitwise operations
         case Opcode::AND:
             handle_and(cpu, program, running);
             break;
@@ -144,8 +139,6 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
         case Opcode::SHR:
             handle_shr(cpu, program, running);
             break;
-        
-        // Function call operations
         case Opcode::CALL:
             handle_call(cpu, program, running);
             break;
@@ -158,8 +151,6 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
         case Opcode::POP_ARG:
             handle_pop_arg(cpu, program, running);
             break;
-        
-        // I/O operations
         case Opcode::IN:
             handle_in(cpu, program, running);
             break;
@@ -190,23 +181,19 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
         case Opcode::OUTSTR:
             handle_outstr(cpu, program, running);
             break;
-        
-        // Data definition
         case Opcode::DB:
             handle_db(cpu, program, running);
             break;
-
-        // TODO: Add remaining opcodes as we create their handlers
-        default: {
-            // Handle unknown opcode
+        default:
             Logger::instance().error()
                 << std::right << std::setw(23) << std::setfill(' ') << "Invalid opcode " << "│ "
-                << "opcode: 0x"
+                << "Unknown opcode 0x"
                 << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode)
-                << " │ is not defined" << std::dec << std::endl;
+                << " at PC=" << std::dec << cpu.get_pc() << std::endl;
             running = false;
-            cpu.print_state("UNKNOWN");
             break;
-        }
     }
 }
+FOOTER
+
+echo "Generated consolidated opcodes file: $OUTFILE"
