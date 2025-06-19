@@ -1,0 +1,26 @@
+# pushf_popf.hex
+# Test PUSH_FLAG and POP_FLAG instructions (correct opcodes)
+# This program will:
+# 1. Set a flag (simulate CMP)
+# 2. PUSH_FLAG (push flags to stack)
+# 3. Clear flags
+# 4. POP_FLAG (restore flags from stack)
+# 5. HALT
+
+# Opcodes (from cpu.hpp):
+# CMP = 0x0A, PUSH_FLAG = 0x1E, POP_FLAG = 0x1F, HALT = 0xFF
+
+# 00: LOAD_IMM R0, 1
+01 00 01
+# 03: LOAD_IMM R1, 1
+01 01 01
+# 06: CMP R0, R1 (sets zero flag)
+0A 00 01
+# 09: PUSH_FLAG
+1E
+# 0A: LOAD_IMM R0, 2 (change reg to clear zero flag)
+01 00 02
+# 0D: POP_FLAG (should restore zero flag)
+1F
+# 0E: HALT
+FF
