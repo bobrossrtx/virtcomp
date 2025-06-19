@@ -21,7 +21,7 @@
 - **INL / OUTL**: Input/output long.
 - **INSTR / OUTSTR**: Input/output string.
 
-#### Flags & Status Operations
+#### Flags & Status Operations (Implemented, Not fully Tested)
 
 - **PUSHF**: Pushes flags register onto stack.
 - **POPF**: Pops flags register from stack.
