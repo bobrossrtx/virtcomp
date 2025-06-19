@@ -16,6 +16,8 @@
 #include <stdexcept>
 #include <algorithm>
 
+using Logging::Logger;
+
 namespace fs = std::filesystem;
 namespace vhw {
 
