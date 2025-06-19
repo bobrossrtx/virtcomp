@@ -189,7 +189,7 @@ void Gui::run_vm(const std::vector<uint8_t>& program) {
     cpu.set_sp(cpu.get_memory().size() - 4);
     cpu.set_fp(cpu.get_sp());
     cpu_initialized = true;
-    static int mem_offset = 0; // <-- Move this here, before any use!
+    [[maybe_unused]] static int mem_offset = 0; // <-- Move this here, before any use!
     mem_offset = 0; // Show start of memory
     // State for GUI control
     bool paused = false;

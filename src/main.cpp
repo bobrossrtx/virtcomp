@@ -169,7 +169,7 @@ bool run_tests() {
     std::cout << result_color << "└──────────────────────────────────────────────────────┘\033[0m" << std::endl;
     for (const auto& result : results) {
         // Print test result with neat spacing (fixed width for name)
-        constexpr int name_width = 24;
+        [[maybe_unused]] constexpr int name_width = 24;
         // ANSI color codes: green for pass, red for fail
         const char* color = result.passed ? "\033[32m" : "\033[31m";
         const char* reset = "\033[0m";
@@ -276,7 +276,7 @@ public:
                 }
             }
         }
-        if (create_standalone_executable(Config::program_file, program, output_name)) {
+        if (create_standalone_executable(program, output_name)) {
             std::string shown_name = output_name;
             if (shown_name.substr(0, 2) != "./") {
                 shown_name = "./" + shown_name;
@@ -338,8 +338,7 @@ public:
     }
 
     // Create a standalone executable with the program embedded
-    bool create_standalone_executable(const std::string& program_file,
-                                      const std::vector<uint8_t>& program,
+    bool create_standalone_executable(const std::vector<uint8_t>& program,
                                       const std::string& output_name) {
         // Note: output_name is already sanitized by run_compiled()
 
