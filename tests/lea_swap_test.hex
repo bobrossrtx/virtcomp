@@ -1,0 +1,20 @@
+# Test program for LEA (Load Effective Address) and SWAP opcodes
+# This program demonstrates the new memory management instructions
+
+# Test LEA - Load Effective Address
+01 00 42    # LOAD_IMM R0, 0x42   (load value 66 into R0)
+20 01 50    # LEA R1, 0x50        (load address 0x50 into R1)
+07 00 50    # STORE R0, 0x50      (store R0 value at address 0x50)
+
+# Test SWAP - Swap register with memory
+01 02 AA    # LOAD_IMM R2, 0xAA   (load value 170 into R2)
+21 02 50    # SWAP R2, 0x50       (swap R2 with memory[0x50])
+
+# At this point:
+# - R2 should contain 0x42 (original value from memory[0x50])
+# - memory[0x50] should contain 0xAA (original value from R2)
+
+# Test LEA with different address
+20 03 60    # LEA R3, 0x60        (load address 0x60 into R3)
+
+FF          # HALT
