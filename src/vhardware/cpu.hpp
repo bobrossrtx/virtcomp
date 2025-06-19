@@ -47,6 +47,9 @@ enum class Opcode : uint8_t {
     PUSH_FLAG = 0x1E,   // Push flags onto stack
     POP_FLAG  = 0x1F,   // Pop flags from stack
 
+    LEA = 0x20,         // Load Effective Address - load address into register
+    SWAP = 0x21,        // Swap - swap values between register and memory
+
     IN = 0x30,          // Input from port/device to register
     OUT = 0x31,         // Output from register to port/device
     INB = 0x32,         // Input byte from port/device to register

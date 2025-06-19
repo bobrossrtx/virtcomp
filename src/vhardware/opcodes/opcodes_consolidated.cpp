@@ -31,6 +31,7 @@ using Logging::Logger;
 #include "jnz.hpp"
 #include "js.hpp"
 #include "jz.hpp"
+#include "lea.hpp"
 #include "load.hpp"
 #include "load_imm.hpp"
 #include "mov.hpp"
@@ -55,12 +56,13 @@ using Logging::Logger;
 #include "shr.hpp"
 #include "store.hpp"
 #include "sub.hpp"
+#include "swap.hpp"
 #include "xor.hpp"
 
 // Consolidated implementations of all opcodes
 
 // Implementation from add.cpp
-void handle_add(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+void handle_add(CPU& cpu, const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
     if (cpu.get_pc() + 2 < program.size()) {
         uint8_t reg1 = program[cpu.get_pc() + 1];
         uint8_t reg2 = program[cpu.get_pc() + 2];
@@ -94,7 +96,7 @@ void handle_and(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 }
 
 // Implementation from call.cpp
-void handle_call(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+void handle_call(CPU& cpu,[[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
     uint32_t pc = cpu.get_pc();
 
     // Reset offset at each call
@@ -223,7 +225,7 @@ void handle_div(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 }
 
 // Implementation from halt.cpp
-void handle_halt(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+void handle_halt(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
     Logger::instance().debug() << fmt::format(
         "[PC=0x{:04X}]{:>5}[HALT] │ PC={}",
         cpu.get_pc(), "", cpu.get_pc()
@@ -328,7 +330,7 @@ void handle_inl(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         if (reg < cpu.get_registers().size()) {
             uint32_t value = cpu.read_port_dword(port);
             // Store bytes in reg, reg+1, reg+2, reg+3 if available
-            for (int i = 0; i < 4 && (reg + i) < cpu.get_registers().size(); ++i) {
+            for (size_t i = 0; i < 4 && (reg + i) < cpu.get_registers().size(); ++i) {
                 cpu.get_registers()[reg + i] = static_cast<uint8_t>((value >> (8 * i)) & 0xFF);
             }
         }
@@ -392,14 +394,14 @@ void handle_inw(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
             uint16_t value = cpu.read_port_word(port);
             // Store lower 8 bits in reg, upper 8 bits in next reg (if exists)
             cpu.get_registers()[reg] = static_cast<uint8_t>(value & 0xFF);
-            if (reg + 1 < cpu.get_registers().size()) {
+            if (static_cast<size_t>(reg + 1) < cpu.get_registers().size()) {
                 cpu.get_registers()[reg + 1] = static_cast<uint8_t>((value >> 8) & 0xFF);
             }
 
             Logger::instance().debug() << fmt::format(
                 "[PC=0x{:04X}]{:>6}[INW] │ R{} = {}, R{} = {}",
                 pc, "", reg, cpu.get_registers()[reg], reg + 1,
-                (reg + 1 < cpu.get_registers().size() ? cpu.get_registers()[reg + 1] : 0)
+                (static_cast<size_t>(reg + 1) < cpu.get_registers().size() ? cpu.get_registers()[reg + 1] : 0)
             ) << std::endl;
         }
 
@@ -534,16 +536,33 @@ void handle_load_imm(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
     if (cpu.get_pc() + 2 < program.size()) {
         uint8_t reg = program[cpu.get_pc() + 1];
         uint8_t imm = program[cpu.get_pc() + 2];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>1}[LOAD_IMM]│ PC={} reg={} imm={}", cpu.get_pc(), "", cpu.get_pc(), reg, imm) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>1}[LOAD_IMM] │ PC=0x{:02X} reg={} imm={}", cpu.get_pc(), "", cpu.get_pc(), reg, imm) << std::endl;
         if (reg < cpu.get_registers().size()) {
             cpu.get_registers()[reg] = imm;
-            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>1}[LOAD_IMM]│ Set R{} = {}", cpu.get_pc(), "", reg, imm) << std::endl;
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>1}[LOAD_IMM] │ Set R{} = {}", cpu.get_pc(), "", reg, imm) << std::endl;
         }
         cpu.set_pc(cpu.get_pc() + 3);
     } else {
         running = false;
     }
     cpu.print_state("LOAD_IMM");
+}
+
+// Implementation for LEA (Load Effective Address)
+void handle_lea(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    if (cpu.get_pc() + 2 < program.size()) {
+        uint8_t reg = program[cpu.get_pc() + 1];
+        uint8_t addr = program[cpu.get_pc() + 2];
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[LEA] │ PC={} Loading address {} into R{}", cpu.get_pc(), "", cpu.get_pc(), addr, reg) << std::endl;
+        if (reg < cpu.get_registers().size()) {
+            cpu.get_registers()[reg] = addr;  // Load the address itself, not the value at the address
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[LEA] │ R{} = 0x{:02X} (address)", cpu.get_pc(), "", reg, addr) << std::endl;
+        }
+        cpu.set_pc(cpu.get_pc() + 3);
+    } else {
+        running = false;
+    }
+    cpu.print_state("LEA");
 }
 
 // Implementation from mov.cpp
@@ -580,7 +599,7 @@ void handle_mul(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 }
 
 // Implementation from nop.cpp
-void handle_nop(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+void handle_nop(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
     Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[NOP] │ PC={}", cpu.get_pc(), "", cpu.get_pc()) << std::endl;
     cpu.set_pc(cpu.get_pc() + 1);
     cpu.print_state("NOP");
@@ -690,7 +709,7 @@ void handle_outl(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 
         if (reg < cpu.get_registers().size()) {
             uint32_t value = 0;
-            for (int i = 0; i < 4 && (reg + i) < cpu.get_registers().size(); ++i) {
+            for (size_t i = 0; i < 4 && (reg + i) < cpu.get_registers().size(); ++i) {
                 value |= (static_cast<uint32_t>(cpu.get_registers()[reg + i]) << (8 * i));
             }
             cpu.write_port_dword(port, value);
@@ -756,7 +775,7 @@ void handle_outw(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 
         if (reg < cpu.get_registers().size()) {
             uint16_t value = cpu.get_registers()[reg];
-            if (reg + 1 < cpu.get_registers().size()) {
+            if (static_cast<size_t>(reg + 1) < cpu.get_registers().size()) {
                 value |= (static_cast<uint16_t>(cpu.get_registers()[reg + 1]) << 8);
             }
             cpu.write_port_word(port, value);
@@ -771,7 +790,7 @@ void handle_outw(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 }
 
 // Implementation from pop_arg.cpp
-void handle_pop_arg(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+void handle_pop_arg(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
     uint32_t pc = cpu.get_pc();
     uint8_t reg = cpu.fetch_operand();
 
@@ -803,7 +822,7 @@ void handle_pop(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 }
 
 // Implementation from pop_flag.cpp
-void handle_pop_flag(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+void handle_pop_flag(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
     Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[POPF] │ PC={} Popping FLAGS={:08X}", cpu.get_pc(), "", cpu.get_pc(), cpu.get_flags()) << std::endl;
     cpu.set_flags(cpu.read_mem32(cpu.get_sp()));
     cpu.set_sp(cpu.get_sp() + 4);
@@ -812,7 +831,7 @@ void handle_pop_flag(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
 }
 
 // Implementation from push_arg.cpp
-void handle_push_arg(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+void handle_push_arg(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
     uint32_t pc = cpu.get_pc();
     uint8_t reg = cpu.fetch_operand();
 
@@ -844,7 +863,7 @@ void handle_push(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 }
 
 // Implementation from push_flag.cpp
-void handle_push_flag(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+void handle_push_flag(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
     Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>4}[PUSHF] │ PC={} Pushing FLAGS={:08X}", cpu.get_pc(), "", cpu.get_pc(), cpu.get_flags()) << std::endl;
     cpu.set_sp(cpu.get_sp() - 4);
     cpu.write_mem32(cpu.get_sp(), cpu.get_flags());
@@ -853,7 +872,7 @@ void handle_push_flag(CPU& cpu, const std::vector<uint8_t>& program, bool& runni
 }
 
 // Implementation from ret.cpp
-void handle_ret(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+void handle_ret(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
     uint32_t pc = cpu.get_pc();
     uint32_t sp = cpu.get_sp();
 
@@ -958,6 +977,26 @@ void handle_sub(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     cpu.print_state("SUB");
 }
 
+// Implementation for SWAP
+void handle_swap(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    if (cpu.get_pc() + 2 < program.size()) {
+        uint8_t reg = program[cpu.get_pc() + 1];
+        uint8_t addr = program[cpu.get_pc() + 2];
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[SWAP] │ PC={} Swapping R{} with memory[{}]", cpu.get_pc(), "", cpu.get_pc(), reg, addr) << std::endl;
+
+        if (reg < cpu.get_registers().size() && addr < cpu.get_memory().size()) {
+            uint32_t temp = cpu.get_registers()[reg];
+            cpu.get_registers()[reg] = cpu.get_memory()[addr];
+            cpu.get_memory()[addr] = temp;
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[SWAP] │ R{} = {}, memory[{}] = {}", cpu.get_pc(), "", reg, cpu.get_registers()[reg], addr, cpu.get_memory()[addr]) << std::endl;
+        }
+        cpu.set_pc(cpu.get_pc() + 3);
+    } else {
+        running = false;
+    }
+    cpu.print_state("SWAP");
+}
+
 // Implementation from xor.cpp
 void handle_xor(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     uint32_t pc = cpu.get_pc();
@@ -1033,8 +1072,14 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
         case Opcode::LOAD:
             handle_load(cpu, program, running);
             break;
+        case Opcode::LEA:
+            handle_lea(cpu, program, running);
+            break;
         case Opcode::STORE:
             handle_store(cpu, program, running);
+            break;
+        case Opcode::SWAP:
+            handle_swap(cpu, program, running);
             break;
         case Opcode::PUSH:
             handle_push(cpu, program, running);
