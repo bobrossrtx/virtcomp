@@ -3,7 +3,13 @@
 #include <cstdint>
 #include <string>
 
+
+#include "../config.hpp"
+#include "../debug/logger.hpp"
+
 #include "device_manager.hpp"
+
+using Logging::Logger;
 
 enum class Opcode : uint8_t {
     NOP = 0x00,         // No operation
@@ -117,7 +123,7 @@ private:
     int arg_offset; // Offset for arguments    // Add these:
     mutable uint32_t last_accessed_addr = static_cast<uint32_t>(-1);
     uint32_t last_modified_addr = static_cast<uint32_t>(-1);
-    
+
     uint8_t readPort(uint8_t port);
     void writePort(uint8_t port, uint8_t value);
     std::string readPortString(uint8_t port, uint8_t maxLength = 255);

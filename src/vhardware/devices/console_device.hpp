@@ -8,7 +8,8 @@
 #include <cstdint>
 #include <string>
 #include <deque>
-#include <mutex>
+
+using Logging::Logger;
 
 namespace vhw {
 
@@ -23,39 +24,39 @@ public:
 
     ConsoleDevice() = default;
     ~ConsoleDevice() override = default;
-    
+
     uint8_t read() override {
         std::lock_guard<std::mutex> lock(bufferMutex);
         if (inputBuffer.empty()) {
             return 0;
         }
-        
+
         uint8_t value = inputBuffer.front();
         inputBuffer.pop_front();
         return value;
     }
-    
+
     void write(uint8_t value) override {
         // Output the character to stdout
         std::cout << static_cast<char>(value) << std::flush;
-        
+
         // Also log it
         Logger::instance().debug() << fmt::format(
             "Console output: {} ('{}')",
-            value, 
+            value,
             value >= 32 && value < 127 ? fmt::format("{}", static_cast<char>(value)) : "."
         ) << std::endl;
     }
-    
+
     std::string getName() const override {
         return "Virtual Console";
     }
-    
+
     void reset() override {
         std::lock_guard<std::mutex> lock(bufferMutex);
         inputBuffer.clear();
     }
-    
+
     /**
      * Add a character to the input buffer
      * This would be called by the system when a key is pressed
@@ -64,7 +65,7 @@ public:
         std::lock_guard<std::mutex> lock(bufferMutex);
         inputBuffer.push_back(value);
     }
-    
+
     /**
      * Add a string to the input buffer
      * This is a convenience method for testing
@@ -75,7 +76,7 @@ public:
             inputBuffer.push_back(static_cast<uint8_t>(c));
         }
     }
-    
+
 private:
     std::deque<uint8_t> inputBuffer;
     std::mutex bufferMutex;

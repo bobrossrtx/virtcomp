@@ -33,6 +33,9 @@ namespace fs = std::experimental::filesystem;
 #include <sys/wait.h>
 #include <unistd.h>
 
+
+using Logging::Logger;
+
 class ArgParser;
 
 void initialize_devices() {
@@ -344,12 +347,16 @@ public:
         if (!generate_program_data_header(program)) {
             std::cerr << "Failed to generate program data header" << std::endl;
             return false;
+        } else {
+            std::cout << "Generated program data header with " << program.size() << " bytes" << std::endl;
         }
 
         // 2. Compile the standalone main
         if (!compile_standalone_main(output_name)) {
             std::cerr << "Failed to compile standalone executable" << std::endl;
             return false;
+        } else {
+            std::cout << "Compiled standalone main to: " << output_name << std::endl;
         }
 
         return true;
@@ -451,14 +458,15 @@ public:
         fs::path bin_dir("bin");
         if (!fs::exists(bin_dir)) {
             fs::create_directory(bin_dir);
-        }
-
-        // Propietary files
+        }        // Propietary files
         // Note: fmt library is included in extern/fmt
         // Note: imgui not included
         std::vector<std::string> extra_files = {
+            "src/debug/logger.cpp",
             "src/vhardware/cpu.cpp",
             "src/vhardware/device_manager.cpp",
+            // Use consolidated opcodes file for faster compilation
+            "src/vhardware/opcodes/opcodes_consolidated.cpp",
             // "src/vhardware/device_factory.cpp",
             // "src/vhardware/devices/console_device.cpp",
             // "src/vhardware/devices/counter_device.cpp",
@@ -501,9 +509,9 @@ public:
         if (waitpid(pid, &status, 0) == -1) {
             std::cerr << "Failed during waitpid" << std::endl;
             return false;
+        } else {
         }
         if (!WIFEXITED(status) || WEXITSTATUS(status) != 0) {
-            std::cerr << "Failed to compile standalone executable" << std::endl;
             return false;
         }
 
