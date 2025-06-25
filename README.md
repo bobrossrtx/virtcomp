@@ -32,10 +32,13 @@ cd virtcomp
 make build
 
 # Run a program
-./bin/virtcomp tests/helloworld.hex
+./bin/virtcomp -p tests/helloworld.hex
+
+# Compile a program
+./bin/virtcomp -p tests/helloworld -o
 
 # Enable debug GUI
-./bin/virtcomp tests/helloworld.hex --gui
+./bin/virtcomp -p tests/helloworld.hex --gui
 ```
 
 ---
