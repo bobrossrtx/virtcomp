@@ -1,7 +1,7 @@
 # VirtComp Development Roadmap
 
 > **Last Updated:** July 9, 2025
-> **Project Status:** Active Development - CPU Core & Testing Framework
+> **Project Status:** Active Development - LEA & SWAP Opcodes Completed, Bug Fixes Needed
 
 ---
 
@@ -64,9 +64,9 @@ VirtComp is a virtual computer system with a custom CPU architecture, supporting
 - 🔜 **Comparison Jumps**: JG/JL/JGE/JLE for signed/unsigned comparisons
 - 🔜 **Flag Extensions**: Additional CPU flags for complex conditions
 
-#### Memory Management Extensions *(Planned)*
-- 🔜 **LEA**: Load Effective Address for pointer arithmetic
-- 🔜 **SWAP**: Register-memory value swapping
+#### Memory Management Extensions *(Completed)*
+- ✅ **LEA**: Load Effective Address for pointer arithmetic
+- ✅ **SWAP**: Register-memory value swapping
 - 🔜 **Memory Protection**: Basic bounds checking and access control
 
 ---
@@ -163,10 +163,20 @@ Transform VirtComp from hex-based programming to human-readable assembly languag
 - **Memory Bounds**: Need enhanced memory access validation
 
 ### Testing & Quality
-- **Unit Test Coverage**: Expand test coverage for edge cases
+- **Unit Test Coverage**: Expand test coverage for edge cases and device interactions
 - **Integration Tests**: Add more complex program validation
 - **Performance Testing**: Benchmark instruction execution speed
 - **Memory Leak Detection**: Validate resource cleanup
+- **Parameterized Tests**: Data-driven testing framework for opcodes
+- **Device Testing**: Comprehensive edge case testing for all I/O devices
+- **Flag System Testing**: Validate all flag combinations and edge cases
+
+### Current Test Issues (5 failing unit tests)
+- **Stack Operations**: SP assertion failure - stack pointer management needs debugging
+- **Conditional Jumps**: Register assertions failing - jump logic needs review
+- **Memory Load/Store**: Memory assertions failing - addressing mode issues
+- **Shift Operations**: Incorrect shift results - bit shift implementation needs fix
+- **Flags Comprehensive**: Infinite loop detection - flag setting logic needs review
 
 ---
 
@@ -191,10 +201,23 @@ Transform VirtComp from hex-based programming to human-readable assembly languag
 
 | Phase | Completion | Lines of Code | Test Coverage | Documentation |
 |-------|------------|---------------|---------------|---------------|
-| Core CPU | 95% | ~3,000 | 85% | Complete |
-| Device System | 90% | ~1,500 | 90% | Complete |
-| Testing Framework | 100% | ~800 | 95% | Complete |
-| **Total Current** | **92%** | **~5,300** | **87%** | **Complete** |
+| Core CPU | 97% | ~3,000 | 77% (17/22 unit tests) | Complete |
+| Device System | 90% | ~1,500 | 100% (32/32 integration tests) | Complete |
+| Testing Framework | 100% | ~900 | 95% | Complete |
+| **Total Current** | **94%** | **~5,400** | **83%** | **Complete** |
+
+### Recent Achievements
+- ✅ **LEA & SWAP Opcodes**: Implemented and fully tested (6/6 tests passing)
+- ✅ **Enhanced Test Suite**: Added comprehensive unit and integration tests
+- ✅ **Memory Management**: Core address manipulation operations completed
+- 🔄 **Bug Fixes Needed**: 5 failing unit tests requiring attention (stack, jumps, memory, shifts, flags)
+
+### Next Priority Tasks
+1. **Fix Stack Operations**: Debug SP assertion failure (expected 256, got 252)
+2. **Fix Conditional Jumps**: Review jump logic causing register assertion failures
+3. **Fix Memory Load/Store**: Address memory addressing mode issues
+4. **Fix Shift Operations**: Correct bit shift implementation (expected 32, got 16)
+5. **Fix Flag System**: Resolve infinite loop in comprehensive flag testing
 
 ---
 
