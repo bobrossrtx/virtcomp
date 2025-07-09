@@ -27,6 +27,7 @@ namespace fs = std::experimental::filesystem;
 
 // Include the test framework
 #include "test/test.hpp"
+#include "test/test_framework.hpp"
 
 // For POSIX process execution instead of system()
 #include <sys/types.h>
@@ -149,13 +150,21 @@ private:
 };
 
 bool run_tests() {
-
     // Print a header
     // Print a colored ASCII art header (cyan)
     // If debug mode is on, use orange (ANSI 38;5;208), else cyan (36)
     const char* color = Config::debug ? "\033[38;5;208m" : "\033[36m";
     std::cout << color << "┌──────────────────────────────────────────────────────┐\033[0m" << std::endl;
-    std::cout << color << "│     Running VirtComp Tests                           │\033[0m" << std::endl;
+    std::cout << color << "│     Running VirtComp Unit Tests                      │\033[0m" << std::endl;
+    std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
+
+    // Run unit tests using the new framework
+    run_unit_tests();
+
+    // Also run the old integration tests for now
+    std::cout << std::endl;
+    std::cout << color << "┌──────────────────────────────────────────────────────┐\033[0m" << std::endl;
+    std::cout << color << "│     Running VirtComp Integration Tests               │\033[0m" << std::endl;
     std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
 
     // Use TestRunner to run all .hex files in tests/
@@ -165,7 +174,7 @@ bool run_tests() {
     // Print result header with the same style as the test header
     const char* result_color = Config::debug ? "\033[38;5;208m" : "\033[36m";
     std::cout << result_color << "┌──────────────────────────────────────────────────────┤\033[0m" << std::endl;
-    std::cout << result_color << "│     VirtComp Test Results                            │\033[0m" << std::endl;
+    std::cout << result_color << "│     VirtComp Integration Test Results                │\033[0m" << std::endl;
     std::cout << result_color << "└──────────────────────────────────────────────────────┘\033[0m" << std::endl;
     for (const auto& result : results) {
         // Print test result with neat spacing (fixed width for name)
@@ -183,7 +192,7 @@ bool run_tests() {
     std::cout << std::endl;
     // Summary: green if all passed, yellow if some failed
     const char* summary_color = (failed == 0) ? "\033[32m" : "\033[33m";
-    std::cout << summary_color << "Tests passed: " << passed << " / " << results.size() << "\033[0m" << std::endl;
+    std::cout << summary_color << "Integration tests passed: " << passed << " / " << results.size() << "\033[0m" << std::endl;
     exit(0);
 }
 

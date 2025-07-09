@@ -5,14 +5,26 @@ SRC_DIR := src
 BUILD_DIR := build
 BIN_DIR := bin
 
-# Find all .cpp files in src and its subdirectories
+# Find all .cpp files in src and its subdirectories, excluding test_runner.cpp
 SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
 # Replace src/ with build/ and .cpp with .o for object files
 OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
 TARGET := $(BIN_DIR)/virtcomp
 
+# Test framework
+TEST_TARGET := $(BIN_DIR)/test_runner
+TEST_SRCS := $(filter-out $(SRC_DIR)/main.cpp $(SRC_DIR)/debug/gui.cpp, $(shell find $(SRC_DIR) -name '*.cpp' -not -path '$(SRC_DIR)/test/test_runner.cpp'))
+TEST_OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(TEST_SRCS))
+TEST_RUNNER_SRC := $(SRC_DIR)/test/test_runner.cpp
+TEST_RUNNER_OBJ := $(BUILD_DIR)/test/test_runner.o
+
 all: $(TARGET)
+
+# Test framework target
+$(TEST_TARGET): $(TEST_OBJS) $(TEST_RUNNER_OBJ) $(FMT_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 # ImGui/GLFW/OpenGL3 sources
 IMGUI_DIR := extern/imgui
@@ -67,6 +79,13 @@ clean:
 test: $(TARGET)
 	./$(TARGET) -t -d
 
+# Run unit tests
+unit-test: $(TEST_TARGET)
+	./$(TEST_TARGET)
+
+# Build and run unit tests
+test-all: unit-test test
+
 prereqs:
 	@if ! dpkg -s libglfw3-dev libglew-dev libgl1-mesa-dev xorg-dev >/dev/null 2>&1; then \
 		echo "Installing required system libraries..."; \
@@ -94,4 +113,4 @@ build: prereqs $(TARGET)
 	@echo "Build complete. Run './$(TARGET)' to start the application."
 	@echo "Run 'make clean' to remove build artifacts."
 
-.PHONY: clean build prereqs test
+.PHONY: clean build prereqs test unit-test test-all
