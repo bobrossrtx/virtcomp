@@ -83,7 +83,8 @@
         "__split_buffer": "cpp",
         "__tree": "cpp",
         "queue": "cpp",
-        "stack": "cpp"
+        "stack": "cpp",
+        "filesystem": "cpp"
     },
     "terminal.integrated.defaultProfile.windows": "kali-linux (WSL)",
     "remote.WSL.fileWatcher.polling": true,
@@ -99,5 +100,6 @@
         "opengl",
         "ramdisk"
     ],
-    "cmake.ignoreCMakeListsMissing": true
+    "cmake.ignoreCMakeListsMissing": true,
+    "sonarlint.pathToCompileCommands": "${workspaceFolder}/build/compile_commands.json"
 }
