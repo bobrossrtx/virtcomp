@@ -1,2 +1,2 @@
-# Invalid opcode: 0xAB is not defined
+# Invalid opcode (error expected): 0xAB is not defined
 AB FF
