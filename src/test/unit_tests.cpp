@@ -307,3 +307,113 @@ TEST_CASE(flags_comprehensive, "flags") {
     // Zero flag should be clear (0 != 1)
     ctx.assert_flag_clear(FLAG_ZERO);
 }
+
+TEST_CASE(lea_basic, "lea") {
+    // Test LEA (Load Effective Address) - loads address into register
+    ctx.load_program({
+        0x20, 0x00, 0x42,  // LEA R0, 0x42 (load address 0x42 into R0)
+        0x20, 0x01, 0x10,  // LEA R1, 0x10 (load address 0x10 into R1)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+
+    // Check that the addresses were loaded correctly
+    ctx.assert_register_eq(0, 0x42);
+    ctx.assert_register_eq(1, 0x10);
+}
+
+TEST_CASE(lea_multiple_addresses, "lea") {
+    // Test LEA with multiple different addresses
+    ctx.load_program({
+        0x20, 0x00, 0x00,  // LEA R0, 0x00 (load address 0x00 into R0)
+        0x20, 0x01, 0xFF,  // LEA R1, 0xFF (load address 0xFF into R1)
+        0x20, 0x02, 0x80,  // LEA R2, 0x80 (load address 0x80 into R2)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+
+    // Check that all addresses were loaded correctly
+    ctx.assert_register_eq(0, 0x00);
+    ctx.assert_register_eq(1, 0xFF);
+    ctx.assert_register_eq(2, 0x80);
+}
+
+TEST_CASE(swap_basic, "swap") {
+    // Test SWAP - swap values between register and memory
+    ctx.load_program({
+        0x01, 0x00, 0x42, 0x00, 0x00, 0x00,  // LOAD_IMM R0, 0x42
+        0x07, 0x00, 0x50,                     // STORE R0, 0x50 (store 0x42 at memory[0x50])
+        0x01, 0x00, 0x33, 0x00, 0x00, 0x00,  // LOAD_IMM R0, 0x33
+        0x21, 0x00, 0x50,                     // SWAP R0, 0x50 (swap R0 with memory[0x50])
+        0xFF                                  // HALT
+    });
+
+    ctx.execute_program();
+
+    // After swap: R0 should have 0x42, memory[0x50] should have 0x33
+    ctx.assert_register_eq(0, 0x42);
+    ctx.assert_memory_eq(0x50, 0x33);
+}
+
+TEST_CASE(swap_multiple_operations, "swap") {
+    // Test multiple SWAP operations
+    ctx.load_program({
+        0x01, 0x00, 0x11, 0x00, 0x00, 0x00,  // LOAD_IMM R0, 0x11
+        0x01, 0x01, 0x22, 0x00, 0x00, 0x00,  // LOAD_IMM R1, 0x22
+        0x07, 0x00, 0x60,                     // STORE R0, 0x60 (store 0x11 at memory[0x60])
+        0x07, 0x01, 0x61,                     // STORE R1, 0x61 (store 0x22 at memory[0x61])
+
+        0x01, 0x00, 0x33, 0x00, 0x00, 0x00,  // LOAD_IMM R0, 0x33
+        0x01, 0x01, 0x44, 0x00, 0x00, 0x00,  // LOAD_IMM R1, 0x44
+
+        0x21, 0x00, 0x60,                     // SWAP R0, 0x60 (swap R0 with memory[0x60])
+        0x21, 0x01, 0x61,                     // SWAP R1, 0x61 (swap R1 with memory[0x61])
+        0xFF                                  // HALT
+    });
+
+    ctx.execute_program();
+
+    // After swaps: R0 should have 0x11, R1 should have 0x22
+    // memory[0x60] should have 0x33, memory[0x61] should have 0x44
+    ctx.assert_register_eq(0, 0x11);
+    ctx.assert_register_eq(1, 0x22);
+    ctx.assert_memory_eq(0x60, 0x33);
+    ctx.assert_memory_eq(0x61, 0x44);
+}
+
+TEST_CASE(lea_swap_combination, "lea") {
+    // Test LEA and SWAP working together
+    ctx.load_program({
+        0x20, 0x00, 0x70,                     // LEA R0, 0x70 (load address 0x70 into R0)
+        0x01, 0x01, 0x55, 0x00, 0x00, 0x00,  // LOAD_IMM R1, 0x55
+        0x07, 0x01, 0x70,                     // STORE R1, 0x70 (store 0x55 at memory[0x70])
+        0x01, 0x01, 0x99, 0x00, 0x00, 0x00,  // LOAD_IMM R1, 0x99
+        0x21, 0x01, 0x70,                     // SWAP R1, 0x70 (swap R1 with memory[0x70])
+        0xFF                                  // HALT
+    });
+
+    ctx.execute_program();
+
+    // R0 should still have address 0x70, R1 should have 0x55, memory[0x70] should have 0x99
+    ctx.assert_register_eq(0, 0x70);
+    ctx.assert_register_eq(1, 0x55);
+    ctx.assert_memory_eq(0x70, 0x99);
+}
+
+TEST_CASE(swap_edge_cases, "swap") {
+    // Test SWAP with same values
+    ctx.load_program({
+        0x01, 0x00, 0x77, 0x00, 0x00, 0x00,  // LOAD_IMM R0, 0x77
+        0x07, 0x00, 0x80,                     // STORE R0, 0x80 (store 0x77 at memory[0x80])
+        0x21, 0x00, 0x80,                     // SWAP R0, 0x80 (swap R0 with memory[0x80])
+        0xFF                                  // HALT
+    });
+
+    ctx.execute_program();
+
+    // Both R0 and memory[0x80] should still have 0x77
+    ctx.assert_register_eq(0, 0x77);
+    ctx.assert_memory_eq(0x80, 0x77);
+}
