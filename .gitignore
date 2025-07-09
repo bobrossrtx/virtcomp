@@ -57,4 +57,7 @@ libexec/
 # Generated files
 src/program_data.hpp
 
+# External dependencies
+extern/
+
 .trae/
