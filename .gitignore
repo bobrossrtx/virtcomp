@@ -53,3 +53,8 @@ libexec/
 *.pyc
 *.pyo
 *.pyd
+
+# Generated files
+src/program_data.hpp
+
+.trae/
