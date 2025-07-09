@@ -22,7 +22,7 @@ public:
         for (const auto& entry : std::filesystem::directory_iterator(test_dir_)) {
             if (entry.path().extension() == ".hex") {
                 std::string test_name = entry.path().filename().string();
-                Logger::instance().running() 
+                Logger::instance().running()
                     << fmt::format("{:>14} [RUN] │ {}", "", test_name) << std::endl;
                 TestResult result = run_test(entry.path());
                 std::ostringstream oss;
@@ -54,6 +54,8 @@ private:
         std::ifstream file(path);
         std::string token;
         std::string comment;
+        bool expect_error = false;
+
         while (file >> token) {
             if (token[0] == '#') {
                 // Read the rest of the line as a comment
@@ -61,6 +63,14 @@ private:
                 std::getline(file, rest_of_line);
                 if (!comment.empty()) comment += "";
                 comment += rest_of_line;
+
+                // Check if this test expects an error
+                if (comment.find("(error expected)") != std::string::npos ||
+                    comment.find("error expected") != std::string::npos ||
+                    comment.find("Invalid opcode") != std::string::npos ||
+                    comment.find("Division by zero") != std::string::npos) {
+                    expect_error = true;
+                }
                 continue;
             }
             try {
@@ -79,16 +89,37 @@ private:
         cpu.reset();
         initialize_devices();
         Config::error_count = 0; // Reset error count before running
+
         try {
             cpu.execute(prog);
         } catch (const std::exception& e) {
+            // If we expect an error, this is a pass
+            if (expect_error) {
+                return {path.filename().string(), true, "Expected error occurred: " + std::string(e.what())};
+            }
             return {path.filename().string(), false, std::string("Exception: ") + e.what()};
         } catch (...) {
+            // If we expect an error, this is a pass
+            if (expect_error) {
+                return {path.filename().string(), true, "Expected error occurred: Unknown exception"};
+            }
             return {path.filename().string(), false, "Unknown exception"};
         }
+
+        // Check error count after execution
         if (Config::error_count > 0) {
+            // If we expect an error, this is a pass
+            if (expect_error) {
+                return {path.filename().string(), true, "Expected runtime errors detected"};
+            }
             return {path.filename().string(), false, "Runtime errors detected"};
         }
+
+        // If we expected an error but didn't get one, this is a failure
+        if (expect_error) {
+            return {path.filename().string(), false, "Expected error but execution succeeded"};
+        }
+
         return {path.filename().string(), true, ""};
     }
 };
