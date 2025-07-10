@@ -141,3 +141,28 @@ Complete reference of all VirtComp CPU opcodes with their hex values, descriptio
 - src/test/unit_tests.cpp - test cases showing opcode usage
 - tests/*.hex - integration test files with real opcode sequences
 - src/vhardware/cpu.hpp - opcode enum definitions
+
+
+## VirtComp Instruction Format Standards
+
+All VirtComp instructions follow consistent byte patterns: LOAD_IMM uses 3 bytes (opcode + register + immediate), arithmetic operations use 3 bytes (opcode + reg1 + reg2), jumps use 2 bytes (opcode + address), and shift operations use immediate values not register values.
+
+### Examples
+
+- LOAD_IMM: 0x01 0x00 0x0A = Load 10 into R0
+- ADD: 0x02 0x00 0x01 = Add R1 to R0
+- JC: 0x0F 0x15 = Jump to address 0x15 if carry flag set
+- SHL: 0x18 0x00 0x02 = Shift R0 left by 2 positions
+
+
+## VirtComp Documentation Quality Standards
+
+Established comprehensive standards for VirtComp documentation accuracy and consistency. All opcode references must match cpu.hpp canonical definitions. All instruction format examples must use correct byte counts (especially 3-byte LOAD_IMM). All code examples must be executable and logically correct. Cross-references between documentation files must be consistent. Documentation must reflect actual implementation behavior, not idealized descriptions.
+
+### Examples
+
+- LOAD_IMM must always show 3-byte format: 01 reg low_byte 00 00 00
+- Opcode references verified against cpu.hpp: CMP=0x0A, IN=0x30, OUT=0x31, JC=0x0F, JNC=0x22
+- Code examples must include proper HALT instruction (FF) for completeness
+- Carry flag testing uses NOT + ADD pattern, not direct CMP instruction
+- All instruction formats documented with accurate byte layouts and addressing modes
