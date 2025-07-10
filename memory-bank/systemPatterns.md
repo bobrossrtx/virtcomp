@@ -178,3 +178,14 @@ Established standardized workflow patterns for VirtComp development. Uses custom
 - Always use the custom script rather than git merge main
 - Script likely includes validation, formatting, and project-specific merge steps
 - Maintains consistency across all development branches and merges
+
+
+## VirtComp Merge Workflow
+
+VirtComp project uses a custom merge-to-main.sh script for merging branches to main. This script automatically excludes memory bank files from being merged to main, keeping development notes and decisions private to feature branches. Usage: ./merge-to-main.sh {current_branch_name}. The script handles cherry-picking commits while filtering out memory-bank/ directory contents.
+
+### Examples
+
+- ./merge-to-main.sh private-memory-bank
+- Memory bank files (memory-bank/*.md) stay on feature branches
+- Only code, documentation, and tests are merged to main
