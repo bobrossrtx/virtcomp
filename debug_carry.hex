@@ -1,8 +1,0 @@
-# Test carry flag: Load max 8-bit value (255) into R0, add 1 
-# Since LOAD_IMM uses 8-bit immediate, max value is 255
-# R0 = 255, R1 = 1, ADD R0, R1 should give R0 = 256 (no carry in 32-bit)
-# To test carry, we need max 32-bit value
-01 00 FF  # LOAD_IMM R0, 255
-01 01 01  # LOAD_IMM R1, 1  
-02 00 01  # ADD R0, R1 (255 + 1 = 256, no carry)
-FF        # HALT

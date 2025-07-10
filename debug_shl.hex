@@ -1,2 +1,0 @@
-# Debug SHL: Load R0=8, SHL R0 by 2, should get 32
-01 00 08 18 00 02 FF
