@@ -156,11 +156,11 @@ Use /** */ style comments for API documentation:
 ```cpp
 /**
  * @brief Execute a single CPU instruction
- * 
+ *
  * Fetches the instruction at the current program counter,
  * decodes it, and executes the corresponding operation.
  * Updates CPU state including registers and flags.
- * 
+ *
  * @throws CPUError if instruction is invalid or causes error
  * @throws std::out_of_range if memory access is invalid
  */
@@ -217,7 +217,7 @@ void set_register(Register reg, uint32_t value) {
  * @brief CPU emulation for VirtComp virtual computer
  * @author Your Name
  * @date 2025-06-09
- * 
+ *
  * This file contains the CPU class that emulates a 32-bit processor
  * with custom instruction set architecture. The CPU supports arithmetic,
  * logic, memory, and I/O operations through a device-based system.
@@ -225,17 +225,17 @@ void set_register(Register reg, uint32_t value) {
 
 /**
  * @brief Virtual CPU implementation
- * 
+ *
  * The CPU class emulates a complete 32-bit processor including:
  * - 8 general-purpose registers (R0-R7)
  * - Program counter, stack pointer, frame pointer
  * - Status flags (zero, sign, carry, overflow)
  * - Memory management with configurable size
  * - Device I/O through port-mapped interface
- * 
+ *
  * The CPU executes instructions in hex format and provides
  * comprehensive debugging and introspection capabilities.
- * 
+ *
  * @example
  * ```cpp
  * CPU cpu(64 * 1024);  // 64KB memory
@@ -271,20 +271,20 @@ Create test programs in hex format with comprehensive comments:
 # Test addition
 01 00 0A 00 00 00    # LOAD_IMM R0, 10
 01 01 05 00 00 00    # LOAD_IMM R1, 5
-06 02 00            # MOV R2, R0
-04 02 01            # ADD R2, R1      ; R2 = 10 + 5 = 15
+04 02 00            # MOV R2, R0
+02 02 01            # ADD R2, R1      ; R2 = 10 + 5 = 15
 
 # Test subtraction
-06 03 00            # MOV R3, R0
-05 03 01            # SUB R3, R1      ; R3 = 10 - 5 = 5
+04 03 00            # MOV R3, R0
+03 03 01            # SUB R3, R1      ; R3 = 10 - 5 = 5
 
 # Test multiplication
-06 04 00            # MOV R4, R0
-11 04 01            # MUL R4, R1      ; R4 = 10 * 5 = 50
+04 04 00            # MOV R4, R0
+10 04 01            # MUL R4, R1      ; R4 = 10 * 5 = 50
 
 # Test division
-06 05 00            # MOV R5, R0
-12 05 01            # DIV R5, R1      ; R5 = 10 / 5 = 2
+04 05 00            # MOV R5, R0
+11 05 01            # DIV R5, R1      ; R5 = 10 / 5 = 2
 
 FF                  # HALT
 
