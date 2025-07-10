@@ -29,6 +29,8 @@ enum class Opcode : uint8_t {
     JNZ = 0x0C,         // Jump if zero flag not set
     JS  = 0x0D,         // Jump if sign flag set
     JNS = 0x0E,         // Jump if sign flag not set
+    JC  = 0x0F,         // Jump if carry flag set
+    JNC = 0x22,         // Jump if carry flag not set
 
     MUL = 0x10,         // Multiply reg1, reg2
     DIV = 0x11,         // Divide reg1, reg2

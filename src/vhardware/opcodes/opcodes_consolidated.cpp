@@ -31,6 +31,8 @@ using Logging::Logger;
 #include "jnz.hpp"
 #include "js.hpp"
 #include "jz.hpp"
+#include "jc.hpp"
+#include "jnc.hpp"
 #include "lea.hpp"
 #include "load.hpp"
 #include "load_imm.hpp"
@@ -67,9 +69,21 @@ void handle_add(CPU& cpu, const std::vector<uint8_t>& program, [[maybe_unused]] 
         uint8_t reg1 = program[cpu.get_pc() + 1];
         uint8_t reg2 = program[cpu.get_pc() + 2];
         Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[ADD] │ PC={} R{} += R{}", cpu.get_pc(), "", cpu.get_pc(), reg1, reg2) << std::endl;
-        uint8_t before = cpu.get_registers()[reg1];
-        cpu.get_registers()[reg1] += cpu.get_registers()[reg2];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[ADD] │ R{}: {} + {} = {}", cpu.get_pc(), "", reg1, before, cpu.get_registers()[reg2], cpu.get_registers()[reg1]) << std::endl;
+        
+        uint32_t before = cpu.get_registers()[reg1];
+        uint32_t operand = cpu.get_registers()[reg2];
+        uint32_t result = before + operand;
+        
+        // Set carry flag if result overflows 32-bit
+        uint32_t current_flags = cpu.get_flags();
+        if (result < before) {
+            cpu.set_flags(current_flags | FLAG_CARRY);
+        } else {
+            cpu.set_flags(current_flags & ~FLAG_CARRY);
+        }
+        
+        cpu.get_registers()[reg1] = result;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[ADD] │ R{}: {} + {} = {} (carry={})", cpu.get_pc(), "", reg1, before, operand, result, (cpu.get_flags() & FLAG_CARRY) ? 1 : 0) << std::endl;
     }
     cpu.set_pc(cpu.get_pc() + 3);
     cpu.print_state("ADD");
@@ -536,10 +550,10 @@ void handle_load_imm(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
     if (cpu.get_pc() + 2 < program.size()) {
         uint8_t reg = program[cpu.get_pc() + 1];
         uint8_t imm = program[cpu.get_pc() + 2];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>1}[LOAD_IMM] │ PC=0x{:02X} reg={} imm={}", cpu.get_pc(), "", cpu.get_pc(), reg, imm) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>1}[LOAD_IMM] │ PC=0x{:02X} reg={} imm=0x{:02X}", cpu.get_pc(), "", cpu.get_pc(), reg, imm) << std::endl;
         if (reg < cpu.get_registers().size()) {
             cpu.get_registers()[reg] = imm;
-            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>1}[LOAD_IMM] │ Set R{} = {}", cpu.get_pc(), "", reg, imm) << std::endl;
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>1}[LOAD_IMM] │ Set R{} = 0x{:02X}", cpu.get_pc(), "", reg, imm) << std::endl;
         }
         cpu.set_pc(cpu.get_pc() + 3);
     } else {
@@ -1017,6 +1031,50 @@ void handle_xor(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     cpu.print_state("XOR");
 }
 
+// Implementation for JC (Jump if Carry)
+void handle_jc(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    uint32_t pc = cpu.get_pc();
+
+    if (pc + 1 < program.size()) {
+        uint8_t addr = program[pc + 1];
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[JC] │ PC={} Checking carry flag", pc, "", pc) << std::endl;
+
+        if (cpu.get_flags() & FLAG_CARRY) {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[JC] │ Carry flag set, jumping to address {}", pc, "", addr) << std::endl;
+            cpu.set_pc(addr);
+        } else {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>7}[JC] │ Carry flag clear, continuing", pc, "", pc) << std::endl;
+            cpu.set_pc(pc + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JC");
+}
+
+// Implementation for JNC (Jump if No Carry)
+void handle_jnc(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    uint32_t pc = cpu.get_pc();
+
+    if (pc + 1 < program.size()) {
+        uint8_t addr = program[pc + 1];
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JNC] │ PC={} Checking carry flag", pc, "", pc) << std::endl;
+
+        if (!(cpu.get_flags() & FLAG_CARRY)) {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JNC] │ Carry flag clear, jumping to address {}", pc, "", addr) << std::endl;
+            cpu.set_pc(addr);
+        } else {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JNC] │ Carry flag set, continuing", pc, "", pc) << std::endl;
+            cpu.set_pc(pc + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JNC");
+}
+
 // Dispatcher function (copied from opcode_dispatcher.cpp)
 void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() >= program.size()) {
@@ -1068,6 +1126,12 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
             break;
         case Opcode::JNS:
             handle_jns(cpu, program, running);
+            break;
+        case Opcode::JC:
+            handle_jc(cpu, program, running);
+            break;
+        case Opcode::JNC:
+            handle_jnc(cpu, program, running);
             break;
         case Opcode::LOAD:
             handle_load(cpu, program, running);
