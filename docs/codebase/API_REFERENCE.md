@@ -643,12 +643,12 @@ constexpr uint32_t FLAG_OVERFLOW = 0x08; // Overflow flag
 ```cpp
 constexpr uint8_t OP_NOP = 0x00;
 constexpr uint8_t OP_LOAD_IMM = 0x01;
-constexpr uint8_t OP_LOAD = 0x02;
-constexpr uint8_t OP_STORE = 0x03;
-constexpr uint8_t OP_ADD = 0x04;
-constexpr uint8_t OP_SUB = 0x05;
-constexpr uint8_t OP_MOV = 0x06;
-constexpr uint8_t OP_JMP = 0x07;
+constexpr uint8_t OP_ADD = 0x02;
+constexpr uint8_t OP_SUB = 0x03;
+constexpr uint8_t OP_MOV = 0x04;
+constexpr uint8_t OP_JMP = 0x05;
+constexpr uint8_t OP_LOAD = 0x06;
+constexpr uint8_t OP_STORE = 0x07;
 // ... (see full list in cpu.hpp)
 constexpr uint8_t OP_HALT = 0xFF;
 ```
