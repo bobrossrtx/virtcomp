@@ -48,11 +48,11 @@ FF                  # HALT (valid)
 **Solutions**:
 ```hex
 # Bad: Uninitialized register
-02 00 01            # LOAD R0, [R1]  ; R1 not initialized!
+06 00 01            # LOAD R0, [R1]  ; R1 not initialized!
 
 # Good: Initialize first
 01 01 10 00 00 00    # LOAD_IMM R1, 0x10
-02 00 01            # LOAD R0, [R1]   ; Now safe
+06 00 01            # LOAD R0, [R1]   ; Now safe
 ```
 
 **Prevention**:
@@ -225,15 +225,15 @@ sudo apt install mesa-utils
 **Add Debug Output**:
 ```hex
 # Add debug prints at key points
-01 00 XX XX XX XX    # LOAD_IMM R0, debug_message_addr
-1F 01 00            # OUTSTR port=1, R0
+01 00 XX 00 00 00    # LOAD_IMM R0, debug_message_addr
+39 01 00            # OUTSTR port=1, R0
 ```
 
 **Register Dumps**:
 ```hex
 # Output register values for debugging
-04 00 01            # ADD R0, R1    ; R1 = ASCII '0'
-19 01 00            # OUT port=1, R0 ; Print R0 as digit
+02 00 01            # ADD R0, R1    ; R1 = ASCII '0'
+31 01 00            # OUT port=1, R0 ; Print R0 as digit
 ```
 
 ### Trace Execution
@@ -261,9 +261,9 @@ loop_start:
 # Good: Proper loop control
 01 00 0A 00 00 00    # LOAD_IMM R0, 10   ; Counter
 loop_start:
-14 00               # DEC R0            ; Decrement
-0E 00 01            # CMP R0, R1        ; Compare with 0
-10 XX XX XX XX      # JNZ loop_start    ; Continue if not zero
+13 00               # DEC R0            ; Decrement
+0A 00 01            # CMP R0, R1        ; Compare with 0
+0C XX XX XX XX      # JNZ loop_start    ; Continue if not zero
 ```
 
 **Inefficient Algorithms**:
@@ -323,13 +323,13 @@ loop_start:
 ```hex
 # Bad: Function falls through
 my_function:
-04 00 01            # ADD R0, R1
+02 00 01            # ADD R0, R1
 # Missing RET!
 
 # Good: Always return
 my_function:
-04 00 01            # ADD R0, R1
-0D                  # RET
+02 00 01            # ADD R0, R1
+1B                  # RET
 ```
 
 **Wrong Jump Addresses**:
@@ -342,7 +342,7 @@ target_address:
 01 00 05 00 00 00    # LOAD_IMM R0, 5
 
 # Jump to address 0x10
-07 10 00 00 00      # JMP target_address
+05 10 00 00 00      # JMP target_address
 ```
 
 ### String Handling
