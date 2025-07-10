@@ -54,6 +54,12 @@ libexec/
 *.pyo
 *.pyd
 
+# Debugging files
+*.dSYM/
+*.su
+*.gcno
+debug*.hex
+
 # Generated files
 src/program_data.hpp
 
