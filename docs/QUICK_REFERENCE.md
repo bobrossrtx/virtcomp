@@ -4,7 +4,7 @@
 - Instructions are written in hexadecimal
 - Comments start with `#`
 - Registers: R0-R7 (encoded as 0x00-0x07)
-- 32-bit immediate values are little-endian
+- LOAD_IMM uses 3-byte format: opcode + register + immediate_value (8-bit)
 
 ## Instruction Categories
 
@@ -12,79 +12,87 @@
 ```hex
 00                    # NOP - No operation
 FF                    # HALT - Stop execution
-01 <reg> <imm32>      # LOAD_IMM - Load immediate value
-06 <dst> <src>        # MOV - Copy register
+01 <reg> <imm8>       # LOAD_IMM - Load immediate value (8-bit)
+04 <dst> <src>        # MOV - Copy register
 ```
 
 ### Arithmetic
 ```hex
-04 <dst> <src>        # ADD - Add registers
-05 <dst> <src>        # SUB - Subtract registers  
-11 <dst> <src>        # MUL - Multiply registers
-12 <dst> <src>        # DIV - Divide registers
-13 <reg>              # INC - Increment register
-14 <reg>              # DEC - Decrement register
+02 <dst> <src>        # ADD - Add registers
+03 <dst> <src>        # SUB - Subtract registers
+10 <dst> <src>        # MUL - Multiply registers
+11 <dst> <src>        # DIV - Divide registers
+12 <reg>              # INC - Increment register
+13 <reg>              # DEC - Decrement register
 ```
 
 ### Memory Operations
 ```hex
-02 <dst> <addr_reg>   # LOAD - Load from memory
-03 <addr_reg> <src>   # STORE - Store to memory
+06 <dst> <addr>       # LOAD - Load from memory
+07 <addr> <src>       # STORE - Store to memory
+20 <reg> <addr>       # LEA - Load Effective Address
+21 <reg> <addr>       # SWAP - Swap register with memory
 ```
 
 ### Control Flow
 ```hex
-07 <addr32>           # JMP - Unconditional jump
-0E <reg1> <reg2>      # CMP - Compare registers
-0F <addr32>           # JZ - Jump if zero
-10 <addr32>           # JNZ - Jump if not zero
-15 <addr32>           # JS - Jump if sign
-16 <addr32>           # JNS - Jump if not sign
+05 <addr>             # JMP - Unconditional jump
+0A <reg1> <reg2>      # CMP - Compare registers
+0B <addr>             # JZ - Jump if zero
+0C <addr>             # JNZ - Jump if not zero
+0D <addr>             # JS - Jump if sign
+0E <addr>             # JNS - Jump if not sign
+0F <addr>             # JC - Jump if carry
+22 <addr>             # JNC - Jump if no carry
 ```
 
 ### Stack Operations
 ```hex
-0A <reg>              # PUSH - Push register to stack
-0B <reg>              # POP - Pop from stack
-0C <addr32>           # CALL - Call subroutine
-0D                    # RET - Return from subroutine
-08 <reg>              # PUSH_ARG - Push function argument
-09 <reg>              # POP_ARG - Pop function argument
+08 <reg>              # PUSH - Push register to stack
+09 <reg>              # POP - Pop from stack
+1A <addr>             # CALL - Call subroutine
+1B                    # RET - Return from subroutine
+1C <reg>              # PUSH_ARG - Push function argument
+1D <reg>              # POP_ARG - Pop function argument
+1E <reg>              # PUSH_FLAG - Push flags onto stack
+1F <reg>              # POP_FLAG - Pop flags from stack
 ```
 
 ### Bitwise Operations
 ```hex
-17 <dst> <src>        # AND - Bitwise AND
-18 <dst> <src>        # OR - Bitwise OR
-19 <dst> <src>        # XOR - Bitwise XOR
-20 <reg>              # NOT - Bitwise NOT
-21 <reg> <amount>     # SHL - Shift left
-22 <reg> <amount>     # SHR - Shift right
+14 <dst> <src>        # AND - Bitwise AND
+15 <dst> <src>        # OR - Bitwise OR
+16 <dst> <src>        # XOR - Bitwise XOR
+17 <reg>              # NOT - Bitwise NOT
+18 <reg> <amount>     # SHL - Shift left (immediate amount)
+19 <reg> <amount>     # SHR - Shift right (immediate amount)
 ```
 
 ### I/O Operations
 ```hex
-1A <dst> <port>       # IN - Read byte from port
-1B <port> <src>       # OUT - Write byte to port
-1C <dst> <port>       # INW - Read word from port
-1D <port> <src>       # OUTW - Write word to port
-1E <dst> <port>       # INL - Read dword from port
-1F <port> <src>       # OUTL - Write dword to port
-23 <dst> <port>       # INSTR - Read string from port
-24 <port> <src>       # OUTSTR - Write string to port
+30 <dst> <port>       # IN - Read from port
+31 <port> <src>       # OUT - Write to port
+32 <dst> <port>       # INB - Read byte from port
+33 <port> <src>       # OUTB - Write byte to port
+34 <dst> <port>       # INW - Read word from port
+35 <port> <src>       # OUTW - Write word to port
+36 <dst> <port>       # INL - Read long from port
+37 <port> <src>       # OUTL - Write long to port
+38 <dst> <port>       # INSTR - Read string from port
+39 <port> <src>       # OUTSTR - Write string to port
 ```
 
 ### Data Definition
 ```hex
-25 <byte>             # DB - Define byte in program
+40 <byte>             # DB - Define byte in program
 ```
 
 ## Common Patterns
 
 ### Hello World
 ```hex
-01 00 10 00 00 00     # LOAD_IMM R0, 0x10 (string address)
-24 01 00              # OUTSTR port=1, R0
+01 00 10              # LOAD_IMM R0, 0x10 (string address)
+39 01 00              # OUTSTR port=1, R0
 FF                    # HALT
 
 # String data at 0x10
@@ -93,23 +101,24 @@ FF                    # HALT
 
 ### Simple Loop
 ```hex
-01 00 0A 00 00 00     # LOAD_IMM R0, 10 (counter)
+01 00 0A              # LOAD_IMM R0, 10 (counter)
+01 01 00              # LOAD_IMM R1, 0 (comparison value)
 # Loop start (0x06):
-14 00                 # DEC R0
-0E 00 01              # CMP R0, R1 (R1 should be 0)
-10 06 00 00 00        # JNZ 0x06 (loop back)
+13 00                 # DEC R0
+0A 00 01              # CMP R0, R1
+0C 06                 # JNZ 0x06 (loop back)
 FF                    # HALT
 ```
 
 ### Function Call
 ```hex
-01 00 05 00 00 00     # LOAD_IMM R0, 5
-0C 10 00 00 00        # CALL 0x10 (function address)
+01 00 05              # LOAD_IMM R0, 5
+1A 10                 # CALL 0x10 (function address)
 FF                    # HALT
 
 # Function at 0x10:
-13 00                 # INC R0 (increment parameter)
-0D                    # RET
+12 00                 # INC R0 (increment parameter)
+1B                    # RET
 ```
 
 ## Device Ports
@@ -143,8 +152,9 @@ Low Memory  │  Code   │ ← PC starts here
 ```
 
 ## Common Gotchas
-1. **Little-endian**: Multi-byte values are stored least significant byte first
+1. **8-bit immediates**: LOAD_IMM only supports 8-bit values (0-255)
 2. **Stack direction**: Stack grows downward (SP decreases on push)
 3. **String termination**: Strings must be null-terminated for OUTSTR
 4. **Register encoding**: Registers are single bytes (0x00-0x07)
-5. **Address alignment**: 32-bit operations should use 4-byte aligned addresses
+5. **Address sizes**: Jump addresses are 8-bit (0-255 program space)
+6. **Carry flag**: Requires 32-bit overflow to trigger (use NOT + ADD technique)
