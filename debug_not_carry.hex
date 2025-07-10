@@ -1,6 +1,0 @@
-# Test NOT and ADD for carry: Load 0, NOT it, add 1
-01 00 00  # LOAD_IMM R0, 0
-17 00     # NOT R0 (R0 becomes 0xFFFFFFFF)
-01 01 01  # LOAD_IMM R1, 1
-02 00 01  # ADD R0, R1 (0xFFFFFFFF + 1 = 0, should set carry)
-FF        # HALT
