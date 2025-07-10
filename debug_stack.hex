@@ -1,0 +1,8 @@
+# Stack test debug
+01 00 42    # LOAD_IMM R0, 66
+01 01 84    # LOAD_IMM R1, 132
+08 00       # PUSH R0
+08 01       # PUSH R1
+09 02       # POP R2
+09 03       # POP R3
+FF          # HALT
