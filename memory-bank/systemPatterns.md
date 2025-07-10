@@ -166,3 +166,15 @@ Established comprehensive standards for VirtComp documentation accuracy and cons
 - Code examples must include proper HALT instruction (FF) for completeness
 - Carry flag testing uses NOT + ADD pattern, not direct CMP instruction
 - All instruction formats documented with accurate byte layouts and addressing modes
+
+
+## VirtComp Git Workflow Standards
+
+Established standardized workflow patterns for VirtComp development. Uses custom merge-to-main.sh script for branch merging instead of direct git commands. The script takes the current branch name as a parameter: `merge-to-main.sh {current_branch_name}`. This ensures consistent merge procedures, proper validation, and maintains project-specific merge standards across all contributors.
+
+### Examples
+
+- ./merge-to-main.sh private-memory-bank
+- Always use the custom script rather than git merge main
+- Script likely includes validation, formatting, and project-specific merge steps
+- Maintains consistency across all development branches and merges
