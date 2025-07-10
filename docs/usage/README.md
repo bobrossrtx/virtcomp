@@ -98,10 +98,10 @@ Let's create a simple program that adds two numbers:
 01 01 03 00 00 00    # LOAD_IMM R1, 3
 
 # Add R0 and R1, store in R2
-04 02 00            # ADD R2, R0
+02 02 00            # ADD R2, R0
 
 # Add R1 to R2 (R2 = R0 + R1)
-04 02 01            # ADD R2, R1
+02 02 01            # ADD R2, R1
 
 # Halt
 FF                  # HALT
@@ -204,40 +204,40 @@ FF    # HALT - end program
 01 02 FF FF FF FF    # LOAD_IMM R2, 0xFFFFFFFF
 ```
 
-#### MOV (0x06)
-**Format**: `06 <dst_reg> <src_reg>`
+#### MOV (0x04)
+**Format**: `04 <dst_reg> <src_reg>`
 **Purpose**: Copy value from source to destination register
 **Example**:
 ```hex
-06 01 00    # MOV R1, R0  (R1 = R0)
+04 01 00    # MOV R1, R0  (R1 = R0)
 ```
 
 ### Arithmetic Operations
 
-#### ADD (0x04)
-**Format**: `04 <dst_reg> <src_reg>`
+#### ADD (0x02)
+**Format**: `02 <dst_reg> <src_reg>`
 **Purpose**: Add src_reg to dst_reg, store in dst_reg
 **Flags**: Updates zero and sign flags
 **Example**:
 ```hex
-04 00 01    # ADD R0, R1  (R0 = R0 + R1)
+02 00 01    # ADD R0, R1  (R0 = R0 + R1)
 ```
 
-#### SUB (0x05)
-**Format**: `05 <dst_reg> <src_reg>`
+#### SUB (0x03)
+**Format**: `03 <dst_reg> <src_reg>`
 **Purpose**: Subtract src_reg from dst_reg, store in dst_reg
 **Flags**: Updates zero and sign flags
 **Example**:
 ```hex
-05 02 03    # SUB R2, R3  (R2 = R2 - R3)
+03 02 03    # SUB R2, R3  (R2 = R2 - R3)
 ```
 
-#### MUL (0x11)
-**Format**: `11 <dst_reg> <src_reg>`
+#### MUL (0x10)
+**Format**: `10 <dst_reg> <src_reg>`
 **Purpose**: Multiply dst_reg by src_reg, store in dst_reg
 **Example**:
 ```hex
-11 00 01    # MUL R0, R1  (R0 = R0 * R1)
+10 00 01    # MUL R0, R1  (R0 = R0 * R1)
 ```
 
 #### DIV (0x12)
@@ -257,26 +257,26 @@ FF    # HALT - end program
 13 00    # INC R0  (R0 = R0 + 1)
 ```
 
-#### DEC (0x14)
-**Format**: `14 <reg>`
+#### DEC (0x13)
+**Format**: `13 <reg>`
 **Purpose**: Decrement register by 1
 **Example**:
 ```hex
-14 07    # DEC R7  (R7 = R7 - 1)
+13 07    # DEC R7  (R7 = R7 - 1)
 ```
 
 ### Memory Operations
 
-#### LOAD (0x02)
-**Format**: `02 <dst_reg> <addr_reg>`
+#### LOAD (0x06)
+**Format**: `06 <dst_reg> <addr_reg>`
 **Purpose**: Load 32-bit value from memory address in addr_reg
 **Example**:
 ```hex
-02 01 00    # LOAD R1, [R0]  (R1 = memory[R0])
+06 01 00    # LOAD R1, [R0]  (R1 = memory[R0])
 ```
 
-#### STORE (0x03)
-**Format**: `03 <addr_reg> <src_reg>`
+#### STORE (0x07)
+**Format**: `07 <addr_reg> <src_reg>`
 **Purpose**: Store 32-bit value from src_reg to memory address in addr_reg
 **Example**:
 ```hex
@@ -285,39 +285,39 @@ FF    # HALT - end program
 
 ### Control Flow
 
-#### JMP (0x07)
-**Format**: `07 <32-bit-address>`
+#### JMP (0x05)
+**Format**: `05 <32-bit-address>`
 **Purpose**: Unconditional jump to address
 **Example**:
 ```hex
-07 10 00 00 00    # JMP 0x10  (jump to address 16)
+05 10 00 00 00    # JMP 0x10  (jump to address 16)
 ```
 
-#### CMP (0x0E)
-**Format**: `0E <reg1> <reg2>`
+#### CMP (0x0A)
+**Format**: `0A <reg1> <reg2>`
 **Purpose**: Compare two registers, set flags
 **Flags**: Sets zero flag if equal, sign flag if reg1 < reg2
 **Example**:
 ```hex
-0E 00 01    # CMP R0, R1  (compare R0 with R1)
+0A 00 01    # CMP R0, R1  (compare R0 with R1)
 ```
 
-#### JZ (0x0F)
-**Format**: `0F <32-bit-address>`
+#### JZ (0x0B)
+**Format**: `0B <32-bit-address>`
 **Purpose**: Jump if zero flag is set (after CMP)
 **Example**:
 ```hex
-0E 00 01          # CMP R0, R1
-0F 20 00 00 00    # JZ 0x20  (jump if R0 == R1)
+0A 00 01          # CMP R0, R1
+0B 20 00 00 00    # JZ 0x20  (jump if R0 == R1)
 ```
 
-#### JNZ (0x10)
-**Format**: `10 <32-bit-address>`
+#### JNZ (0x0C)
+**Format**: `0C <32-bit-address>`
 **Purpose**: Jump if zero flag is clear
 **Example**:
 ```hex
-0E 02 03          # CMP R2, R3
-10 30 00 00 00    # JNZ 0x30  (jump if R2 != R3)
+0A 02 03          # CMP R2, R3
+0C 30 00 00 00    # JNZ 0x30  (jump if R2 != R3)
 ```
 
 ### Stack Operations
@@ -571,10 +571,10 @@ FF                  # HALT
 ```hex
 # Poll for device ready status
 # Loop:
-18 00 05            # IN R0, 5      (read status)
-0E 00 01            # CMP R0, R1    (compare with ready value)
-0F 10 00 00 00      # JZ 0x10       (jump if ready)
-07 03 00 00 00      # JMP 0x03      (loop back)
+30 00 05            # IN R0, 5      (read status)
+0A 00 01            # CMP R0, R1    (compare with ready value)
+0B 10 00 00 00      # JZ 0x10       (jump if ready)
+05 03 00 00 00      # JMP 0x03      (loop back)
 # Ready:
 # ... proceed with operation
 ```
@@ -585,9 +585,9 @@ FF                  # HALT
 01 00 30 00 00 00    # LOAD_IMM R0, 0x30  (string address)
 
 # Loop through string
-02 01 00            # LOAD R1, [R0]     (load character)
-0E 01 02            # CMP R1, R2        (compare with 0)
-0F 20 00 00 00      # JZ 0x20           (end if null)
+06 01 00            # LOAD R1, [R0]     (load character)
+0A 01 02            # CMP R1, R2        (compare with 0)
+0B 20 00 00 00      # JZ 0x20           (end if null)
 
 # Process character in R1
 # ... processing code ...
@@ -678,18 +678,18 @@ Common errors and solutions:
 0C 00 00 00 00      # CALL 0x00  (calls itself)
 
 # Good: proper base case
-0E 00 01            # CMP R0, R1        (check condition)
-0F 10 00 00 00      # JZ 0x10           (base case)
-0C 00 00 00 00      # CALL 0x00         (recursive case)
-0D                  # RET
+0A 00 01            # CMP R0, R1        (check condition)
+0B 10 00 00 00      # JZ 0x10           (base case)
+1A 00 00 00 00      # CALL 0x00         (recursive case)
+1B                  # RET
 ```
 
 #### Division by Zero
 ```hex
 # Good: check before division
-0E 01 02            # CMP R1, R2        (check if R1 == 0)
-0F 10 00 00 00      # JZ error_handler  (handle zero case)
-12 00 01            # DIV R0, R1        (safe division)
+0A 01 02            # CMP R1, R2        (check if R1 == 0)
+0B 10 00 00 00      # JZ error_handler  (handle zero case)
+11 00 01            # DIV R0, R1        (safe division)
 ```
 
 ### Testing Strategies
@@ -699,10 +699,10 @@ Common errors and solutions:
 # Test addition function
 01 00 05 00 00 00    # LOAD_IMM R0, 5
 01 01 03 00 00 00    # LOAD_IMM R1, 3
-0C 50 00 00 00      # CALL add_func
+1A 50 00 00 00      # CALL add_func
 01 02 08 00 00 00    # LOAD_IMM R2, 8  (expected result)
-0E 00 02            # CMP R0, R2
-0F 30 00 00 00      # JZ test_pass
+0A 00 02            # CMP R0, R2
+0B 30 00 00 00      # JZ test_pass
 # Test failed
 FF                  # HALT
 
@@ -723,9 +723,9 @@ VirtComp provides a flat memory model, but you can implement your own memory man
 01 07 00 10 00 00    # LOAD_IMM R7, 0x1000
 
 # Allocate function (size in R0, returns address in R0)
-06 01 07            # MOV R1, R7        (save current heap top)
+04 01 07            # MOV R1, R7        (save current heap top)
 04 07 00            # ADD R7, R0        (advance heap pointer)
-06 00 01            # MOV R0, R1        (return old heap top)
+04 00 01            # MOV R0, R1        (return old heap top)
 0D                  # RET
 ```
 
@@ -733,11 +733,11 @@ VirtComp provides a flat memory model, but you can implement your own memory man
 ```hex
 # Function prologue
 0A 06               # PUSH R6           (save old frame pointer)
-06 06 07            # MOV R6, R7        (set new frame pointer)
+04 06 07            # MOV R6, R7        (set new frame pointer)
 # ... allocate local variables by adjusting SP
 
 # Function epilogue  
-06 07 06            # MOV R7, R6        (restore stack pointer)
+04 07 06            # MOV R7, R6        (restore stack pointer)
 0B 06               # POP R6            (restore frame pointer)
 0D                  # RET
 ```
@@ -846,16 +846,16 @@ Check the `tests/` directory for complete example programs:
 | STORE    | 0x03   | `03 addr src` | Store to memory |
 | ADD      | 0x04   | `04 dst src` | Add registers |
 | SUB      | 0x05   | `05 dst src` | Subtract registers |
-| MOV      | 0x06   | `06 dst src` | Move register |
-| JMP      | 0x07   | `07 addr32` | Jump unconditional |
-| PUSH     | 0x0A   | `0A reg` | Push to stack |
-| POP      | 0x0B   | `0B reg` | Pop from stack |
-| CALL     | 0x0C   | `0C addr32` | Call function |
-| RET      | 0x0D   | `0D` | Return |
-| CMP      | 0x0E   | `0E r1 r2` | Compare registers |
-| JZ       | 0x0F   | `0F addr32` | Jump if zero |
-| JNZ      | 0x10   | `10 addr32` | Jump if not zero |
-| OUTSTR   | 0x1F   | `1F port reg` | Output string |
+| MOV      | 0x04   | `04 dst src` | Move register |
+| JMP      | 0x05   | `05 addr32` | Jump unconditional |
+| PUSH     | 0x08   | `08 reg` | Push to stack |
+| POP      | 0x09   | `09 reg` | Pop from stack |
+| CALL     | 0x1A   | `1A addr32` | Call function |
+| RET      | 0x1B   | `1B` | Return |
+| CMP      | 0x0A   | `0A r1 r2` | Compare registers |
+| JZ       | 0x0B   | `0B addr32` | Jump if zero |
+| JNZ      | 0x0C   | `0C addr32` | Jump if not zero |
+| OUTSTR   | 0x39   | `39 port reg` | Output string |
 | HALT     | 0xFF   | `FF` | Stop execution |
 
 ### Device Port Map
