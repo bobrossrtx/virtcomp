@@ -1,3 +1,2 @@
-# Simple test to demonstrate JO/JNO functionality
-# Load small values, add them (no overflow), test JNO, then load result indicating success
-01 00 05 01 01 03 02 00 01 24 0C 01 02 EE 05 0E 01 02 AA FF
+# Simple test to demonstrate JNO functionality  
+01 00 05 01 01 03 02 00 01 24 10 01 02 EE 05 12 01 02 AA FF
