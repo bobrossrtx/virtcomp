@@ -1,2 +1,5 @@
+<<<<<<< HEAD
 # Simple test to demonstrate JNO functionality  
 01 00 05 01 01 03 02 00 01 24 10 01 02 EE 05 12 01 02 AA FF
+=======
+>>>>>>> 3860f94 (fix(tests): resolve merge conflict in simple_overflow_test.hex)
