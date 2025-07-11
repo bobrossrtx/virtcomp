@@ -44,6 +44,8 @@ FF                    # HALT - Stop execution
 0E <addr>             # JNS - Jump if not sign
 0F <addr>             # JC - Jump if carry
 22 <addr>             # JNC - Jump if no carry
+23 <addr>             # JO - Jump if overflow
+24 <addr>             # JNO - Jump if no overflow
 ```
 
 ### Stack Operations
