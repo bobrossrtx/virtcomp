@@ -33,6 +33,8 @@ using Logging::Logger;
 #include "jz.hpp"
 #include "jc.hpp"
 #include "jnc.hpp"
+#include "jo.hpp"
+#include "jno.hpp"
 #include "lea.hpp"
 #include "load.hpp"
 #include "load_imm.hpp"
@@ -82,8 +84,22 @@ void handle_add(CPU& cpu, const std::vector<uint8_t>& program, [[maybe_unused]] 
             cpu.set_flags(current_flags & ~FLAG_CARRY);
         }
         
+        // Set overflow flag for signed arithmetic
+        // Overflow occurs when:
+        // - Adding two positive numbers results in a negative number
+        // - Adding two negative numbers results in a positive number
+        bool sign_before = (static_cast<int32_t>(before) < 0);
+        bool sign_operand = (static_cast<int32_t>(operand) < 0);
+        bool sign_result = (static_cast<int32_t>(result) < 0);
+        
+        if ((sign_before == sign_operand) && (sign_before != sign_result)) {
+            cpu.set_flags(cpu.get_flags() | FLAG_OVERFLOW);
+        } else {
+            cpu.set_flags(cpu.get_flags() & ~FLAG_OVERFLOW);
+        }
+        
         cpu.get_registers()[reg1] = result;
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[ADD] │ R{}: {} + {} = {} (carry={})", cpu.get_pc(), "", reg1, before, operand, result, (cpu.get_flags() & FLAG_CARRY) ? 1 : 0) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[ADD] │ R{}: {} + {} = {} (carry={}, overflow={})", cpu.get_pc(), "", reg1, before, operand, result, (cpu.get_flags() & FLAG_CARRY) ? 1 : 0, (cpu.get_flags() & FLAG_OVERFLOW) ? 1 : 0) << std::endl;
     }
     cpu.set_pc(cpu.get_pc() + 3);
     cpu.print_state("ADD");
@@ -601,9 +617,32 @@ void handle_mul(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t reg2 = program[cpu.get_pc() + 2];
         Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[MUL] │ PC={} R{} *= R{}", cpu.get_pc(), "", cpu.get_pc(), reg1, reg2) << std::endl;
         if (reg1 < cpu.get_registers().size() && reg2 < cpu.get_registers().size()) {
-            uint8_t before = cpu.get_registers()[reg1];
-            cpu.get_registers()[reg1] *= cpu.get_registers()[reg2];
-            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[MUL] │ R{}: {} * {} = {}", cpu.get_pc(), "", reg1, before, cpu.get_registers()[reg2], cpu.get_registers()[reg1]) << std::endl;
+            uint32_t before = cpu.get_registers()[reg1];
+            uint32_t operand = cpu.get_registers()[reg2];
+            
+            // Use 64-bit arithmetic to detect overflow
+            uint64_t result64 = static_cast<uint64_t>(before) * static_cast<uint64_t>(operand);
+            uint32_t result = static_cast<uint32_t>(result64);
+            
+            // Set carry flag if result overflows 32-bit
+            uint32_t current_flags = cpu.get_flags();
+            if (result64 > UINT32_MAX) {
+                cpu.set_flags(current_flags | FLAG_CARRY);
+            } else {
+                cpu.set_flags(current_flags & ~FLAG_CARRY);
+            }
+            
+            // Set overflow flag for signed arithmetic
+            // Check if signed multiplication overflows
+            int64_t signed_result = static_cast<int64_t>(static_cast<int32_t>(before)) * static_cast<int64_t>(static_cast<int32_t>(operand));
+            if (signed_result < INT32_MIN || signed_result > INT32_MAX) {
+                cpu.set_flags(cpu.get_flags() | FLAG_OVERFLOW);
+            } else {
+                cpu.set_flags(cpu.get_flags() & ~FLAG_OVERFLOW);
+            }
+            
+            cpu.get_registers()[reg1] = result;
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[MUL] │ R{}: {} * {} = {} (carry={}, overflow={})", cpu.get_pc(), "", reg1, before, operand, result, (cpu.get_flags() & FLAG_CARRY) ? 1 : 0, (cpu.get_flags() & FLAG_OVERFLOW) ? 1 : 0) << std::endl;
         }
         cpu.set_pc(cpu.get_pc() + 3);
     } else {
@@ -980,9 +1019,34 @@ void handle_sub(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t reg2 = program[cpu.get_pc() + 2];
         Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[SUB] │ PC={} R{} -= R{}", cpu.get_pc(), "", cpu.get_pc(), reg1, reg2) << std::endl;
         if (reg1 < cpu.get_registers().size() && reg2 < cpu.get_registers().size()) {
-            uint8_t before = cpu.get_registers()[reg1];
-            cpu.get_registers()[reg1] -= cpu.get_registers()[reg2];
-            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[SUB] │ R{}: {} - {} = {}", cpu.get_pc(), "", reg1, before, cpu.get_registers()[reg2], cpu.get_registers()[reg1]) << std::endl;
+            uint32_t before = cpu.get_registers()[reg1];
+            uint32_t operand = cpu.get_registers()[reg2];
+            uint32_t result = before - operand;
+            
+            // Set carry flag if underflow occurs (borrowing needed)
+            uint32_t current_flags = cpu.get_flags();
+            if (before < operand) {
+                cpu.set_flags(current_flags | FLAG_CARRY);
+            } else {
+                cpu.set_flags(current_flags & ~FLAG_CARRY);
+            }
+            
+            // Set overflow flag for signed arithmetic
+            // Overflow occurs when:
+            // - Subtracting a negative number from a positive number results in a negative number
+            // - Subtracting a positive number from a negative number results in a positive number
+            bool sign_before = (static_cast<int32_t>(before) < 0);
+            bool sign_operand = (static_cast<int32_t>(operand) < 0);
+            bool sign_result = (static_cast<int32_t>(result) < 0);
+            
+            if ((sign_before != sign_operand) && (sign_before != sign_result)) {
+                cpu.set_flags(cpu.get_flags() | FLAG_OVERFLOW);
+            } else {
+                cpu.set_flags(cpu.get_flags() & ~FLAG_OVERFLOW);
+            }
+            
+            cpu.get_registers()[reg1] = result;
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[SUB] │ R{}: {} - {} = {} (carry={}, overflow={})", cpu.get_pc(), "", reg1, before, operand, result, (cpu.get_flags() & FLAG_CARRY) ? 1 : 0, (cpu.get_flags() & FLAG_OVERFLOW) ? 1 : 0) << std::endl;
         }
         cpu.set_pc(cpu.get_pc() + 3);
     } else {
@@ -1075,6 +1139,50 @@ void handle_jnc(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     cpu.print_state("JNC");
 }
 
+// Implementation from jo.cpp
+void handle_jo(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    uint32_t pc = cpu.get_pc();
+
+    if (pc + 1 < program.size()) {
+        uint8_t addr = program[pc + 1];
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JO] │ PC={} Checking overflow flag", pc, "", pc) << std::endl;
+
+        if (cpu.get_flags() & FLAG_OVERFLOW) {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JO] │ Overflow flag set, jumping to address {}", pc, "", addr) << std::endl;
+            cpu.set_pc(addr);
+        } else {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JO] │ Overflow flag clear, continuing", pc, "", pc) << std::endl;
+            cpu.set_pc(pc + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JO");
+}
+
+// Implementation from jno.cpp
+void handle_jno(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    uint32_t pc = cpu.get_pc();
+
+    if (pc + 1 < program.size()) {
+        uint8_t addr = program[pc + 1];
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JNO] │ PC={} Checking overflow flag", pc, "", pc) << std::endl;
+
+        if (!(cpu.get_flags() & FLAG_OVERFLOW)) {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JNO] │ Overflow flag clear, jumping to address {}", pc, "", addr) << std::endl;
+            cpu.set_pc(addr);
+        } else {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JNO] │ Overflow flag set, continuing", pc, "", pc) << std::endl;
+            cpu.set_pc(pc + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JNO");
+}
+
 // Dispatcher function (copied from opcode_dispatcher.cpp)
 void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() >= program.size()) {
@@ -1132,6 +1240,12 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
             break;
         case Opcode::JNC:
             handle_jnc(cpu, program, running);
+            break;
+        case Opcode::JO:
+            handle_jo(cpu, program, running);
+            break;
+        case Opcode::JNO:
+            handle_jno(cpu, program, running);
             break;
         case Opcode::LOAD:
             handle_load(cpu, program, running);

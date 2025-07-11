@@ -1,0 +1,2 @@
+# Test JNO: 16 + 32 = 48 (no overflow), should jump and set R2=0x42
+01 00 10 01 01 20 02 00 01 24 0C 01 02 AA FF 01 02 42 FF

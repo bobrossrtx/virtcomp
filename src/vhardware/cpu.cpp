@@ -54,6 +54,10 @@ std::unordered_set<size_t> compute_valid_instruction_starts(const std::vector<ui
             case Opcode::JNZ:
             case Opcode::JS:
             case Opcode::JNS:
+            case Opcode::JC:
+            case Opcode::JNC:
+            case Opcode::JO:
+            case Opcode::JNO:
             case Opcode::PUSH:
             case Opcode::POP:
             case Opcode::INC:
