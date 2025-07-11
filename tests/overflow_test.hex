@@ -1,0 +1,2 @@
+# Test overflow with signed multiplication: (-1) * (-1) should not overflow, but large values might
+01 00 80 01 01 80 10 00 01 23 0C 01 02 AA FF 01 02 42 FF
