@@ -58,11 +58,11 @@ VirtComp is a virtual computer system with a custom CPU architecture, supporting
 - ✅ **String I/O**: INSTR/OUTSTR for text processing
 - 🔄 **Device Integration**: Enhanced device protocol support
 
-#### Advanced Conditional Operations *(90% Complete)*
+#### Advanced Conditional Operations *(95% Complete)*
 - ✅ **Carry Flags**: JC/JNC for unsigned arithmetic overflow (completed and tested)
 - ✅ **Basic Testing**: All carry flag operations thoroughly tested and working
 - ✅ **Test Suite**: Comprehensive unit and integration tests for conditional jumps
-- 🔜 **Overflow Flags**: JO/JNO for signed arithmetic overflow
+- ✅ **Overflow Flags**: JO/JNO for signed arithmetic overflow (completed and tested)
 - 🔜 **Comparison Jumps**: JG/JL/JGE/JLE for signed/unsigned comparisons
 - 🔜 **Flag Extensions**: Additional CPU flags for complex conditions
 
