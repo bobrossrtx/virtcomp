@@ -54,6 +54,12 @@ libexec/
 *.pyo
 *.pyd
 
+# Debugging files
+*.dSYM/
+*.su
+*.gcno
+debug*.hex
+
 # Generated files
 src/program_data.hpp
 
@@ -61,3 +67,11 @@ src/program_data.hpp
 extern/
 
 .trae/
+
+# Memory bank and development files
+memory-bank/
+.github/*.chatmode.md
+fix_load_imm.sh
+debug_shift_test.cpp
+merge-to-main.sh
+src/test/test_runner.cpp
