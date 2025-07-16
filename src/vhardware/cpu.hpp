@@ -33,6 +33,10 @@ enum class Opcode : uint8_t {
     JNC = 0x22,         // Jump if carry flag not set
     JO  = 0x23,         // Jump if overflow flag set
     JNO = 0x24,         // Jump if overflow flag not set
+    JG  = 0x25,         // Jump if greater (signed)
+    JL  = 0x26,         // Jump if less (signed)
+    JGE = 0x27,         // Jump if greater or equal (signed)
+    JLE = 0x28,         // Jump if less or equal (signed)
 
     MUL = 0x10,         // Multiply reg1, reg2
     DIV = 0x11,         // Divide reg1, reg2

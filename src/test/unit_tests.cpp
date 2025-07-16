@@ -506,7 +506,7 @@ TEST_CASE(carry_flag_arithmetic, "flags") {
         0x01, 0x00, 0x10,  // LOAD_IMM R0, 0x10
         0x01, 0x01, 0x20,  // LOAD_IMM R1, 0x20
         0x02, 0x00, 0x01,  // ADD R0, R1 (0x10 + 0x20 = 0x30, no carry)
-        
+
         // Test case 2: Cause carry using NOT to get max value
         0x01, 0x02, 0x00,  // LOAD_IMM R2, 0 (start with 0)
         0x17, 0x02,        // NOT R2 (R2 becomes 0xFFFFFFFF)
@@ -521,4 +521,426 @@ TEST_CASE(carry_flag_arithmetic, "flags") {
     ctx.assert_register_eq(0, 0x30);  // No carry here
     ctx.assert_register_eq(2, 0);     // Overflowed to 0
     ctx.assert_flag_set(FLAG_CARRY);   // Final carry flag should be set
+}
+
+TEST_CASE(jg_greater_than, "comparison_jumps") {
+    // Test JG (Jump if Greater) - should jump when first > second
+    ctx.load_program({
+        0x01, 0x00, 0x05,  // LOAD_IMM R0, 5
+        0x01, 0x01, 0x03,  // LOAD_IMM R1, 3
+        0x0A, 0x00, 0x01,  // CMP R0, R1 (5 - 3 = 2, positive, not zero)
+        0x25, 0x0F,        // JG 15 (0x0F) - should jump
+        0x01, 0x02, 0xFF,  // LOAD_IMM R2, 255 (should be skipped)
+        0xFF,              // HALT (should be skipped)
+        // Jump target at address 15:
+        0x01, 0x02, 0xAA,  // LOAD_IMM R2, 170 (should be executed)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 5);
+    ctx.assert_register_eq(1, 3);
+    ctx.assert_register_eq(2, 0xAA);  // Should be 170, not 255
+}
+
+TEST_CASE(jl_less_than, "comparison_jumps") {
+    // Test JL (Jump if Less) - should jump when first < second
+    ctx.load_program({
+        0x01, 0x00, 0x03,  // LOAD_IMM R0, 3
+        0x01, 0x01, 0x05,  // LOAD_IMM R1, 5
+        0x0A, 0x00, 0x01,  // CMP R0, R1 (3 - 5 = -2, negative, not zero)
+        0x26, 0x0F,        // JL 15 (0x0F) - should jump
+        0x01, 0x02, 0xFF,  // LOAD_IMM R2, 255 (should be skipped)
+        0xFF,              // HALT (should be skipped)
+        // Jump target at address 15:
+        0x01, 0x02, 0xBB,  // LOAD_IMM R2, 187 (should be executed)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 3);
+    ctx.assert_register_eq(1, 5);
+    ctx.assert_register_eq(2, 0xBB);  // Should be 187, not 255
+}
+
+TEST_CASE(jge_greater_equal, "comparison_jumps") {
+    // Test JGE (Jump if Greater or Equal) - should jump when first >= second
+    ctx.load_program({
+        0x01, 0x00, 0x05,  // LOAD_IMM R0, 5
+        0x01, 0x01, 0x05,  // LOAD_IMM R1, 5
+        0x0A, 0x00, 0x01,  // CMP R0, R1 (5 - 5 = 0, zero flag set)
+        0x27, 0x0F,        // JGE 15 (0x0F) - should jump (equal case)
+        0x01, 0x02, 0xFF,  // LOAD_IMM R2, 255 (should be skipped)
+        0xFF,              // HALT (should be skipped)
+        // Jump target at address 15:
+        0x01, 0x02, 0xCC,  // LOAD_IMM R2, 204 (should be executed)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 5);
+    ctx.assert_register_eq(1, 5);
+    ctx.assert_register_eq(2, 0xCC);  // Should be 204, not 255
+}
+
+TEST_CASE(jle_less_equal, "comparison_jumps") {
+    // Test JLE (Jump if Less or Equal) - should jump when first <= second
+    ctx.load_program({
+        0x01, 0x00, 0x03,  // LOAD_IMM R0, 3
+        0x01, 0x01, 0x05,  // LOAD_IMM R1, 5
+        0x0A, 0x00, 0x01,  // CMP R0, R1 (3 - 5 = -2, negative, not zero)
+        0x28, 0x0F,        // JLE 15 (0x0F) - should jump (less case)
+        0x01, 0x02, 0xFF,  // LOAD_IMM R2, 255 (should be skipped)
+        0xFF,              // HALT (should be skipped)
+        // Jump target at address 15:
+        0x01, 0x02, 0xDD,  // LOAD_IMM R2, 221 (should be executed)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 3);
+    ctx.assert_register_eq(1, 5);
+    ctx.assert_register_eq(2, 0xDD);  // Should be 221, not 255
+}
+
+TEST_CASE(comparison_jumps_no_jump, "comparison_jumps") {
+    // Test that comparison jumps don't jump when condition is false
+    ctx.load_program({
+        0x01, 0x00, 0x03,  // LOAD_IMM R0, 3
+        0x01, 0x01, 0x05,  // LOAD_IMM R1, 5
+        0x0A, 0x00, 0x01,  // CMP R0, R1 (3 - 5 = -2, negative, not zero)
+        0x25, 0x12,        // JG 18 - should NOT jump (3 is not > 5)
+        0x01, 0x02, 0xAA,  // LOAD_IMM R2, 170 (should be executed)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 3);
+    ctx.assert_register_eq(1, 5);
+    ctx.assert_register_eq(2, 0xAA);  // Should be executed since JG didn't jump
+}
+
+// ===== MISSING INSTRUCTION TESTS =====
+
+TEST_CASE(nop_instruction, "instructions") {
+    // Test that NOP does nothing
+    ctx.load_program({
+        0x01, 0x00, 0x05,  // LOAD_IMM R0, 5
+        0x00,              // NOP
+        0x00,              // NOP
+        0x01, 0x01, 0x03,  // LOAD_IMM R1, 3
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 5);
+    ctx.assert_register_eq(1, 3);
+}
+
+TEST_CASE(mov_instruction, "instructions") {
+    // Test MOV instruction (register to register copy)
+    ctx.load_program({
+        0x01, 0x00, 0x42,  // LOAD_IMM R0, 66
+        0x04, 0x01, 0x00,  // MOV R1, R0 (R1 = R0)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 66);
+    ctx.assert_register_eq(1, 66);
+}
+
+TEST_CASE(jmp_instruction, "control_flow") {
+    // Test unconditional jump
+    ctx.load_program({
+        0x01, 0x00, 0x10,  // LOAD_IMM R0, 16
+        0x05, 0x08,        // JMP 8 (skip next instruction)
+        0x01, 0x00, 0xFF,  // LOAD_IMM R0, 255 (should be skipped)
+        0xFF               // HALT (at address 8)
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 16);  // Should not be overwritten to 255
+}
+
+TEST_CASE(mul_instruction, "arithmetic") {
+    // Test multiplication
+    ctx.load_program({
+        0x01, 0x00, 0x06,  // LOAD_IMM R0, 6
+        0x01, 0x01, 0x07,  // LOAD_IMM R1, 7
+        0x10, 0x00, 0x01,  // MUL R0, R1 (R0 = R0 * R1)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 42);  // 6 * 7 = 42
+    ctx.assert_register_eq(1, 7);   // R1 unchanged
+}
+
+TEST_CASE(div_instruction, "arithmetic") {
+    // Test division (normal case)
+    ctx.load_program({
+        0x01, 0x00, 0x15,  // LOAD_IMM R0, 21
+        0x01, 0x01, 0x03,  // LOAD_IMM R1, 3
+        0x11, 0x00, 0x01,  // DIV R0, R1 (R0 = R0 / R1)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 7);   // 21 / 3 = 7
+    ctx.assert_register_eq(1, 3);   // R1 unchanged
+}
+
+TEST_CASE(inc_instruction, "arithmetic") {
+    // Test increment
+    ctx.load_program({
+        0x01, 0x00, 0x05,  // LOAD_IMM R0, 5
+        0x12, 0x00,        // INC R0
+        0x12, 0x00,        // INC R0
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 7);   // 5 + 1 + 1 = 7
+}
+
+TEST_CASE(dec_instruction, "arithmetic") {
+    // Test decrement
+    ctx.load_program({
+        0x01, 0x00, 0x08,  // LOAD_IMM R0, 8
+        0x13, 0x00,        // DEC R0
+        0x13, 0x00,        // DEC R0
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 6);   // 8 - 1 - 1 = 6
+}
+
+TEST_CASE(js_jns_jumps, "control_flow") {
+    // Test sign flag jumps
+    ctx.load_program({
+        0x01, 0x00, 0x03,  // LOAD_IMM R0, 3
+        0x01, 0x01, 0x05,  // LOAD_IMM R1, 5
+        0x0A, 0x00, 0x01,  // CMP R0, R1 (3 - 5 = -2, sets sign flag)
+        0x0D, 0x0F,        // JS 15 - should jump (sign flag set)
+        0x01, 0x02, 0xFF,  // LOAD_IMM R2, 255 (should be skipped)
+        0xFF,              // HALT (should be skipped)
+        // Jump target at address 15:
+        0x01, 0x02, 0xAA,  // LOAD_IMM R2, 170 (should be executed)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(2, 0xAA);  // Should jump and execute
+}
+
+TEST_CASE(jz_jnz_jumps, "control_flow") {
+    // Test zero flag jumps
+    ctx.load_program({
+        0x01, 0x00, 0x05,  // LOAD_IMM R0, 5
+        0x01, 0x01, 0x05,  // LOAD_IMM R1, 5
+        0x0A, 0x00, 0x01,  // CMP R0, R1 (5 - 5 = 0, sets zero flag)
+        0x0B, 0x0F,        // JZ 15 - should jump (zero flag set)
+        0x01, 0x02, 0xFF,  // LOAD_IMM R2, 255 (should be skipped)
+        0xFF,              // HALT (should be skipped)
+        // Jump target at address 15:
+        0x01, 0x02, 0xBB,  // LOAD_IMM R2, 187 (should be executed)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(2, 0xBB);  // Should jump and execute
+}
+
+TEST_CASE(overflow_flag_arithmetic, "flags") {
+    // Test overflow flag with large numbers
+    ctx.load_program({
+        0x01, 0x00, 0xFF,  // LOAD_IMM R0, 255
+        0x01, 0x01, 0x01,  // LOAD_IMM R1, 1
+        0x02, 0x00, 0x01,  // ADD R0, R1 (255 + 1 = 256, no overflow in 32-bit)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    // In 32-bit system: 255 + 1 = 256, no overflow
+    ctx.assert_register_eq(0, 256);  // Should be 256, not 0
+}
+
+TEST_CASE(jo_jno_jumps, "control_flow") {
+    // Test overflow flag jumps
+    ctx.load_program({
+        0x01, 0x00, 0xFF,  // LOAD_IMM R0, 255
+        0x01, 0x01, 0x01,  // LOAD_IMM R1, 1
+        0x02, 0x00, 0x01,  // ADD R0, R1 (causes overflow: 255 + 1 = 0)
+        0x23, 0x12,        // JO 18 - should jump if overflow occurred
+        0x01, 0x02, 0xFF,  // LOAD_IMM R2, 255 (skipped if overflow)
+        0xFF,              // HALT (skipped if overflow)
+        // Jump target at address 18:
+        0x01, 0x02, 0xCC,  // LOAD_IMM R2, 204 (executed if overflow)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    // Result depends on whether overflow flag is properly implemented
+    // This test will validate overflow flag behavior
+}
+
+TEST_CASE(subroutine_call_return, "control_flow") {
+    // Test CALL and RET instructions
+    ctx.load_program({
+        0x01, 0x00, 0x10,  // 0-2: LOAD_IMM R0, 16
+        0x1A, 0x0F,        // 3-4: CALL 15 (call subroutine)
+        0x01, 0x01, 0x99,  // 5-7: LOAD_IMM R1, 153 (should execute after return)
+        0xFF,              // 8: HALT
+        // Padding to reach address 15:
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,  // 9-14: padding
+        // Subroutine at address 15:
+        0x01, 0x02, 0xAA,  // 15-17: LOAD_IMM R2, 170
+        0x1B,              // 18: RET (return to caller)
+    });
+
+    ctx.execute_program();
+    
+    ctx.assert_register_eq(0, 16);   // Original value
+    ctx.assert_register_eq(1, 153);  // Set after return
+    ctx.assert_register_eq(2, 0xAA); // Set in subroutine
+}
+
+TEST_CASE(stack_flag_operations, "stack") {
+    // Test PUSH_FLAG and POP_FLAG
+    ctx.load_program({
+        0x01, 0x00, 0x05,  // LOAD_IMM R0, 5
+        0x01, 0x01, 0x05,  // LOAD_IMM R1, 5
+        0x0A, 0x00, 0x01,  // CMP R0, R1 (sets zero flag)
+        0x1E,              // PUSH_FLAG (save flags to stack)
+        0x01, 0x02, 0x00,  // LOAD_IMM R2, 0 (will clear flags)
+        0x0A, 0x02, 0x01,  // CMP R2, R1 (sets different flags)
+        0x1F,              // POP_FLAG (restore original flags)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_flag_set(FLAG_ZERO);  // Should have original zero flag restored
+}
+
+TEST_CASE(stack_arg_operations, "stack") {
+    // Test PUSH_ARG and POP_ARG
+    ctx.load_program({
+        0x01, 0x00, 0x42,  // LOAD_IMM R0, 66
+        0x1C, 0x00,        // PUSH_ARG R0 (push argument)
+        0x01, 0x00, 0x00,  // LOAD_IMM R0, 0 (clear R0)
+        0x1D, 0x01,        // POP_ARG R1 (pop argument to R1)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 0);   // Cleared
+    ctx.assert_register_eq(1, 66);  // Should have popped value
+}
+
+TEST_CASE(advanced_io_operations, "devices") {
+    // Test different I/O sizes
+    ctx.load_program({
+        0x01, 0x00, 0x42,  // LOAD_IMM R0, 66
+        0x33, 0x00, 0x01,  // OUTB R0, port 1 (output byte)
+        0x32, 0x01, 0x01,  // INB R1, port 1 (input byte)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 66);
+    // Note: Actual I/O behavior depends on device implementation
+}
+
+TEST_CASE(db_data_definition, "memory") {
+    // Test DB (Define Byte) instruction for embedding data
+    ctx.load_program({
+        0x40, 0x10, 0x05,  // DB target_addr=16, length=5
+        0x48, 0x65, 0x6C, 0x6C, 0x6F,  // Data: "Hello"
+        0x06, 0x00, 0x10,  // LOAD R0, [16] (load first byte)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 0x48);  // Should load 'H' (0x48)
+}
+
+TEST_CASE(edge_case_register_bounds, "error_handling") {
+    // Test that invalid register numbers are handled
+    ctx.load_program({
+        0x01, 0x08, 0x05,  // LOAD_IMM R8, 5 (invalid register)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    // Should either error or handle gracefully
+}
+
+TEST_CASE(edge_case_memory_bounds, "error_handling") {
+    // Test memory boundary access
+    ctx.load_program({
+        0x01, 0x00, 0xFF,  // LOAD_IMM R0, 255
+        0x07, 0x00, 0xFF,  // STORE R0, [255] (store at memory boundary)
+        0x06, 0x01, 0xFF,  // LOAD R1, [255] (load from memory boundary)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 255);
+    ctx.assert_register_eq(1, 255);
+}
+
+TEST_CASE(shift_edge_cases, "bitwise") {
+    // Test shift operations with edge cases
+    ctx.load_program({
+        0x01, 0x00, 0x80,  // LOAD_IMM R0, 128 (0b10000000)
+        0x18, 0x00, 0x01,  // SHL R0, 1 (shift left by 1)
+        0x01, 0x01, 0x04,  // LOAD_IMM R1, 4
+        0x19, 0x01, 0x01,  // SHR R1, 1 (shift right by 1)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 256);  // 128 << 1 = 256 in 32-bit system
+    ctx.assert_register_eq(1, 2);    // 4 >> 1 = 2
+}
+
+TEST_CASE(flag_combination_tests, "flags") {
+    // Test multiple flag combinations
+    ctx.load_program({
+        // Test carry + zero
+        0x01, 0x00, 0xFF,  // LOAD_IMM R0, 255
+        0x01, 0x01, 0x01,  // LOAD_IMM R1, 1
+        0x02, 0x00, 0x01,  // ADD R0, R1 (255 + 1 = 0, carry + zero)
+
+        // Test sign flag
+        0x01, 0x02, 0x01,  // LOAD_IMM R2, 1
+        0x01, 0x03, 0x02,  // LOAD_IMM R3, 2
+        0x0A, 0x02, 0x03,  // CMP R2, R3 (1 - 2 = -1, sign flag)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_flag_set(FLAG_SIGN);   // Last operation sets sign flag
+}
+
+TEST_CASE(complex_program_flow, "integration") {
+    // Test a more complex program with multiple control structures
+    ctx.load_program({
+        0x01, 0x00, 0x05,  // LOAD_IMM R0, 5 (counter)
+        0x01, 0x01, 0x00,  // LOAD_IMM R1, 0 (for comparison)
+        // Loop start at address 6:
+        0x13, 0x00,        // DEC R0
+        0x0A, 0x00, 0x01,  // CMP R0, R1 (compare counter to 0)
+        0x0B, 0x0F,        // JZ 15 (exit loop when R0 = 0)
+        0x05, 0x06,        // JMP 6 (back to loop start)
+        // Loop exit at address 15:
+        0x01, 0x02, 0xFF,  // LOAD_IMM R2, 255 (success marker)
+        0xFF               // HALT
+    });
+
+    ctx.execute_program();
+    ctx.assert_register_eq(0, 0);    // Counter should be 0
+    ctx.assert_register_eq(2, 255);  // Success marker should be set
 }

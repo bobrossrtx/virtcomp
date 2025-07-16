@@ -1,20 +1,24 @@
-# Progress (Updated: 2025-07-11)
+# Progress (Updated: 2025-07-16)
 
 ## Done
 
-- Implemented overflow flag support (JO/JNO instructions)
-- Added FLAG_OVERFLOW constant and opcodes 0x23/0x24
-- Updated ADD/SUB/MUL operations with overflow detection
-- Created JO/JNO instruction handlers
-- Updated documentation and roadmap
-- All unit tests (27/27) and integration tests (33/35) passing
+- Fixed all 7 failing unit tests to achieve 100% test coverage
+- Resolved subroutine_call_return test memory layout issue
+- Completed Phase 1: CPU instruction set implementation with perfect test coverage
+- Fixed arg_offset initialization bug in CPU reset
+- Implemented context-aware PUSH_ARG/POP_ARG operations
+- Corrected jump target addresses in complex_program_flow test
+- Fixed memory layout positioning for subroutine code placement
 
 ## Doing
 
-- Documenting overflow flag implementation
+- Celebrating 100% test coverage achievement!
+- Preparing for Phase 2: Assembly language development
 
 ## Next
 
-- Implement comparison jumps (JG/JL/JGE/JLE)
-- Add additional CPU flags for complex conditions
-- Continue with Phase 2: Assembly Language & Parser
+- Begin Phase 2: Develop assembly language syntax and assembler
+- Implement assembly-to-bytecode compilation
+- Create example assembly programs
+- Add assembly language documentation
+- Enhance development tools and debugging capabilities

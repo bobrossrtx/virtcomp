@@ -105,6 +105,7 @@ void CPU::reset() {
     sp = memory.size();
     fp = sp;
     flags = 0;
+    arg_offset = 0; // Initialize arg_offset for PUSH_ARG/POP_ARG operations
     last_accessed_addr = INVALID_ADDR; // Clear highlight
     last_modified_addr = INVALID_ADDR; // Clear highlight
 }
@@ -224,8 +225,8 @@ void CPU::run(const std::vector<uint8_t>& program) {
 }
 
 bool CPU::step(const std::vector<uint8_t>& program) {
-    // Copy program into memory if first step
-    if (pc == 0) {
+    // Copy program into memory if first step and memory is empty
+    if (pc == 0 && memory[0] == 0 && !program.empty()) {
         std::copy(program.begin(), program.end(), memory.begin());
         sp = memory.size() - 4;
         fp = sp;

@@ -136,7 +136,7 @@ void handle_call(CPU& cpu,[[maybe_unused]] const std::vector<uint8_t>& program, 
 
     Logger::instance().debug() << fmt::format(
         "[PC=0x{:04X}]{:>5}[Call] │ PC=0x{:X}->addr=0x{:X} ret 0x{:X} and FP 0x{:X} to stack at SP=0x{:X}",
-        pc, "", pc, addr, (pc + 1), cpu.get_fp(), cpu.get_sp()
+        pc, "", pc, addr, (pc + 2), cpu.get_fp(), cpu.get_sp()
     ) << std::endl;
 
     // Push old FP
@@ -144,10 +144,10 @@ void handle_call(CPU& cpu,[[maybe_unused]] const std::vector<uint8_t>& program, 
     cpu.set_sp(sp);
     cpu.write_mem32(sp, cpu.get_fp());
 
-    // Push return address (pc + 1)
+    // Push return address (pc + 2 for 2-byte CALL instruction)
     sp -= 4;
     cpu.set_sp(sp);
-    cpu.write_mem32(sp, pc + 1);
+    cpu.write_mem32(sp, pc + 2);
 
     // Set new FP
     cpu.set_fp(sp);
@@ -510,7 +510,14 @@ void handle_js(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t addr = program[pc + 1];
 
         if (cpu.get_flags() & FLAG_SIGN) {
-            // TODO: Add valid instruction start validation
+            // Simple validation - check if address is within program bounds
+            if (addr >= program.size()) {
+                Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                    << "Invalid jump address " << "│ (JS): "
+                    << static_cast<int>(addr) << " at PC=" << cpu.get_pc() << std::endl;
+                running = false;
+                return;
+            }
             cpu.set_pc(addr);
         } else {
             cpu.set_pc(pc + 2);
@@ -847,16 +854,32 @@ void handle_pop_arg(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& progr
     uint32_t pc = cpu.get_pc();
     uint8_t reg = cpu.fetch_operand();
 
-    cpu.get_registers()[reg] = cpu.read_mem32(cpu.get_fp() + cpu.get_arg_offset());
+    // Check if we're in a function call context by checking if arg_offset has been set
+    // In function context, arg_offset is set to 8 by CALL
+    // In standalone context, arg_offset remains 0 (initialized value)
+    if (cpu.get_arg_offset() > 0) {
+        // Function context: use frame pointer + offset  
+        cpu.get_registers()[reg] = cpu.read_mem32(cpu.get_fp() + cpu.get_arg_offset());
+        
+        Logger::instance().debug() << fmt::format(
+            "[PC=0x{:04X}]{:>2}[POP_ARG] │ Function context: FP={} arg_offset={} addr={} value={}",
+            pc, "", cpu.get_fp(), cpu.get_arg_offset(),
+            (cpu.get_fp() + cpu.get_arg_offset()), cpu.get_registers()[reg]
+        ) << std::endl;
+        
+        cpu.set_arg_offset(cpu.get_arg_offset() + 4);
+    } else {
+        // Standalone context: pop from stack like regular POP
+        cpu.get_registers()[reg] = cpu.read_mem32(cpu.get_sp());
+        cpu.set_sp(cpu.get_sp() + 4);
+        
+        Logger::instance().debug() << fmt::format(
+            "[PC=0x{:04X}]{:>2}[POP_ARG] │ Standalone context: popped from SP={} value={}",
+            pc, "", cpu.get_sp() - 4, cpu.get_registers()[reg]
+        ) << std::endl;
+    }
 
-    Logger::instance().debug() << fmt::format(
-        "[PC=0x{:04X}]{:>2}[POP_ARG] │ FP={} arg_offset={} addr={} value={}",
-        pc, "", cpu.get_fp(), cpu.get_arg_offset(),
-        (cpu.get_fp() + cpu.get_arg_offset()), cpu.get_registers()[reg]
-    ) << std::endl;
-
-    cpu.set_arg_offset(cpu.get_arg_offset() + 4);
-    cpu.set_pc(pc + 1);
+    // Don't set PC - fetch_operand already advanced it
     cpu.print_state("POP_ARG");
 }
 
@@ -897,7 +920,7 @@ void handle_push_arg(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& prog
     cpu.set_sp(sp);
     cpu.write_mem32(sp, cpu.get_registers()[reg]);
 
-    cpu.set_pc(pc + 1);
+    // Don't set PC - fetch_operand already advanced it
     cpu.print_state("PUSH_ARG");
 }
 
@@ -934,18 +957,16 @@ void handle_ret(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, 
         pc, "", sp
     ) << std::endl;
 
-    // Save return value before unwinding stack
-    uint32_t ret_val = cpu.read_mem32(sp);         // return value is at sp
-    uint32_t ret_addr = cpu.read_mem32(sp + 4);    // return address
-    uint32_t old_fp = cpu.read_mem32(sp + 8);      // old frame pointer
+    // Stack layout from CALL:
+    // SP: return address
+    // SP+4: old frame pointer
+    uint32_t ret_addr = cpu.read_mem32(sp);      // return address at sp
+    uint32_t old_fp = cpu.read_mem32(sp + 4);    // old frame pointer at sp+4
 
-    // Unwind stack
-    sp += 12;
+    // Unwind stack (pop 8 bytes: return address + old FP)
+    sp += 8;
     cpu.set_sp(sp);
     cpu.set_fp(old_fp);
-
-    // Write return value to caller's stack frame (at fp + 0)
-    cpu.write_mem32(cpu.get_fp(), ret_val);
 
     cpu.print_stack_frame("RET");
     cpu.set_pc(ret_addr);
@@ -1183,6 +1204,110 @@ void handle_jno(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     cpu.print_state("JNO");
 }
 
+// Implementation for JG (Jump if Greater - signed)
+void handle_jg(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    if (cpu.get_pc() + 1 < program.size()) {
+        uint8_t addr = program[cpu.get_pc() + 1];
+        // JG: Jump if greater (NOT zero AND NOT sign)
+        // This means reg1 > reg2 from the last CMP
+        if (!(cpu.get_flags() & FLAG_ZERO) && !(cpu.get_flags() & FLAG_SIGN)) {
+            // Simple validation - check if address is within program bounds
+            if (addr >= program.size()) {
+                Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                    << "Invalid jump address " << "│ (JG): "
+                    << static_cast<int>(addr) << " at PC=" << cpu.get_pc() << std::endl;
+                running = false;
+                return;
+            }
+            cpu.set_pc(addr);
+        } else {
+            cpu.set_pc(cpu.get_pc() + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JG");
+}
+
+// Implementation for JL (Jump if Less - signed)
+void handle_jl(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    if (cpu.get_pc() + 1 < program.size()) {
+        uint8_t addr = program[cpu.get_pc() + 1];
+        // JL: Jump if less (sign flag set AND NOT zero)
+        // This means reg1 < reg2 from the last CMP
+        if ((cpu.get_flags() & FLAG_SIGN) && !(cpu.get_flags() & FLAG_ZERO)) {
+            // Simple validation - check if address is within program bounds
+            if (addr >= program.size()) {
+                Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                    << "Invalid jump address " << "│ (JL): "
+                    << static_cast<int>(addr) << " at PC=" << cpu.get_pc() << std::endl;
+                running = false;
+                return;
+            }
+            cpu.set_pc(addr);
+        } else {
+            cpu.set_pc(cpu.get_pc() + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JL");
+}
+
+// Implementation for JGE (Jump if Greater or Equal - signed)
+void handle_jge(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    if (cpu.get_pc() + 1 < program.size()) {
+        uint8_t addr = program[cpu.get_pc() + 1];
+        // JGE: Jump if greater or equal (NOT sign flag)
+        // This means reg1 >= reg2 from the last CMP
+        if (!(cpu.get_flags() & FLAG_SIGN)) {
+            // Simple validation - check if address is within program bounds
+            if (addr >= program.size()) {
+                Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                    << "Invalid jump address " << "│ (JGE): "
+                    << static_cast<int>(addr) << " at PC=" << cpu.get_pc() << std::endl;
+                running = false;
+                return;
+            }
+            cpu.set_pc(addr);
+        } else {
+            cpu.set_pc(cpu.get_pc() + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JGE");
+}
+
+// Implementation for JLE (Jump if Less or Equal - signed)
+void handle_jle(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    if (cpu.get_pc() + 1 < program.size()) {
+        uint8_t addr = program[cpu.get_pc() + 1];
+        // JLE: Jump if less or equal (sign flag OR zero flag)
+        // This means reg1 <= reg2 from the last CMP
+        if ((cpu.get_flags() & FLAG_SIGN) || (cpu.get_flags() & FLAG_ZERO)) {
+            // Simple validation - check if address is within program bounds
+            if (addr >= program.size()) {
+                Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                    << "Invalid jump address " << "│ (JLE): "
+                    << static_cast<int>(addr) << " at PC=" << cpu.get_pc() << std::endl;
+                running = false;
+                return;
+            }
+            cpu.set_pc(addr);
+        } else {
+            cpu.set_pc(cpu.get_pc() + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JLE");
+}
+
 // Dispatcher function (copied from opcode_dispatcher.cpp)
 void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() >= program.size()) {
@@ -1246,6 +1371,18 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
             break;
         case Opcode::JNO:
             handle_jno(cpu, program, running);
+            break;
+        case Opcode::JG:
+            handle_jg(cpu, program, running);
+            break;
+        case Opcode::JL:
+            handle_jl(cpu, program, running);
+            break;
+        case Opcode::JGE:
+            handle_jge(cpu, program, running);
+            break;
+        case Opcode::JLE:
+            handle_jle(cpu, program, running);
             break;
         case Opcode::LOAD:
             handle_load(cpu, program, running);

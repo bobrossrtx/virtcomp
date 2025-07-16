@@ -1,0 +1,11 @@
+# Test JG (Jump if Greater) - should jump when 5 > 3
+# Load 5 into r0, 3 into r1, compare, then test JG
+01 00 05   # LOAD_IMM r0, 5
+01 01 03   # LOAD_IMM r1, 3  
+0A 00 01   # CMP r0, r1 (5 - 3 = 2, not zero, not negative)
+25 12      # JG 18 (0x12) - should jump
+01 02 FF   # LOAD_IMM r2, 255 (should be skipped)
+FF         # HALT
+# Jump target at address 18 (0x12):
+01 02 AA   # LOAD_IMM r2, 170 (should be executed)
+FF         # HALT
