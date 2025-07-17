@@ -558,7 +558,7 @@ public:
             return;
         }
 
-        // Print a simple, clean header
+        // Print a simple, clean headerw
         if (!Config::compile_only) {
             const char* color = Config::debug ? "\033[38;5;208m" : "\033[36m";
             std::cout << color << "\n=== VirtComp Virtual Machine ===" << "\033[0m" << std::endl;
@@ -573,12 +573,12 @@ public:
         // Print CPU state
         cpu.print_state("End");
         cpu.print_registers();
-        
+
         // Print extended registers if enabled
         if (Config::extended_registers) {
             cpu.print_extended_registers();
         }
-        
+
         cpu.print_memory();
 
         if (Config::error_count > 0) {
