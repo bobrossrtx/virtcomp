@@ -72,7 +72,7 @@ private:
 // Test context - provides testing environment and assertions
 class TestContext {
 public:
-    TestContext() : cpu(), program() {
+    TestContext() : cpu(CPU::create_test_cpu()), program() {
         cpu.reset();
         initialize_devices();
     }

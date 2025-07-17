@@ -7,8 +7,17 @@ TEST_CASE(cpu_reset, "cpu") {
     // Test that CPU reset works properly
     ctx.cpu.reset();
 
-    // Check that all registers are zero
-    for (int i = 0; i < 8; i++) {
+    // Check that general-purpose registers are zero (R0-R3)
+    for (int i = 0; i < 4; i++) {
+        ctx.assert_register_eq(i, 0);
+    }
+    
+    // Check that stack pointers are initialized correctly (R4=RSP, R5=RBP should be at memory end)
+    ctx.assert_register_eq(4, ctx.cpu.get_memory_size()); // RSP = stack top
+    ctx.assert_register_eq(5, ctx.cpu.get_memory_size()); // RBP = stack top
+    
+    // Check that remaining registers are zero (R6-R7)
+    for (int i = 6; i < 8; i++) {
         ctx.assert_register_eq(i, 0);
     }
 
@@ -36,10 +45,14 @@ TEST_CASE(load_immediate, "instructions") {
     ctx.assert_register_eq(0, 5);
     ctx.assert_register_eq(1, 10);
 
-    // Check that other registers are still zero
-    for (int i = 2; i < 8; i++) {
-        ctx.assert_register_eq(i, 0);
-    }
+    // Check that other registers have expected values
+    ctx.assert_register_eq(2, 0);  // R2 should be 0
+    ctx.assert_register_eq(3, 0);  // R3 should be 0
+    // R4 (RSP) and R5 (RBP) are stack pointers, initialized to memory size
+    ctx.assert_register_eq(4, ctx.cpu.get_memory_size()); // RSP = stack top  
+    ctx.assert_register_eq(5, ctx.cpu.get_memory_size()); // RBP = stack top
+    ctx.assert_register_eq(6, 0);  // R6 should be 0
+    ctx.assert_register_eq(7, 0);  // R7 should be 0
 }
 
 TEST_CASE(add_instruction, "arithmetic") {
