@@ -5,8 +5,8 @@ SRC_DIR := src
 BUILD_DIR := build
 BIN_DIR := bin
 
-# Find all .cpp files in src and its subdirectories, excluding test_runner.cpp
-SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -not -name 'test_runner.cpp')
+# Find all .cpp files in src and its subdirectories, excluding test files
+SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -not -name 'test_runner.cpp' -not -name 'test_assembler.cpp')
 # Add the new register system source files explicitly
 REGISTER_SRCS := $(SRC_DIR)/vhardware/cpu_registers.cpp
 SRCS += $(REGISTER_SRCS)
@@ -15,9 +15,14 @@ OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
 TARGET := $(BIN_DIR)/virtcomp
 
+# Assembler test target (minimal dependencies, no CPU execution)
+ASSEMBLER_TEST_TARGET := $(BIN_DIR)/test_assembler
+ASSEMBLER_TEST_SRCS := $(SRC_DIR)/test/test_assembler.cpp $(filter $(SRC_DIR)/assembler/%.cpp,$(SRCS))
+ASSEMBLER_TEST_OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(filter $(SRC_DIR)/%.cpp,$(ASSEMBLER_TEST_SRCS))) $(BUILD_DIR)/test/test_assembler.o
+
 # Test framework
 TEST_TARGET := $(BIN_DIR)/test_runner
-TEST_SRCS := $(filter-out $(SRC_DIR)/main.cpp $(SRC_DIR)/debug/gui.cpp, $(shell find $(SRC_DIR) -name '*.cpp' -not -path '$(SRC_DIR)/test/test_runner.cpp'))
+TEST_SRCS := $(filter-out $(SRC_DIR)/main.cpp $(SRC_DIR)/debug/gui.cpp $(SRC_DIR)/test/test_assembler.cpp, $(shell find $(SRC_DIR) -name '*.cpp' -not -path '$(SRC_DIR)/test/test_runner.cpp'))
 TEST_OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(TEST_SRCS))
 TEST_RUNNER_SRC := $(SRC_DIR)/test/test_runner.cpp
 TEST_RUNNER_OBJ := $(BUILD_DIR)/test/test_runner.o
@@ -76,6 +81,16 @@ $(TARGET): $(OBJS) $(IMGUI_OBJS) $(FMT_OBJS)
 	@mkdir -p $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(GL_LIBS) $(LDFLAGS)
 
+# Build assembler test
+$(ASSEMBLER_TEST_TARGET): $(ASSEMBLER_TEST_OBJS) $(FMT_OBJS)
+	@mkdir -p $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+# Rule for building test_assembler.o in test build directory
+$(BUILD_DIR)/test/test_assembler.o: $(SRC_DIR)/test/test_assembler.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 clean:
 	rm -rf $(BUILD_DIR) $(BIN_DIR)
 
@@ -88,6 +103,10 @@ unit-test: $(TARGET)
 
 # Build and run unit tests
 test-all: unit-test test
+
+# Test assembler
+test-assembler: $(ASSEMBLER_TEST_TARGET)
+	./$(ASSEMBLER_TEST_TARGET)
 
 prereqs:
 	@if ! dpkg -s libglfw3-dev libglew-dev libgl1-mesa-dev xorg-dev >/dev/null 2>&1; then \
@@ -116,4 +135,4 @@ build: prereqs $(TARGET)
 	@echo "Build complete. Run './$(TARGET)' to start the application."
 	@echo "Run 'make clean' to remove build artifacts."
 
-.PHONY: clean build prereqs test unit-test test-all
+.PHONY: clean build prereqs test unit-test test-all test-assembler

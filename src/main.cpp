@@ -29,6 +29,12 @@ namespace fs = std::experimental::filesystem;
 #include "test/test.hpp"
 #include "test/test_framework.hpp"
 
+// Include the assembler framework
+#include "assembler/virtcomp_assembler.hpp"
+#include "assembler/lexer.hpp"
+#include "assembler/parser.hpp"
+#include "assembler/assembler.hpp"
+
 // For POSIX process execution instead of system()
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -247,17 +253,28 @@ public:
             [this](const std::string& value) { Config::program_file = value; });
 
         // Run tests argument
-        parser.add_action_arg("test", "--test", "-t", "Run tests",
-            [this]() { run_tests(); });
+        parser.add_bool_arg("test", "--test", "-t", "Run tests",
+            [this](bool value) { Config::running_tests = value; });
 
         // Gui argument
         parser.add_action_arg("gui", "--gui", "-g", "Enable debug GUI",
-            [this]() { run_gui(); });        // Compile argument
+            [this]() { run_gui(); });
+
+        // Assembly mode argument
+        parser.add_value_arg("assembly", "--assembly", "-A", "Assembly mode: assemble and run .asm file",
+            [this](const std::string& value) {
+                Config::assembly_mode = true;
+                Config::assembly_file = value;
+            });
+
+        // Compile argument
         parser.add_value_arg("compile", "--compile", "-o", "Compile program into a standalone executable (optionally specify output name)",
             [this](const std::string& value) {
                 Config::compile_only = true;
                 Config::output_name = value;
-            });        parser.parse(argc, argv);
+            });
+
+        parser.parse(argc, argv);
     }
 
     // Run in compiled mode (create a standalone executable)
@@ -538,6 +555,33 @@ public:
     void run() {
         if (show_help) return;
 
+        // Handle test mode first
+        if (Config::running_tests) {
+            // Validate conflicting flags for test mode
+            if (Config::assembly_mode) {
+                std::cerr << "Error: Test mode (-t/--test) cannot be used with assembly mode (-A/--assembly)" << std::endl;
+                return;
+            }
+            if (!Config::program_file.empty()) {
+                std::cerr << "Error: Test mode (-t/--test) cannot be used with program file (-p/--program)" << std::endl;
+                return;
+            }
+            run_tests();
+            return;
+        }
+
+        // Validate conflicting flags for assembly mode
+        if (Config::assembly_mode && !Config::program_file.empty()) {
+            std::cerr << "Error: Assembly mode (-A/--assembly) cannot be used with program file (-p/--program)" << std::endl;
+            return;
+        }
+
+        // Handle assembly mode
+        if (Config::assembly_mode) {
+            run_assembly_mode();
+            return;
+        }
+
         CPU cpu;
         cpu.reset();
 
@@ -610,6 +654,121 @@ private:
             }
         }
         return true;
+    }
+
+    // Assembly mode: assemble and run .asm file
+    void run_assembly_mode() {
+        if (Config::assembly_file.empty()) {
+            std::cerr << "Error: No assembly file specified for assembly mode (-A/--assembly)" << std::endl;
+            return;
+        }
+
+        // Check if file exists and has .asm extension
+        if (!fs::exists(Config::assembly_file)) {
+            std::cerr << "Error: Assembly file not found: " << Config::assembly_file << std::endl;
+            return;
+        }
+
+        // Load assembly source
+        std::ifstream file(Config::assembly_file);
+        if (!file.is_open()) {
+            std::cerr << "Error: Could not open assembly file: " << Config::assembly_file << std::endl;
+            return;
+        }
+
+        std::ostringstream oss;
+        oss << file.rdbuf();
+        std::string assembly_source = oss.str();
+
+        if (Config::verbose) {
+            std::cout << "Assembling: " << Config::assembly_file << std::endl;
+        }
+
+        // Step 1: Lexical analysis
+        Assembler::Lexer lexer(assembly_source);
+        auto tokens = lexer.tokenize();
+
+        if (lexer.has_errors()) {
+            std::cerr << "Lexer errors:" << std::endl;
+            for (const auto& error : lexer.get_errors()) {
+                std::cerr << "  " << error << std::endl;
+            }
+            return;
+        }
+
+        // Step 2: Parsing
+        Assembler::Parser parser(tokens);
+        auto ast = parser.parse();
+
+        if (parser.has_errors()) {
+            std::cerr << "Parser errors:" << std::endl;
+            for (const auto& error : parser.get_errors()) {
+                std::cerr << "  " << error << std::endl;
+            }
+            return;
+        }
+
+        // Step 3: Code generation
+        Assembler::AssemblerEngine assembler;
+        auto bytecode = assembler.assemble(*ast);
+
+        if (assembler.has_errors()) {
+            std::cerr << "Assembly errors:" << std::endl;
+            for (const auto& error : assembler.get_errors()) {
+                std::cerr << "  " << error << std::endl;
+            }
+            return;
+        }
+
+        if (Config::verbose) {
+            std::cout << "Assembly successful. Generated " << bytecode.size() << " bytes of bytecode." << std::endl;
+
+            // Show symbol table if verbose
+            const auto& symbols = assembler.get_symbols();
+            if (!symbols.empty()) {
+                std::cout << "Symbol table:" << std::endl;
+                for (const auto& [name, symbol] : symbols) {
+                    std::cout << "  " << name << " = 0x" << std::hex << symbol.address << std::dec << std::endl;
+                }
+            }
+        }
+
+        // Initialize CPU and devices
+        CPU cpu;
+        cpu.reset();
+        initialize_devices();
+
+        // Print header for assembled program
+        if (Config::verbose) {
+            std::cout << "\n\033[36m┌─────────────────────────────────────────────────────────────┐\033[0m" << std::endl;
+            std::cout << "\033[36m│\033[0m               \033[1mRunning Assembled Program\033[0m                     \033[36m│\033[0m" << std::endl;
+            std::cout << "\033[36m└─────────────────────────────────────────────────────────────┘\033[0m" << std::endl;
+        }
+
+        try {
+            // Execute the assembled bytecode
+            cpu.execute(bytecode);
+
+            // Print CPU state and registers (same as regular program mode)
+            cpu.print_state("End");
+            cpu.print_registers();
+
+            // Print extended registers if enabled
+            if (Config::extended_registers) {
+                cpu.print_extended_registers();
+            }
+
+            cpu.print_memory();
+
+            if (Config::error_count > 0) {
+                Logger::instance().error() << "Assembly program failed with " << Config::error_count << " errors." << std::endl;
+            } else {
+                Logger::instance().success() << "Assembly program completed successfully." << std::endl;
+            }
+        } catch (const std::exception& e) {
+            std::cerr << "Runtime error: " << e.what() << std::endl;
+            Config::error_count++;
+        }
     }
 };
 
