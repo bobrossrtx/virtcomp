@@ -1,7 +1,7 @@
 # VirtComp Development Roadmap
 
-> **Last Updated:** July 16, 2025
-> **Project Status:** Phase 1 Complete - CPU Core 100% Tested, Ready for Assembly Language Development
+> **Last Updated:** July 17, 2025
+> **Project Status:** Phase 2.5 Complete - Extended Architecture Ready, Assembly Language Development Next Priority
 
 ---
 
@@ -20,6 +20,14 @@ VirtComp is a virtual computer system with a custom CPU architecture, supporting
 - **Stack Operations**: PUSH/POP with stack pointer management
 - **Flag System**: Zero, Sign, Carry, and Overflow flags for conditional operations
 - **Jump Instructions**: Complete set including JG/JL/JGE/JLE comparison jumps
+
+### ✅ Output Formatting & Polish *(100% Complete)*
+- ✅ **ASCII Art Removal**: Cleaned up debug output for professional appearance
+- ✅ **Debug Bar Cleanup**: Removed decorative horizontal bars and formatting tokens
+- ✅ **Extended Register Display**: Implemented `-er`/`--extended-registers` command-line flag
+- ✅ **Professional UI**: Extended registers shown after regular registers at program end
+- ✅ **Logger Enhancement**: Level-only color highlighting for improved readability
+- ✅ **Register Update Tracking**: Framework for individual register change notifications
 
 ### ✅ Device System
 - **Device Manager**: Centralized I/O device management
@@ -82,14 +90,19 @@ VirtComp is a virtual computer system with a custom CPU architecture, supporting
 
 Transform VirtComp from hex-based programming to human-readable assembly language.
 
+> **Important Architecture Goals**: VirtComp is designed to be the new base for a future programming language project, serving as a C++ equivalent to the Java Virtual Machine. The assembly language implementation should consider this long-term vision of x64-like architecture emulation.
+
 #### Core Language Design
+
 - **Mnemonic System**: Human-readable instruction names (ADD, MOV, JMP, etc.)
+- **Extended Register Set**: Support for expanded register architecture (R1-R15, EAX, EBX, ECX, etc.)
 - **Syntax Definition**: Consistent instruction format and operand specification
 - **Addressing Modes**: Direct, indirect, immediate, and indexed addressing
 - **Label System**: Named memory locations and jump targets
 - **Comment Support**: Line comments (;) and block comments (/* */)
 
 #### Advanced Language Features
+
 - **Assembler Directives**: .data, .text, .org, .equ, .include
 - **Data Types**: DB, DW, DD for bytes, words, and double words
 - **String Literals**: Quoted string constants with escape sequences
@@ -97,6 +110,7 @@ Transform VirtComp from hex-based programming to human-readable assembly languag
 - **Expression Evaluation**: Arithmetic in operands (label+4, 2*SIZE, etc.)
 
 #### Parser & Assembler Implementation
+
 - **Two-Pass Assembly**: Symbol collection and code generation phases
 - **Symbol Table**: Global label and constant management
 - **Error Handling**: Detailed error messages with line numbers and context
@@ -104,10 +118,88 @@ Transform VirtComp from hex-based programming to human-readable assembly languag
 - **Macro System**: Reusable code templates with parameters
 
 #### Development Tools Integration
+
 - **CLI Assembler**: Standalone command-line tool (virtasm)
 - **IDE Integration**: Assembly editing with syntax highlighting
 - **Debugger Enhancement**: Symbol-aware debugging with source mapping
 - **Build System**: Makefile integration for assembly projects
+
+---
+
+### ✅ **Phase 2.5: CPU Architecture Expansion** *(100% Complete - Q4 2025)*
+
+**Priority: COMPLETED** | **Dependencies: Phase 1 ✅ Complete**
+
+Successfully expanded VirtComp's CPU architecture to support a comprehensive x64-like register set and dual-mode operation, preparing for its role as a virtual machine base for future programming language projects.
+
+#### ✅ Extended Register Architecture *(100% Complete)*
+- ✅ **50-Register System**: Complete implementation of RAX, RBX, RCX, RDX, RSP, RBP, RSI, RDI, R8-R15 (16 GP), plus segment, control, debug, and special registers
+- ✅ **x64-Style Register Names**: Full register naming system with legacy aliases (EAX, AX, AL, etc.)
+- ✅ **Register Size Support**: 8-bit, 16-bit, 32-bit, and 64-bit register operations
+- ✅ **Extended Register Operations**: MOVEX, ADDEX, SUBEX for R8-R15 register access
+
+#### ✅ Dual-Mode CPU Operation *(100% Complete)*
+- ✅ **x32/x64 Mode Switching**: Dynamic switching between 32-bit and 64-bit operation modes
+- ✅ **Mode Control Opcodes**: MODE32, MODE64, MODECMP for runtime mode management
+- ✅ **Mode-Aware Arithmetic**: Operations automatically adapt width based on current CPU mode
+- ✅ **Backward Compatibility**: All existing 32-bit code continues to work seamlessly
+
+#### ✅ Massive Memory Expansion *(100% Complete)*
+- ✅ **Memory Capacity**: Expanded from 256 bytes to 1MB (4,096x increase)
+- ✅ **Dynamic Memory Resizing**: Runtime memory management with bounds checking
+- ✅ **Test Compatibility**: Maintained 256-byte test environment for backward compatibility
+- ✅ **Memory Architecture**: Flat memory model with full addressing support
+
+#### ✅ Enhanced Instruction Set *(100% Complete)*
+- ✅ **64-bit Arithmetic**: ADD64, SUB64, MUL64, DIV64, CMP64 with proper overflow handling
+- ✅ **64-bit Data Movement**: MOV64, LOAD_IMM64 for full 64-bit value manipulation
+- ✅ **Extended Register Access**: Full access to all 50 registers through enhanced opcodes
+- ✅ **Mode Integration**: All operations respect current CPU mode for seamless dual-mode support
+
+#### ✅ Validation & Testing *(100% Complete)*
+- ✅ **Extended Register Test**: Comprehensive test demonstrating x32/x64 mode switching and extended register operations
+- ✅ **100% Test Coverage**: All 53 unit tests and 39 integration tests continue to pass
+- ✅ **Debug Infrastructure**: Enhanced debugging output with mode indicators and register name resolution
+- ✅ **Performance Validation**: 1MB memory operations confirmed working efficiently
+
+#### ✅ UI Enhancement & Professional Polish *(100% Complete)*
+- ✅ **Extended Register Display**: Command-line flag (-er/--extended-registers) for 50-register visibility
+- ✅ **Output Formatting Cleanup**: Removed ASCII art headers and debug decorative elements
+- ✅ **Logger Color Enhancement**: Purple timestamps, colored log levels, clean message display
+- ✅ **Register Display Optimization**: Extended registers shown once at end instead of repetitive debug output
+- ✅ **Professional UI**: Clean, production-ready output formatting for end users
+
+---
+
+### 🚀 **Phase 2.7: Bytecode Compilation System** *(Long-term Goal - Overtime)*
+
+**Priority: OVERTIME** | **Dependencies: Architecture Expansion**
+
+Transform VirtComp from an interpreter-like system to a proper bytecode compilation target, enabling it to serve as the foundation for a new programming language project.
+
+#### Compilation Architecture
+
+- **Assembly Compilation**: Convert assembly programs to bytecode executable files
+- **Bytecode Format**: Standardized executable file format with headers and metadata
+- **Loader System**: Bytecode file loading and execution environment
+- **Static Analysis**: Compilation-time optimization and error detection
+- **Symbol Export**: Inter-module linking and library support
+
+#### Virtual Machine Enhancement
+
+- **Execution Engine**: Optimized bytecode interpreter or JIT compilation
+- **Memory Management**: Heap allocation, garbage collection foundation
+- **Module System**: Dynamic library loading and symbol resolution
+- **Standard Library**: Core runtime functions and system interfaces
+- **Exception Handling**: Structured error propagation and recovery
+
+#### Programming Language Foundation
+
+- **High-Level Frontend**: Target for future programming language compiler
+- **Type System Support**: Runtime type information and checking
+- **Object Model**: Class and object system primitives
+- **Memory Safety**: Bounds checking, null pointer protection
+- **Interoperability**: C/C++ FFI for external library integration
 
 ---
 
@@ -200,21 +292,23 @@ Transform VirtComp from hex-based programming to human-readable assembly languag
 | Core CPU | 100% | ~3,000 | 100% (53/53 unit tests) | Complete |
 | Device System | 100% | ~1,500 | 100% (39/39 integration tests) | Complete |
 | Testing Framework | 100% | ~900 | 100% | Complete |
-| **Total Current** | **100%** | **~5,400** | **100%** | **Complete** |
+| Extended Architecture | 100% | ~2,000 | 100% | Complete |
+| **Total Current** | **100%** | **~7,400** | **100%** | **Complete** |
 
 ### Recent Achievements ✅
-- ✅ **100% Test Coverage**: All 53 unit tests and 39 integration tests passing
-- ✅ **CPU Instruction Set**: Complete implementation with perfect reliability
-- ✅ **Bug Resolution**: Fixed all 7 failing tests through systematic debugging
-- ✅ **Stack Frame Management**: Resolved complex function call and argument handling
-- ✅ **Memory Layout**: Corrected subroutine positioning for proper CALL/RET execution
+- ✅ **Phase 2.5 Complete**: Extended register architecture with 50 registers and dual x32/x64 mode support
+- ✅ **Extended Register Operations**: Full MOVEX, ADDEX, SUBEX instruction set for R8-R15 access
+- ✅ **Memory Expansion**: Increased from 256 bytes to 1MB (4,096x increase) with backward compatibility
+- ✅ **UI Polish**: Professional output formatting with purple timestamps and colored log levels
+- ✅ **Command-Line Interface**: Extended register display via -er/--extended-registers flag
+- ✅ **100% Test Coverage**: All 53 unit tests and 39 integration tests continue to pass
 
 ### Next Priority Tasks 🚀
-1. **Assembly Language Design**: Define human-readable instruction syntax
-2. **Parser Implementation**: Build two-pass assembler for symbol resolution
-3. **Development Tools**: Create CLI assembler and enhanced debugging tools
-4. **Documentation**: Assembly language reference and programming examples
-5. **Integration**: Seamless hex-to-assembly transition for existing programs
+1. **Assembly Language Design**: Define human-readable instruction syntax with extended register support
+2. **Parser Implementation**: Build two-pass assembler with 50-register name resolution
+3. **Register Name System**: Implement RAX, RBX, RCX, RDX, R8-R15 parsing and validation
+4. **Development Tools**: Create CLI assembler (virtasm) with x64-style syntax support
+5. **Extended Register Integration**: Seamless assembly-to-bytecode for all 50 registers
 
 ---
 
