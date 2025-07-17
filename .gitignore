@@ -78,3 +78,4 @@ src/test/test_runner.cpp
 
 # Backup files
 *.old.*
+.aider*
