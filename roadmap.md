@@ -84,18 +84,18 @@ VirtComp is a virtual computer system with a custom CPU architecture, supporting
 
 ## 📋 Next Development Phase
 
-### 🔥 **Phase 2: Assembly Language & Parser** *(Current Priority - Q4 2025)*
+### 🔥 **Phase 2: Assembly Language & Parser** *(IMMEDIATE NEXT PRIORITY - Starting Tomorrow)*
 
-**Priority: HIGH** | **Dependencies: Phase 1 ✅ Complete**
+**Priority: CRITICAL** | **Dependencies: Phase 2.5 ✅ Complete**
 
-Transform VirtComp from hex-based programming to human-readable assembly language.
+Transform VirtComp from hex-based programming to human-readable assembly language with full extended register support.
 
 > **Important Architecture Goals**: VirtComp is designed to be the new base for a future programming language project, serving as a C++ equivalent to the Java Virtual Machine. The assembly language implementation should consider this long-term vision of x64-like architecture emulation.
 
 #### Core Language Design
 
 - **Mnemonic System**: Human-readable instruction names (ADD, MOV, JMP, etc.)
-- **Extended Register Set**: Support for expanded register architecture (R1-R15, EAX, EBX, ECX, etc.)
+- **Extended Register Set**: Support for all 50 registers (RAX, RBX, RCX, RDX, RSP, RBP, RSI, RDI, R8-R15, plus segment/control/debug registers)
 - **Syntax Definition**: Consistent instruction format and operand specification
 - **Addressing Modes**: Direct, indirect, immediate, and indexed addressing
 - **Label System**: Named memory locations and jump targets
