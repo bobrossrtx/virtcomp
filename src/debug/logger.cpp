@@ -296,9 +296,38 @@ void Logger::write_to_console(LogLevel level, const std::string& formatted_messa
     // Determine output stream
     std::ostream& out = (level == LogLevel::ERROR) ? std::cerr : std::cout;
 
-    // Apply color and output
-    std::string color = level_to_color(level);
-    out << color << formatted_message << RESET_COLOR << std::endl;
+    // Find the level portion in the formatted message and colorize only that part
+    std::string level_color = level_to_color(level);
+    std::string level_str = level_to_string(level);
+    std::string purple_color = "\033[1;35m"; // Bright Magenta/Purple
+
+    // Look for the pattern [LEVEL] in the formatted message
+    std::string level_pattern = "[" + level_str + "]";
+    size_t level_pos = formatted_message.find(level_pattern);
+
+    if (level_pos != std::string::npos) {
+        // Split the message into parts: before level, level, after level
+        std::string before_level = formatted_message.substr(0, level_pos);
+        std::string after_level = formatted_message.substr(level_pos + level_pattern.length());
+
+        // Look for timestamp pattern [YY-MM-DD HH:MM:SS.mmm] at the beginning
+        size_t timestamp_end = before_level.find(']');
+        if (timestamp_end != std::string::npos && before_level[0] == '[') {
+            std::string timestamp_part = before_level.substr(0, timestamp_end + 1);
+            std::string remaining_before = before_level.substr(timestamp_end + 1);
+
+            // Output with purple timestamp, colored level, and normal message
+            out << purple_color << timestamp_part << RESET_COLOR
+                << remaining_before << level_color << level_pattern << RESET_COLOR
+                << after_level << std::endl;
+        } else {
+            // Fallback: just color the level if no timestamp found
+            out << before_level << level_color << level_pattern << RESET_COLOR << after_level << std::endl;
+        }
+    } else {
+        // Fallback: output without color if we can't find the level pattern
+        out << formatted_message << std::endl;
+    }
 }
 
 void Logger::write_to_file(const std::string& formatted_message) {

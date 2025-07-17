@@ -142,7 +142,7 @@ public:
         std::cout << "virtcomp Usage: virtcomp [options]" << std::endl;
         for (const auto& def : args_) {
             // Use printf to align arguments and help text
-            std::cout << fmt::format("  {:<16} {:<6}  {}\n", def.arg, def.alias, def.help);
+            std::cout << fmt::format("  {:<20} {:<6}  {}\n", def.arg, def.alias, def.help);
         }
     }
 private:
@@ -233,6 +233,10 @@ public:
         // Verbose argument
         parser.add_bool_arg("verbose", "--verbose", "-v", "Show informational messages (use --verbose=false to disable)",
             [this](bool value) { Config::verbose = value; });
+
+        // Extended registers argument
+        parser.add_bool_arg("extended_registers", "--extended-registers", "-er", "Show extended register output (50 registers)",
+            [this](bool value) { Config::extended_registers = value; });
 
         // Debug File argument
         parser.add_value_arg("debug_file", "--debug-file", "-f", "Debug file path",
@@ -554,24 +558,14 @@ public:
             return;
         }
 
-        // Print a header
-        // Print a colored ASCII art header (cyan)
-        // If debug mode is on, use orange (ANSI 38;5;208), else cyan (36)
-        const char* color = Config::debug ? "\033[38;5;208m" : "\033[36m";
-        std::cout << color << "┌──────────────────────────────────────────────────────┐\033[0m" << std::endl;
-        std::cout << color << R"(│                                                      │
-│     __      ___      _                               │
-│     \ \    / (_)    | |                              │
-│      \ \  / / _ _ __| |_ ___ ___  _ __ ___  _ __     │
-│       \ \/ / | | '__| __/ __/ _ \| '_ ` _ \| '_ \    │
-│        \  /  | | |  | || (_| (_) | | | | | | |_) |   │
-│         \/   |_|_|   \__\___\___/|_| |_| |_| .__/    │
-│                                            | |       │
-│                                            |_|       │
-│                                                      │)" << "\033[0m" << std::endl;
-        std::cout << color << "└──────────────────────────────────────────────────────┘\033[0m" << std::endl;
+        // Print a simple, clean header
+        if (!Config::compile_only) {
+            const char* color = Config::debug ? "\033[38;5;208m" : "\033[36m";
+            std::cout << color << "\n=== VirtComp Virtual Machine ===" << "\033[0m" << std::endl;
+            std::cout << color << "Execution started..." << "\033[0m\n" << std::endl;
+        }
 
-        // Initialize the device system after displaying the logo
+        // Initialize the device system
         initialize_devices();
 
         cpu.execute(program);
@@ -579,6 +573,12 @@ public:
         // Print CPU state
         cpu.print_state("End");
         cpu.print_registers();
+        
+        // Print extended registers if enabled
+        if (Config::extended_registers) {
+            cpu.print_extended_registers();
+        }
+        
         cpu.print_memory();
 
         if (Config::error_count > 0) {
