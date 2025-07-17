@@ -72,7 +72,7 @@ private:
 // Test context - provides testing environment and assertions
 class TestContext {
 public:
-    TestContext() : cpu(), program() {
+    TestContext() : cpu(CPU::create_test_cpu()), program() {
         cpu.reset();
         initialize_devices();
     }
@@ -134,6 +134,7 @@ public:
         std::copy(program.begin(), program.end(), cpu.get_memory().begin());
         cpu.set_pc(0);
         cpu.set_sp(cpu.get_memory().size() - 4);
+        cpu.set_fp(cpu.get_memory().size() - 4);  // Match main program behavior
 
         size_t step_count = 0;
 

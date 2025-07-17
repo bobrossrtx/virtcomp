@@ -63,6 +63,19 @@ using Logging::Logger;
 #include "swap.hpp"
 #include "xor.hpp"
 
+// Extended 64-bit register operation headers
+#include "add64.hpp"
+#include "sub64.hpp"
+#include "mov64.hpp"
+#include "load_imm64.hpp"
+#include "movex.hpp"
+#include "addex.hpp"
+
+// CPU mode control headers
+#include "mode32.hpp"
+#include "mode64.hpp"
+#include "modecmp.hpp"
+
 // Consolidated implementations of all opcodes
 
 // Implementation from add.cpp
@@ -135,8 +148,8 @@ void handle_call(CPU& cpu,[[maybe_unused]] const std::vector<uint8_t>& program, 
     uint8_t addr = cpu.fetch_operand();
 
     Logger::instance().debug() << fmt::format(
-        "[PC=0x{:04X}]{:>5}[Call] │ PC=0x{:X}->addr=0x{:X} ret 0x{:X} and FP 0x{:X} to stack at SP=0x{:X}",
-        pc, "", pc, addr, (pc + 1), cpu.get_fp(), cpu.get_sp()
+        "[PC=0x{:04X}] [Call] PC=0x{:X}->addr=0x{:X} ret 0x{:X} and FP 0x{:X} to stack at SP=0x{:X}",
+        pc, pc, addr, (pc + 2), cpu.get_fp(), cpu.get_sp()
     ) << std::endl;
 
     // Push old FP
@@ -144,10 +157,10 @@ void handle_call(CPU& cpu,[[maybe_unused]] const std::vector<uint8_t>& program, 
     cpu.set_sp(sp);
     cpu.write_mem32(sp, cpu.get_fp());
 
-    // Push return address (pc + 1)
+    // Push return address (pc + 2 for 2-byte CALL instruction)
     sp -= 4;
     cpu.set_sp(sp);
-    cpu.write_mem32(sp, pc + 1);
+    cpu.write_mem32(sp, pc + 2);
 
     // Set new FP
     cpu.set_fp(sp);
@@ -155,8 +168,8 @@ void handle_call(CPU& cpu,[[maybe_unused]] const std::vector<uint8_t>& program, 
     cpu.set_pc(addr);
 
     Logger::instance().debug() << fmt::format(
-        "[PC=0x{:04X}]{:>5}[CALL] │ After jump PC=0x{:X}",
-        pc, "", pc
+        "[PC=0x{:04X}] [CALL] After jump PC=0x{:X}",
+        pc, pc
     ) << std::endl;
 
     cpu.print_state("CALL");
@@ -191,8 +204,8 @@ void handle_db(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t length = program[pc + 2]; // Number of data bytes
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>7}[DB] │ Copying {} data bytes to address 0x{:02X}",
-            pc, "", length, target_addr
+            "[PC=0x{:04X}] [DB] Copying {} data bytes to address 0x{:02X}",
+            pc, length, target_addr
         ) << std::endl;
 
         // Copy data bytes to memory starting at target_addr
@@ -200,8 +213,8 @@ void handle_db(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
             cpu.get_memory()[target_addr + i] = program[pc + 3 + i];
 
             Logger::instance().debug() << fmt::format(
-                "[PC=0x{:04X}]{:>7}[DB] │ memory[0x{:02X}] = 0x{:02X} ('{}')",
-                pc, "", target_addr + i, program[pc + 3 + i],
+                "[PC=0x{:04X}] [DB] memory[0x{:02X}] = 0x{:02X} ('{}')",
+                pc, target_addr + i, program[pc + 3 + i],
                 (program[pc + 3 + i] >= 32 && program[pc + 3 + i] <= 126) ? static_cast<char>(program[pc + 3 + i]) : '.'
             ) << std::endl;
         }
@@ -218,11 +231,11 @@ void handle_db(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 void handle_dec(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() + 1 < program.size()) {
         uint8_t reg = program[cpu.get_pc() + 1];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[DEC] │ PC={} R{}", cpu.get_pc(), "", cpu.get_pc(), static_cast<int>(reg)) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [DEC] PC={} R{}", cpu.get_pc(), cpu.get_pc(), static_cast<int>(reg)) << std::endl;
         if (reg < cpu.get_registers().size()) {
             uint8_t before = cpu.get_registers()[reg];
             --cpu.get_registers()[reg];
-            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[DEC] │ R{}: {} - 1 = {}", cpu.get_pc(), "", static_cast<int>(reg), before, cpu.get_registers()[reg]) << std::endl;
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [DEC] R{}: {} - 1 = {}", cpu.get_pc(), static_cast<int>(reg), before, cpu.get_registers()[reg]) << std::endl;
         }
         cpu.set_pc(cpu.get_pc() + 2);
     } else {
@@ -236,16 +249,16 @@ void handle_div(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() + 2 < program.size()) {
         uint8_t reg1 = program[cpu.get_pc() + 1];
         uint8_t reg2 = program[cpu.get_pc() + 2];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[DIV] │ PC={} R{} /= R{}", cpu.get_pc(), "", cpu.get_pc(), reg1, reg2) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [DIV] PC={} R{} /= R{}", cpu.get_pc(), cpu.get_pc(), reg1, reg2) << std::endl;
         if (reg1 < cpu.get_registers().size() && reg2 < cpu.get_registers().size()) {
             if (cpu.get_registers()[reg2] == 0) {
-                Logger::instance().error() << fmt::format("{:>6}Invalid Division │ Division by zero at PC={}", "", cpu.get_pc()) << std::endl;
+                Logger::instance().error() << fmt::format("[PC=0x{:04X}] [DIV] Invalid Division Division by zero at PC={}", cpu.get_pc(), cpu.get_pc()) << std::endl;
                 running = false;
                 return;
             }
             uint8_t before = cpu.get_registers()[reg1];
             cpu.get_registers()[reg1] /= cpu.get_registers()[reg2];
-            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[DIV] │ R{}: {} / {} = {}", cpu.get_pc(), "", reg1, before, cpu.get_registers()[reg2], cpu.get_registers()[reg1]) << std::endl;
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [DIV] R{}: {} / {} = {}", cpu.get_pc(), reg1, before, cpu.get_registers()[reg2], cpu.get_registers()[reg1]) << std::endl;
         }
         cpu.set_pc(cpu.get_pc() + 3);
     } else {
@@ -257,8 +270,8 @@ void handle_div(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 // Implementation from halt.cpp
 void handle_halt(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
     Logger::instance().debug() << fmt::format(
-        "[PC=0x{:04X}]{:>5}[HALT] │ PC={}",
-        cpu.get_pc(), "", cpu.get_pc()
+        "[PC=0x{:04X}] [HALT] PC={}",
+        cpu.get_pc(), cpu.get_pc()
     ) << std::endl;
     running = false;
     cpu.set_pc(cpu.get_pc() + 1);
@@ -274,8 +287,8 @@ void handle_inb(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t port = program[pc + 2];
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>6}[INB] │ PC={} R{} <- port {}",
-            pc, "", pc, reg, port
+            "[PC=0x{:04X}] [INB] PC={} R{} <- port {}",
+            pc, pc, reg, port
         ) << std::endl;
 
         if (reg < cpu.get_registers().size()) {
@@ -283,8 +296,8 @@ void handle_inb(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
             cpu.get_registers()[reg] = value;
 
             Logger::instance().debug() << fmt::format(
-                "[PC=0x{:04X}]{:>6}[INB] │ R{} = {}",
-                pc, "", reg, value
+                "[PC=0x{:04X}] [INB] R{} = {}",
+                pc, reg, value
             ) << std::endl;
         }
 
@@ -300,11 +313,11 @@ void handle_inb(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 void handle_inc(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() + 1 < program.size()) {
         uint8_t reg = program[cpu.get_pc() + 1];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[INC] │ PC={} R{}", cpu.get_pc(), "", cpu.get_pc(), static_cast<int>(reg)) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [INC] PC={} R{}", cpu.get_pc(), cpu.get_pc(), static_cast<int>(reg)) << std::endl;
         if (reg < cpu.get_registers().size()) {
             uint8_t before = cpu.get_registers()[reg];
             ++cpu.get_registers()[reg];
-            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[INC] │ R{}: {} + 1 = {}", cpu.get_pc(), "", static_cast<int>(reg), before, cpu.get_registers()[reg]) << std::endl;
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [INC] R{}: {} + 1 = {}", cpu.get_pc(), static_cast<int>(reg), before, cpu.get_registers()[reg]) << std::endl;
         }
         cpu.set_pc(cpu.get_pc() + 2);
     } else {
@@ -322,8 +335,8 @@ void handle_in(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t port = program[pc + 2];
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>7}[IN] │ PC={} R{} <- port {}",
-            pc, "", pc, reg, port
+            "[PC=0x{:04X}] [IN] PC={} R{} <- port {}",
+            pc, pc, reg, port
         ) << std::endl;
 
         if (reg < cpu.get_registers().size()) {
@@ -331,8 +344,8 @@ void handle_in(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
             cpu.get_registers()[reg] = value;
 
             Logger::instance().debug() << fmt::format(
-                "[PC=0x{:04X}]{:>7}[IN] │ R{} = {}",
-                pc, "", reg, value
+                "[PC=0x{:04X}] [IN] R{} = {}",
+                pc, reg, value
             ) << std::endl;
         }
 
@@ -353,8 +366,8 @@ void handle_inl(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t port = program[pc + 2];
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>7}[INL] │ PC={} R{} <- port {} (dword)",
-            pc, "", pc, reg, port
+            "[PC=0x{:04X}] [INL] PC={} R{} <- port {} (dword)",
+            pc, pc, reg, port
         ) << std::endl;
 
         if (reg < cpu.get_registers().size()) {
@@ -382,8 +395,8 @@ void handle_instr(CPU& cpu, const std::vector<uint8_t>& program, bool& running) 
         uint8_t port = program[pc + 2];
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>5}[INSTR] │ PC={} R{} <- port {} (string)",
-            pc, "", pc, reg, port
+            "[PC=0x{:04X}] [INSTR] PC={} R{} <- port {} (string)",
+            pc, pc, reg, port
         ) << std::endl;
 
         if (reg < cpu.get_registers().size()) {
@@ -391,8 +404,8 @@ void handle_instr(CPU& cpu, const std::vector<uint8_t>& program, bool& running) 
             std::string value = cpu.read_port_string(port, maxLength);
 
             Logger::instance().debug() << fmt::format(
-                "[PC=0x{:04X}]{:>5}[INSTR] │ Read string: '{}'",
-                pc, "", value
+                "[PC=0x{:04X}] [INSTR] Read string: '{}'",
+                pc, value
             ) << std::endl;
 
             // Store string length in register
@@ -416,8 +429,8 @@ void handle_inw(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t port = program[pc + 2];
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>6}[INW] │ PC={} R{} <- port {} (word)",
-            pc, "", pc, reg, port
+            "[PC=0x{:04X}] [INW] PC={} R{} <- port {} (word)",
+            pc, pc, reg, port
         ) << std::endl;
 
         if (reg < cpu.get_registers().size()) {
@@ -429,8 +442,8 @@ void handle_inw(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
             }
 
             Logger::instance().debug() << fmt::format(
-                "[PC=0x{:04X}]{:>6}[INW] │ R{} = {}, R{} = {}",
-                pc, "", reg, cpu.get_registers()[reg], reg + 1,
+                "[PC=0x{:04X}] [INW] R{} = {}, R{} = {}",
+                pc, reg, cpu.get_registers()[reg], reg + 1,
                 (static_cast<size_t>(reg + 1) < cpu.get_registers().size() ? cpu.get_registers()[reg + 1] : 0)
             ) << std::endl;
         }
@@ -510,7 +523,14 @@ void handle_js(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t addr = program[pc + 1];
 
         if (cpu.get_flags() & FLAG_SIGN) {
-            // TODO: Add valid instruction start validation
+            // Simple validation - check if address is within program bounds
+            if (addr >= program.size()) {
+                Logger::instance().error() << std::right << std::setw(23) << std::setfill(' ')
+                    << "Invalid jump address " << "│ (JS): "
+                    << static_cast<int>(addr) << " at PC=" << cpu.get_pc() << std::endl;
+                running = false;
+                return;
+            }
             cpu.set_pc(addr);
         } else {
             cpu.set_pc(pc + 2);
@@ -583,10 +603,10 @@ void handle_lea(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() + 2 < program.size()) {
         uint8_t reg = program[cpu.get_pc() + 1];
         uint8_t addr = program[cpu.get_pc() + 2];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[LEA] │ PC={} Loading address {} into R{}", cpu.get_pc(), "", cpu.get_pc(), addr, reg) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [LEA] PC={} Loading address {} into R{}", cpu.get_pc(), cpu.get_pc(), addr, reg) << std::endl;
         if (reg < cpu.get_registers().size()) {
             cpu.get_registers()[reg] = addr;  // Load the address itself, not the value at the address
-            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[LEA] │ R{} = 0x{:02X} (address)", cpu.get_pc(), "", reg, addr) << std::endl;
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [LEA] R{} = 0x{:02X} (address)", cpu.get_pc(), reg, addr) << std::endl;
         }
         cpu.set_pc(cpu.get_pc() + 3);
     } else {
@@ -615,7 +635,7 @@ void handle_mul(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() + 2 < program.size()) {
         uint8_t reg1 = program[cpu.get_pc() + 1];
         uint8_t reg2 = program[cpu.get_pc() + 2];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[MUL] │ PC={} R{} *= R{}", cpu.get_pc(), "", cpu.get_pc(), reg1, reg2) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [MUL] PC={} R{} *= R{}", cpu.get_pc(), cpu.get_pc(), reg1, reg2) << std::endl;
         if (reg1 < cpu.get_registers().size() && reg2 < cpu.get_registers().size()) {
             uint32_t before = cpu.get_registers()[reg1];
             uint32_t operand = cpu.get_registers()[reg2];
@@ -653,7 +673,7 @@ void handle_mul(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 
 // Implementation from nop.cpp
 void handle_nop(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
-    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[NOP] │ PC={}", cpu.get_pc(), "", cpu.get_pc()) << std::endl;
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [NOP] PC={}", cpu.get_pc(), cpu.get_pc()) << std::endl;
     cpu.set_pc(cpu.get_pc() + 1);
     cpu.print_state("NOP");
 }
@@ -706,8 +726,8 @@ void handle_outb(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t port = program[pc + 2];
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>5}[OUTB] │ PC={} port {} <- R{}={}",
-            pc, "", pc, port, reg, cpu.get_registers()[reg]
+            "[PC=0x{:04X}] [OUTB] PC={} port {} <- R{}={}",
+            pc, pc, port, reg, cpu.get_registers()[reg]
         ) << std::endl;
 
         if (reg < cpu.get_registers().size()) {
@@ -731,8 +751,8 @@ void handle_out(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t port = program[pc + 2];
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>6}[OUT] │ PC={} port {} <- R{}={}",
-            pc, "", pc, port, reg, cpu.get_registers()[reg]
+            "[PC=0x{:04X}] [OUT] PC={} port {} <- R{}={}",
+            pc, pc, port, reg, cpu.get_registers()[reg]
         ) << std::endl;
 
         if (reg < cpu.get_registers().size()) {
@@ -756,8 +776,8 @@ void handle_outl(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t port = program[pc + 2];
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>5}[OUTL] │ PC={} port {} <- R{} (dword)",
-            pc, "", pc, port, reg
+            "[PC=0x{:04X}] [OUTL] PC={} port {} <- R{} (dword)",
+            pc, pc, port, reg
         ) << std::endl;
 
         if (reg < cpu.get_registers().size()) {
@@ -785,8 +805,8 @@ void handle_outstr(CPU& cpu, const std::vector<uint8_t>& program, bool& running)
         uint8_t port = program[pc + 2];
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>4}[OUTSTR] │ PC={} port {} <- string from memory",
-            pc, "", pc, port
+            "[PC=0x{:04X}] [OUTSTR] PC={} port {} <- string from memory",
+            pc, pc, port
         ) << std::endl;
 
         if (reg < cpu.get_registers().size()) {
@@ -798,8 +818,8 @@ void handle_outstr(CPU& cpu, const std::vector<uint8_t>& program, bool& running)
             }
 
             Logger::instance().debug() << fmt::format(
-                "[PC=0x{:04X}]{:>4}[OUTSTR] │ Writing string: '{}'",
-                pc, "", str
+                "[PC=0x{:04X}] [OUTSTR] Writing string: '{}'",
+                pc, str
             ) << std::endl;
 
             cpu.write_port_string(port, str);
@@ -822,8 +842,8 @@ void handle_outw(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         uint8_t port = program[pc + 2];
 
         Logger::instance().debug() << fmt::format(
-            "[PC=0x{:04X}]{:>5}[OUTW] │ PC={} port {} <- R{} (word)",
-            pc, "", pc, port, reg
+            "[PC=0x{:04X}] [OUTW] PC={} port {} <- R{} (word)",
+            pc, pc, port, reg
         ) << std::endl;
 
         if (reg < cpu.get_registers().size()) {
@@ -847,16 +867,32 @@ void handle_pop_arg(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& progr
     uint32_t pc = cpu.get_pc();
     uint8_t reg = cpu.fetch_operand();
 
-    cpu.get_registers()[reg] = cpu.read_mem32(cpu.get_fp() + cpu.get_arg_offset());
+    // Check if we're in a function call context by checking if arg_offset has been set
+    // In function context, arg_offset is set to 8 by CALL
+    // In standalone context, arg_offset remains 0 (initialized value)
+    if (cpu.get_arg_offset() > 0) {
+        // Function context: use frame pointer + offset
+        cpu.get_registers()[reg] = cpu.read_mem32(cpu.get_fp() + cpu.get_arg_offset());
 
-    Logger::instance().debug() << fmt::format(
-        "[PC=0x{:04X}]{:>2}[POP_ARG] │ FP={} arg_offset={} addr={} value={}",
-        pc, "", cpu.get_fp(), cpu.get_arg_offset(),
-        (cpu.get_fp() + cpu.get_arg_offset()), cpu.get_registers()[reg]
-    ) << std::endl;
+        Logger::instance().debug() << fmt::format(
+            "[PC=0x{:04X}] [POP_ARG] Function context: FP={} arg_offset={} addr={} value={}",
+            pc, cpu.get_fp(), cpu.get_arg_offset(),
+            (cpu.get_fp() + cpu.get_arg_offset()), cpu.get_registers()[reg]
+        ) << std::endl;
 
-    cpu.set_arg_offset(cpu.get_arg_offset() + 4);
-    cpu.set_pc(pc + 1);
+        cpu.set_arg_offset(cpu.get_arg_offset() + 4);
+    } else {
+        // Standalone context: pop from stack like regular POP
+        cpu.get_registers()[reg] = cpu.read_mem32(cpu.get_sp());
+        cpu.set_sp(cpu.get_sp() + 4);
+
+        Logger::instance().debug() << fmt::format(
+            "[PC=0x{:04X}] [POP_ARG] Standalone context: popped from SP={} value={}",
+            pc, cpu.get_sp() - 4, cpu.get_registers()[reg]
+        ) << std::endl;
+    }
+
+    // Don't set PC - fetch_operand already advanced it
     cpu.print_state("POP_ARG");
 }
 
@@ -865,7 +901,7 @@ void handle_pop(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() + 1 < program.size()) {
         uint8_t reg = program[cpu.get_pc() + 1];
         cpu.get_registers()[reg] = cpu.read_mem32(cpu.get_sp());
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[POP] │ PC={} Popping to R{}={}", cpu.get_pc(), "", cpu.get_pc(), static_cast<int>(reg), cpu.get_registers()[reg]) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [POP] PC={} Popping to R{}={}", cpu.get_pc(), cpu.get_pc(), static_cast<int>(reg), cpu.get_registers()[reg]) << std::endl;
         cpu.set_sp(cpu.get_sp() + 4);
         cpu.set_pc(cpu.get_pc() + 2);
     } else {
@@ -876,7 +912,7 @@ void handle_pop(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 
 // Implementation from pop_flag.cpp
 void handle_pop_flag(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
-    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[POPF] │ PC={} Popping FLAGS={:08X}", cpu.get_pc(), "", cpu.get_pc(), cpu.get_flags()) << std::endl;
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [POPF] PC={} Popping FLAGS={:08X}", cpu.get_pc(), cpu.get_pc(), cpu.get_flags()) << std::endl;
     cpu.set_flags(cpu.read_mem32(cpu.get_sp()));
     cpu.set_sp(cpu.get_sp() + 4);
     cpu.set_pc(cpu.get_pc() + 1);  // POP_FLAG is a single-byte instruction
@@ -889,15 +925,15 @@ void handle_push_arg(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& prog
     uint8_t reg = cpu.fetch_operand();
 
     Logger::instance().debug() << fmt::format(
-        "[PC=0x{:04X}]{:>1}[PUSH_ARG] │ SP={} Pushing R{}={}",
-        pc, "", cpu.get_sp(), static_cast<int>(reg), cpu.get_registers()[reg]
+        "[PC=0x{:04X}] [PUSH_ARG] SP={} Pushing R{}={}",
+        pc, cpu.get_sp(), static_cast<int>(reg), cpu.get_registers()[reg]
     ) << std::endl;
 
     uint32_t sp = cpu.get_sp() - 4;
     cpu.set_sp(sp);
     cpu.write_mem32(sp, cpu.get_registers()[reg]);
 
-    cpu.set_pc(pc + 1);
+    // Don't set PC - fetch_operand already advanced it
     cpu.print_state("PUSH_ARG");
 }
 
@@ -905,7 +941,7 @@ void handle_push_arg(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& prog
 void handle_push(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() + 1 < program.size()) {
         uint8_t reg = program[cpu.get_pc() + 1];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[PUSH] │ PC={} Pushing R{}={}", cpu.get_pc(), "", cpu.get_pc(), static_cast<int>(reg), cpu.get_registers()[reg]) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [PUSH] PC={} Pushing R{}={}", cpu.get_pc(), cpu.get_pc(), static_cast<int>(reg), cpu.get_registers()[reg]) << std::endl;
         cpu.set_sp(cpu.get_sp() - 4);
         cpu.write_mem32(cpu.get_sp(), cpu.get_registers()[reg]);
         cpu.set_pc(cpu.get_pc() + 2);
@@ -917,7 +953,7 @@ void handle_push(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
 
 // Implementation from push_flag.cpp
 void handle_push_flag(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, [[maybe_unused]] bool& running) {
-    Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>4}[PUSHF] │ PC={} Pushing FLAGS={:08X}", cpu.get_pc(), "", cpu.get_pc(), cpu.get_flags()) << std::endl;
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [PUSHF] PC={} Pushing FLAGS={:08X}", cpu.get_pc(), cpu.get_pc(), cpu.get_flags()) << std::endl;
     cpu.set_sp(cpu.get_sp() - 4);
     cpu.write_mem32(cpu.get_sp(), cpu.get_flags());
     cpu.set_pc(cpu.get_pc() + 1);  // PUSH_FLAG is a single-byte instruction
@@ -930,22 +966,20 @@ void handle_ret(CPU& cpu, [[maybe_unused]] const std::vector<uint8_t>& program, 
     uint32_t sp = cpu.get_sp();
 
     Logger::instance().debug() << fmt::format(
-        "[PC=0x{:04X}]{:>6}[RET] │ SP={} Restoring FP and popping return address",
-        pc, "", sp
+        "[PC=0x{:04X}] [RET] SP={} Restoring FP and popping return address",
+        pc, sp
     ) << std::endl;
 
-    // Save return value before unwinding stack
-    uint32_t ret_val = cpu.read_mem32(sp);         // return value is at sp
-    uint32_t ret_addr = cpu.read_mem32(sp + 4);    // return address
-    uint32_t old_fp = cpu.read_mem32(sp + 8);      // old frame pointer
+    // Stack layout from CALL:
+    // SP: return address
+    // SP+4: old frame pointer
+    uint32_t ret_addr = cpu.read_mem32(sp);      // return address at sp
+    uint32_t old_fp = cpu.read_mem32(sp + 4);    // old frame pointer at sp+4
 
-    // Unwind stack
-    sp += 12;
+    // Unwind stack (pop 8 bytes: return address + old FP)
+    sp += 8;
     cpu.set_sp(sp);
     cpu.set_fp(old_fp);
-
-    // Write return value to caller's stack frame (at fp + 0)
-    cpu.write_mem32(cpu.get_fp(), ret_val);
 
     cpu.print_stack_frame("RET");
     cpu.set_pc(ret_addr);
@@ -1017,7 +1051,7 @@ void handle_sub(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() + 2 < program.size()) {
         uint8_t reg1 = program[cpu.get_pc() + 1];
         uint8_t reg2 = program[cpu.get_pc() + 2];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[SUB] │ PC={} R{} -= R{}", cpu.get_pc(), "", cpu.get_pc(), reg1, reg2) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [SUB] PC={} R{} -= R{}", cpu.get_pc(), cpu.get_pc(), reg1, reg2) << std::endl;
         if (reg1 < cpu.get_registers().size() && reg2 < cpu.get_registers().size()) {
             uint32_t before = cpu.get_registers()[reg1];
             uint32_t operand = cpu.get_registers()[reg2];
@@ -1060,13 +1094,13 @@ void handle_swap(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() + 2 < program.size()) {
         uint8_t reg = program[cpu.get_pc() + 1];
         uint8_t addr = program[cpu.get_pc() + 2];
-        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[SWAP] │ PC={} Swapping R{} with memory[{}]", cpu.get_pc(), "", cpu.get_pc(), reg, addr) << std::endl;
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [SWAP] PC={} Swapping R{} with memory[{}]", cpu.get_pc(), cpu.get_pc(), reg, addr) << std::endl;
 
         if (reg < cpu.get_registers().size() && addr < cpu.get_memory().size()) {
             uint32_t temp = cpu.get_registers()[reg];
             cpu.get_registers()[reg] = cpu.get_memory()[addr];
             cpu.get_memory()[addr] = temp;
-            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>5}[SWAP] │ R{} = {}, memory[{}] = {}", cpu.get_pc(), "", reg, cpu.get_registers()[reg], addr, cpu.get_memory()[addr]) << std::endl;
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [SWAP] R{} = {}, memory[{}] = {}", cpu.get_pc(), reg, cpu.get_registers()[reg], addr, cpu.get_memory()[addr]) << std::endl;
         }
         cpu.set_pc(cpu.get_pc() + 3);
     } else {
@@ -1340,6 +1374,38 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
         case Opcode::DB:
             handle_db(cpu, program, running);
             break;
+
+        // Extended 64-bit register operations
+        case Opcode::ADD64:
+            handle_add64(cpu, program, running);
+            break;
+        case Opcode::SUB64:
+            handle_sub64(cpu, program, running);
+            break;
+        case Opcode::MOV64:
+            handle_mov64(cpu, program, running);
+            break;
+        case Opcode::LOAD_IMM64:
+            handle_load_imm64(cpu, program, running);
+            break;
+        case Opcode::MOVEX:
+            handle_movex(cpu, program, running);
+            break;
+        case Opcode::ADDEX:
+            handle_addex(cpu, program, running);
+            break;
+
+        // CPU Mode Control Operations
+        case Opcode::MODE32:
+            handle_mode32(cpu, program, running);
+            break;
+        case Opcode::MODE64:
+            handle_mode64(cpu, program, running);
+            break;
+        case Opcode::MODECMP:
+            handle_modecmp(cpu, program, running);
+            break;
+
         default:
             Logger::instance().error()
                 << std::right << std::setw(23) << std::setfill(' ') << "Invalid opcode " << "│ "

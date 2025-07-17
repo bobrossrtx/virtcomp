@@ -1,0 +1,11 @@
+# Test JGE (Jump if Greater or Equal) - should jump when 5 >= 5
+# Load 5 into r0, 5 into r1, compare, then test JGE
+01 00 05   # LOAD_IMM r0, 5
+01 01 05   # LOAD_IMM r1, 5
+0A 00 01   # CMP r0, r1 (5 - 5 = 0, zero flag set, not negative)
+27 12      # JGE 18 (0x12) - should jump
+01 02 FF   # LOAD_IMM r2, 255 (should be skipped)
+FF         # HALT
+# Jump target at address 18 (0x12):
+01 02 CC   # LOAD_IMM r2, 204 (should be executed)
+FF         # HALT

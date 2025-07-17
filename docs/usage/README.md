@@ -94,7 +94,7 @@ Let's create a simple program that adds two numbers:
 # Load first number (5) into R0
 01 00 05 00 00 00    # LOAD_IMM R0, 5
 
-# Load second number (3) into R1  
+# Load second number (3) into R1
 01 01 03 00 00 00    # LOAD_IMM R1, 3
 
 # Add R0 and R1, store in R2
@@ -140,7 +140,7 @@ Good commenting makes programs maintainable and educational:
 01 00 0A 00 00 00    # LOAD_IMM R0, 10    ; First value
 0A 00               # PUSH R0             ; Push to stack
 
-01 00 14 00 00 00    # LOAD_IMM R0, 20    ; Second value  
+01 00 14 00 00 00    # LOAD_IMM R0, 20    ; Second value
 0A 00               # PUSH R0             ; Push to stack
 
 # Pop values back
@@ -167,7 +167,7 @@ Instructions use variable-length encoding:
 
 ```
 Single Byte:    [OPCODE]
-Two Bytes:      [OPCODE] [REG/IMM]  
+Two Bytes:      [OPCODE] [REG/IMM]
 Multi-Byte:     [OPCODE] [REG] [32-BIT-IMM]
 ```
 
@@ -182,7 +182,7 @@ Registers are encoded as single bytes:
 #### NOP (0x00)
 **Format**: `00`
 **Purpose**: No operation, consumes one CPU cycle
-**Example**: 
+**Example**:
 ```hex
 00    # NOP - do nothing
 ```
@@ -652,7 +652,7 @@ FF                  # HALT
 
 # Array data at 0x50
 0A 00 00 00         # 10
-14 00 00 00         # 20  
+14 00 00 00         # 20
 1E 00 00 00         # 30
 28 00 00 00         # 40
 32 00 00 00         # 50
@@ -749,10 +749,10 @@ VirtComp provides a flat memory model, but you can implement your own memory man
 # Unrolled loop (process 4 elements at once)
 02 01 00            # LOAD R1, [R0]     # Element 0
 04 02 01            # ADD R2, R1
-02 01 00            # LOAD R1, [R0+4]   # Element 1  
+02 01 00            # LOAD R1, [R0+4]   # Element 1
 04 02 01            # ADD R2, R1
 02 01 00            # LOAD R1, [R0+8]   # Element 2
-04 02 01            # ADD R2, R1  
+04 02 01            # ADD R2, R1
 02 01 00            # LOAD R1, [R0+12]  # Element 3
 04 02 01            # ADD R2, R1
 
@@ -770,7 +770,7 @@ VirtComp provides a flat memory model, but you can implement your own memory man
 
 # Loop using only registers
 04 01 03            # ADD R1, R3        # use R3 for data
-04 03 02            # ADD R3, R2        # advance by stride  
+04 03 02            # ADD R3, R2        # advance by stride
 14 00               # DEC R0            # decrement counter
 10 XX XX XX XX      # JNZ loop_start    # branch
 ```
@@ -782,7 +782,7 @@ VirtComp provides a flat memory model, but you can implement your own memory man
 The planned assembly language will provide:
 
 - **Symbolic labels** instead of numeric addresses
-- **Mnemonics** for easier instruction writing  
+- **Mnemonics** for easier instruction writing
 - **Directives** for data definition and memory layout
 - **Macros** for code reuse
 - **Include files** for modular programming
