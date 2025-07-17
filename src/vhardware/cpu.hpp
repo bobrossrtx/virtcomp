@@ -3,13 +3,20 @@
 #include <cstdint>
 #include <string>
 
-
 #include "../config.hpp"
 #include "../debug/logger.hpp"
-
+#include "cpu_registers.hpp"  // New extended register architecture
 #include "device_manager.hpp"
 
 using Logging::Logger;
+using VirtComp_Registers::Register;
+using VirtComp_Registers::TOTAL_REGISTERS;
+
+// CPU Operation Modes
+enum class CPUMode : uint8_t {
+    MODE_32BIT = 0,     // 32-bit mode (legacy compatibility)
+    MODE_64BIT = 1      // 64-bit mode (extended operations)
+};
 
 enum class Opcode : uint8_t {
     NOP = 0x00,         // No operation
@@ -71,12 +78,48 @@ enum class Opcode : uint8_t {
 
     DB = 0x40,          // Define byte
 
+    // Extended 64-bit Register Operations (0x50-0x6F range)
+    ADD64 = 0x50,       // 64-bit Add reg1, reg2
+    SUB64 = 0x51,       // 64-bit Subtract reg1, reg2
+    MOV64 = 0x52,       // 64-bit Move reg1, reg2 (reg1 = reg2)
+    LOAD_IMM64 = 0x53,  // Load 64-bit immediate value into reg
+    MUL64 = 0x54,       // 64-bit Multiply reg1, reg2
+    DIV64 = 0x55,       // 64-bit Divide reg1, reg2
+    AND64 = 0x56,       // 64-bit Bitwise AND reg1, reg2
+    OR64 = 0x57,        // 64-bit Bitwise OR reg1, reg2
+    XOR64 = 0x58,       // 64-bit Bitwise XOR reg1, reg2
+    NOT64 = 0x59,       // 64-bit Bitwise NOT reg
+    SHL64 = 0x5A,       // 64-bit Shift Left reg, imm
+    SHR64 = 0x5B,       // 64-bit Shift Right reg, imm
+    CMP64 = 0x5C,       // 64-bit Compare reg1, reg2
+    INC64 = 0x5D,       // 64-bit Increment reg
+    DEC64 = 0x5E,       // 64-bit Decrement reg
+
+    // Extended Register Set Operations (0x60-0x6F range)
+    MOVEX = 0x60,       // Move between extended registers (R8-R15)
+    ADDEX = 0x61,       // Add with extended registers
+    SUBEX = 0x62,       // Subtract with extended registers
+    MULEX = 0x63,       // Multiply with extended registers
+    DIVEX = 0x64,       // Divide with extended registers
+    CMPEX = 0x65,       // Compare with extended registers
+    LOADEX = 0x66,      // Load from memory to extended register
+    STOREX = 0x67,      // Store from extended register to memory
+    PUSHEX = 0x68,      // Push extended register onto stack
+    POPEX = 0x69,       // Pop from stack to extended register
+
+    // CPU Mode Control Operations (0x70-0x7F range)
+    MODE32 = 0x70,      // Switch to 32-bit mode
+    MODE64 = 0x71,      // Switch to 64-bit mode
+    MODECMP = 0x72,     // Compare current mode with operand
+    MODEFLAG = 0x73,    // Set mode flag in RFLAGS register
+
     HALT = 0xFF         // Halt execution
 };
 
 class CPU {
 public:
-    CPU();
+    CPU(size_t memory_size = 0); // 0 means use default size
+    static CPU create_test_cpu(); // Factory method for test compatibility
     ~CPU();
 
     void reset();
@@ -85,23 +128,101 @@ public:
     bool step(const std::vector<uint8_t>& program); // executes one instruction, returns false if halted or error
     void print_state(const std::string& info) const;
     void print_registers() const;
+    void print_extended_registers() const; // Show all 50 registers
+    void print_register_update(Register reg, uint64_t old_value, uint64_t new_value) const; // Print register change message
     void print_memory(std::size_t start = 0, std::size_t end = 0x20) const; // Print first 32 bytes by default
 
-    // Add these getters for testing
-    const std::vector<uint32_t>& get_registers() const { return registers; }
-    std::vector<uint32_t>& get_registers() { return registers; } // Non-const version for opcodes
+    // Memory management
+    size_t get_memory_size() const { return memory.size(); }
+    void resize_memory(size_t new_size); // Dynamic memory resizing
+
+    // CPU Mode Management (x32/x64 support)
+    CPUMode get_cpu_mode() const { return cpu_mode; }
+    void set_cpu_mode(CPUMode mode) {
+        cpu_mode = mode;
+        Logger::instance().info() << fmt::format(
+            "CPU mode switched to {}-bit",
+            (mode == CPUMode::MODE_64BIT) ? 64 : 32) << std::endl;
+    }
+    bool is_64bit_mode() const { return cpu_mode == CPUMode::MODE_64BIT; }
+    bool is_32bit_mode() const { return cpu_mode == CPUMode::MODE_32BIT; }
+
+    // Mode-aware register operations
+    uint64_t get_register_mode_aware(Register reg) const {
+        if (is_32bit_mode()) {
+            return get_register_32(reg); // Return only lower 32 bits in 32-bit mode
+        }
+        return get_register_64(reg); // Return full 64 bits in 64-bit mode
+    }
+
+    void set_register_mode_aware(Register reg, uint64_t value) {
+        if (is_32bit_mode()) {
+            set_register_32(reg, static_cast<uint32_t>(value)); // Only set lower 32 bits
+        } else {
+            set_register_64(reg, value); // Set full 64 bits
+        }
+    }
+
+    // Get effective register size based on current mode
+    size_t get_register_size() const {
+        return is_64bit_mode() ? 8 : 4; // 8 bytes for 64-bit, 4 bytes for 32-bit
+    }
+
+    // Extended register access (64-bit registers)
+    uint64_t get_register(Register reg) const;
+    void set_register(Register reg, uint64_t value);
+
+    // Enhanced register operations with size specification
+    uint64_t get_register_64(Register reg) const { return get_register(reg); }
+    uint32_t get_register_32(Register reg) const { return static_cast<uint32_t>(get_register(reg)); }
+    uint16_t get_register_16(Register reg) const { return static_cast<uint16_t>(get_register(reg)); }
+    uint8_t get_register_8(Register reg) const { return static_cast<uint8_t>(get_register(reg)); }
+
+    void set_register_64(Register reg, uint64_t value) { set_register(reg, value); }
+    void set_register_32(Register reg, uint32_t value) {
+        // Preserve upper 32 bits when setting lower 32 bits
+        uint64_t current = get_register(reg);
+        set_register(reg, (current & 0xFFFFFFFF00000000ULL) | value);
+    }
+    void set_register_16(Register reg, uint16_t value) {
+        // Preserve upper 48 bits when setting lower 16 bits
+        uint64_t current = get_register(reg);
+        set_register(reg, (current & 0xFFFFFFFFFFFF0000ULL) | value);
+    }
+    void set_register_8(Register reg, uint8_t value) {
+        // Preserve upper 56 bits when setting lower 8 bits
+        uint64_t current = get_register(reg);
+        set_register(reg, (current & 0xFFFFFFFFFFFFFF00ULL) | value);
+    }
+
+    // Extended register validation
+    bool is_valid_register(Register reg) const {
+        return static_cast<size_t>(reg) < TOTAL_REGISTERS;
+    }
+    bool is_extended_register(Register reg) const {
+        auto index = static_cast<size_t>(reg);
+        return index >= 8 && index < 16; // R8-R15
+    }
+
+    // Register name support for debugging
+    std::string get_register_name(Register reg) const;
+
+    // Legacy register access (for backward compatibility)
+    const std::vector<uint32_t>& get_registers() const { return legacy_registers; }
+    std::vector<uint32_t>& get_registers() { return legacy_registers; } // Non-const version for opcodes
+
     std::vector<uint8_t>& get_memory() { return memory; }
-    uint32_t get_flags() const { return flags; }
-    void set_flags(uint32_t value) { flags = value; }
-    uint32_t get_pc() const { return pc; }
-    uint32_t get_sp() const { return sp; }
-    uint32_t get_fp() const { return fp; }
+    uint32_t get_flags() const { return static_cast<uint32_t>(registers[static_cast<size_t>(Register::RFLAGS)]); }
+    void set_flags(uint32_t value) { registers[static_cast<size_t>(Register::RFLAGS)] = value; }
+    uint32_t get_pc() const { return static_cast<uint32_t>(registers[static_cast<size_t>(Register::RIP)]); }
+    uint32_t get_sp() const { return static_cast<uint32_t>(registers[static_cast<size_t>(Register::RSP)]); }
+    uint32_t get_fp() const { return static_cast<uint32_t>(registers[static_cast<size_t>(Register::RBP)]); }
     int get_arg_offset() const { return arg_offset; }
     void set_arg_offset(int value) { arg_offset = value; }
 
-    void set_pc(uint32_t value) { pc = value; }
-    void set_sp(uint32_t value) { sp = value; }
-    void set_fp(uint32_t value) { fp = value; }
+    void set_pc(uint32_t value) { registers[static_cast<size_t>(Register::RIP)] = value; }
+    void set_sp(uint32_t value) { registers[static_cast<size_t>(Register::RSP)] = value; }
+    void set_fp(uint32_t value) { registers[static_cast<size_t>(Register::RBP)] = value; }
 
     uint8_t fetch_operand();
     void write_mem32(uint32_t addr, uint32_t value);
@@ -125,15 +246,23 @@ public:
     void write_port_dword(uint8_t port, uint32_t value) { vhw::DeviceManager::instance().writePortDWord(port, value); }
 
 private:
-    std::vector<uint32_t> registers;
+    // CPU operation mode (32-bit or 64-bit)
+    CPUMode cpu_mode;
+
+    // Extended 64-bit register array (50 registers total)
+    std::vector<uint64_t> registers;
+
+    // Legacy 32-bit register compatibility layer
+    std::vector<uint32_t> legacy_registers;
+
     std::vector<uint8_t> memory;
-    uint32_t pc; // Program Counter
-    uint32_t sp; // Stack Pointer
-    uint32_t fp; // Frame Pointer
-    uint32_t flags; // Status Flags
-    int arg_offset; // Offset for arguments    // Add these:
+    int arg_offset; // Offset for arguments
     mutable uint32_t last_accessed_addr = static_cast<uint32_t>(-1);
     uint32_t last_modified_addr = static_cast<uint32_t>(-1);
+
+    // Internal register synchronization
+    void sync_legacy_registers();
+    void sync_from_legacy_registers();
 
     uint8_t readPort(uint8_t port);
     void writePort(uint8_t port, uint8_t value);

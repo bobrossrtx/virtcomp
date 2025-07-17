@@ -6,7 +6,10 @@ BUILD_DIR := build
 BIN_DIR := bin
 
 # Find all .cpp files in src and its subdirectories, excluding test_runner.cpp
-SRCS := $(shell find $(SRC_DIR) -name '*.cpp')
+SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -not -name 'test_runner.cpp')
+# Add the new register system source files explicitly
+REGISTER_SRCS := $(SRC_DIR)/vhardware/cpu_registers.cpp
+SRCS += $(REGISTER_SRCS)
 # Replace src/ with build/ and .cpp with .o for object files
 OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
@@ -80,8 +83,8 @@ test: $(TARGET)
 	./$(TARGET) -t -d
 
 # Run unit tests
-unit-test: $(TEST_TARGET)
-	./$(TEST_TARGET)
+unit-test: $(TARGET)
+	./$(TARGET) -t
 
 # Build and run unit tests
 test-all: unit-test test
