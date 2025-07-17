@@ -2,31 +2,25 @@
 
 ## Done
 
-- Phase 2.5: CPU Architecture Expansion (100%)
-- Extended Register Architecture (50 registers)
-- x32/x64 Dual-Mode Support
-- Mode-Aware Arithmetic Operations
-- Extended Register Operations (MOVEX, ADDEX, etc.)
-- Memory Expansion to 1MB
-- All Unit Tests Passing (53/53)
-- All Integration Tests Passing (39/39)
-- Extended Register Test Validation
-- Output Formatting Enhancement
-- Debug Display Cleanup
-- Professional UI Polish
-- Extended Register Command-Line Flag (-er)
-- Logger Color Enhancement (Purple timestamps, colored levels)
+- ✅ Assembly mode integration (-A flag)
+- ✅ Full assembler pipeline in main executable
+- ✅ Binary bytecode generation and execution
+- ✅ Assembly file validation and error handling
+- ✅ CPU/device initialization in assembly mode
+- ✅ Verbose output with symbol tables
+- ✅ Flag conflict validation between -A, -t, and -p
+- ✅ Command-line argument parsing and validation
+- ✅ Comprehensive error handling for assembly mode
+- ✅ Integration with debug and verbose flags
 
 ## Doing
 
-- Roadmap and Documentation Updates
-- Project Status Assessment
+- Document assembly mode usage
+- Test edge cases and create comprehensive examples
 
 ## Next
 
-- Assembly Language Design
-- Two-Pass Assembler Implementation
-- Register Name Parsing
-- Assembly Syntax Definition
-- CLI Assembler Tool (virtasm)
-- Extended Register Name Resolution Fix
+- Create assembly language documentation
+- Add more complex assembly examples
+- Potentially add assembly syntax highlighting
+- Consider adding assembly-specific debugging features

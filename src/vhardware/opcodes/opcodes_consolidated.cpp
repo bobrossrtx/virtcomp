@@ -1416,3 +1416,71 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
             break;
     }
 }
+
+// 64-bit and Extended Register Operations Implementation
+// These are placeholder implementations for compatibility
+
+// Implementation for ADD64 opcode - 64-bit addition
+void handle_add64(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [ADD64] 64-bit addition operation", cpu.get_pc()) << std::endl;
+    // Placeholder: delegate to regular ADD for now
+    handle_add(cpu, program, running);
+}
+
+// Implementation for SUB64 opcode - 64-bit subtraction  
+void handle_sub64(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [SUB64] 64-bit subtraction operation", cpu.get_pc()) << std::endl;
+    // Placeholder: delegate to regular SUB for now
+    handle_sub(cpu, program, running);
+}
+
+// Implementation for MOV64 opcode - 64-bit move
+void handle_mov64(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [MOV64] 64-bit move operation", cpu.get_pc()) << std::endl;
+    // Placeholder: delegate to regular MOV for now
+    handle_mov(cpu, program, running);
+}
+
+// Implementation for LOAD_IMM64 opcode - 64-bit immediate load
+void handle_load_imm64(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [LOAD_IMM64] 64-bit immediate load operation", cpu.get_pc()) << std::endl;
+    // Placeholder: delegate to regular LOAD_IMM for now
+    handle_load_imm(cpu, program, running);
+}
+
+// Implementation for MOVEX opcode - Extended move
+void handle_movex(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [MOVEX] Extended move operation", cpu.get_pc()) << std::endl;
+    // Placeholder: delegate to regular MOV for now  
+    handle_mov(cpu, program, running);
+}
+
+// Implementation for ADDEX opcode - Extended addition
+void handle_addex(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [ADDEX] Extended addition operation", cpu.get_pc()) << std::endl;
+    // Placeholder: delegate to regular ADD for now
+    handle_add(cpu, program, running);
+}
+
+// Mode Control Operations Implementation
+
+// Implementation for MODE32 opcode - Switch to 32-bit mode
+void handle_mode32(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [MODE32] Switching CPU to 32-bit mode", cpu.get_pc()) << std::endl;
+    cpu.set_cpu_mode(CPUMode::MODE_32BIT);
+    cpu.set_pc(cpu.get_pc() + 1);
+}
+
+// Implementation for MODE64 opcode - Switch to 64-bit mode  
+void handle_mode64(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [MODE64] Switching CPU to 64-bit mode", cpu.get_pc()) << std::endl;
+    cpu.set_cpu_mode(CPUMode::MODE_64BIT);
+    cpu.set_pc(cpu.get_pc() + 1);
+}
+
+// Implementation for MODECMP opcode - Mode-aware comparison
+void handle_modecmp(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [MODECMP] Mode-aware comparison", cpu.get_pc()) << std::endl;
+    // Placeholder: delegate to regular CMP for now
+    handle_cmp(cpu, program, running);
+}
