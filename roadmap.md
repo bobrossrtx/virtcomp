@@ -48,6 +48,15 @@ VirtComp is a virtual computer system with a custom CPU architecture, supporting
 - **Comprehensive Documentation**: API references, usage guides, troubleshooting
 - **Memory Bank System**: Project knowledge management and decision tracking
 
+### ✅ Assembly Language Integration *(COMPLETE - July 2025)*
+- **VM Integration**: Full assembly language integrated with main VirtComp executable
+- **Assembly Mode**: `-A/--assembly` flag for assembling and running .asm files
+- **Complete Pipeline**: Lexer → Parser → Assembler → Bytecode → VM execution
+- **Flag Validation**: Conflict detection between assembly, test, and program modes
+- **Symbol Tables**: Verbose output showing assembled symbols and addresses
+- **Error Handling**: Comprehensive error reporting for assembly, parsing, and runtime
+- **Debug Integration**: Assembly mode works with `-v`, `-d`, and `--extended-registers`
+
 ---
 
 ## 🚀 Current Development Phase
@@ -216,7 +225,121 @@ Transform VirtComp from an interpreter-like system to a proper bytecode compilat
 
 ---
 
-### 🏗️ **Phase 3: Virtual Storage System** *(Planned - Q1 2026)*
+## 🚀 **NEW DEVELOPMENT ROADMAP** *(Updated July 2025)*
+
+Based on the successful completion of assembly language integration, here is the planned development sequence:
+
+### 📚 **Phase 3A: Assembly Language Documentation & Examples** *(Next Priority - Q4 2025)*
+
+**Priority: HIGH** | **Dependencies: Assembly Integration ✅ Complete**
+
+Essential for usability - create comprehensive documentation and examples so developers can actually use the assembly language we've built.
+
+#### Documentation Creation
+- **Assembly Language Manual**: Complete instruction reference with syntax and examples
+- **Tutorial Series**: Step-by-step guides from basic to advanced assembly programming
+- **API Documentation**: Register descriptions, addressing modes, and calling conventions
+- **Quick Reference**: Printable instruction set summary and register map
+
+#### Example Programs
+- **Hello World**: Basic text output demonstration
+- **Arithmetic Examples**: Addition, subtraction, multiplication, division
+- **Control Flow**: Loops, conditionals, and function calls
+- **Device I/O**: Console, file, and counter device usage
+- **Advanced Examples**: Complex programs showcasing full feature set
+
+#### Testing & Validation
+- **Example Verification**: Ensure all examples compile and run correctly
+- **Documentation Testing**: Validate all code snippets and references
+- **User Experience**: Test documentation clarity with external users
+
+### 🖥️ **Phase 3B: Graphics & Display System** *(Q1 2026)*
+
+**Priority: HIGH** | **Dependencies: Documentation Complete**
+
+Add visual output capabilities to make VirtComp programs engaging and enable graphics programming.
+
+#### Graphics Device Implementation
+- **Framebuffer Device**: Memory-mapped pixel buffer for graphics output
+- **Resolution Support**: Multiple display modes (80x25 text, 320x240, 640x480 graphics)
+- **Color System**: 8-bit color palette with RGB mapping
+- **Graphics Primitives**: Pixel plotting, line drawing, rectangle fill
+
+#### Graphics API
+- **Assembly Instructions**: Graphics-specific operations and registers
+- **Memory Mapping**: Direct framebuffer access patterns
+- **Graphics Library**: Reusable assembly routines for common operations
+- **Text Rendering**: Character display in graphics modes
+
+#### Visual Examples
+- **Pixel Art**: Simple graphics demonstrations
+- **Animation**: Moving objects and visual effects
+- **Games**: Simple games like Pong or Snake
+- **Visualizations**: Data plotting and graphic displays
+
+### � **Phase 3C: Advanced I/O & Networking** *(Q2 2026)*
+
+**Priority: MEDIUM** | **Dependencies: Graphics System Complete**
+
+Expand I/O capabilities for real-world integration and communication.
+
+#### Enhanced I/O
+- **Serial Communication**: UART device for external communication
+- **Network Interface**: TCP/UDP socket simulation
+- **Timer System**: Programmable intervals and real-time operations
+- **Interrupt System**: Hardware interrupt simulation and handling
+
+#### File System Improvements
+- **Directory Operations**: Folder creation, listing, navigation
+- **File Metadata**: Size, timestamps, permissions
+- **Stream I/O**: Buffered file operations and seeking
+- **Virtual File System**: Multiple mount points and device types
+
+### 🚀 **Phase 3D: High-Level Language Frontend** *(Q3 2026)*
+
+**Priority: VERY HIGH** | **Dependencies: All Previous Phases Complete**
+
+Transform VirtComp into a true language platform by implementing a high-level language that compiles to VirtComp assembly.
+
+#### Language Design
+- **C-like Syntax**: Familiar syntax for wide adoption
+- **Type System**: Static typing with automatic memory management
+- **Function System**: Procedures, parameters, local variables, return values
+- **Control Structures**: if/else, while, for, switch statements
+
+#### Compiler Implementation
+- **Lexer & Parser**: Language front-end processing
+- **Symbol Tables**: Variable and function scope management
+- **Code Generation**: High-level to VirtComp assembly translation
+- **Optimization**: Basic optimizations for efficiency
+
+#### Standard Library
+- **Built-in Functions**: Math, string, I/O operations
+- **Graphics Library**: High-level graphics programming interface
+- **System Interface**: Device access and system operations
+- **Runtime Support**: Memory management and error handling
+
+### ⚡ **Phase 3E: Performance & Optimization** *(Q4 2026)*
+
+**Priority: MEDIUM** | **Dependencies: Language Frontend Complete**
+
+Optimize VirtComp for speed and efficiency once all major features are complete.
+
+#### Performance Improvements
+- **JIT Compilation**: Just-in-time compilation for hot code paths
+- **Bytecode Optimization**: Instruction combining and dead code elimination
+- **Memory Optimization**: Efficient memory allocation and garbage collection
+- **Profiling Tools**: Performance analysis and bottleneck identification
+
+#### Advanced Features
+- **Multi-threading**: Parallel execution capabilities
+- **Native Compilation**: Compile VirtComp programs to native machine code
+- **Plugin System**: Extensible architecture for custom devices and features
+- **Development Tools**: Advanced debugging and development environment
+
+---
+
+### �🏗️ **Phase 4: Virtual Storage System** *(Planned - Q1 2027)*
 
 **Priority: MEDIUM** | **Dependencies: Phase 2 completion**
 
