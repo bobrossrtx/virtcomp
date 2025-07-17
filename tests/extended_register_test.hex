@@ -1,0 +1,38 @@
+# Extended Register Test Program (Manual Hex Assembly)
+# Testing new x32/x64 mode switching and extended register operations
+
+# MODE32 (0x70) - Switch to 32-bit mode
+70
+
+# LOAD_IMM (0x01) R0, 100 - Load 100 into R0 in 32-bit mode
+01 00 64
+
+# MODE64 (0x71) - Switch to 64-bit mode
+71
+
+# LOAD_IMM64 (0x53) R8, 0x123456789ABCDEF0 - Load 64-bit value into R8
+53 08 F0 DE BC 9A 78 56 34 12
+
+# MOVEX (0x60) R9, R8 - Move R8 to R9 using extended register operation
+60 09 08
+
+# ADDEX (0x61) R9, R0 - Add R0 to R9 using extended register operation
+61 09 00
+
+# MODE32 (0x70) - Switch back to 32-bit mode
+70
+
+# ADD64 (0x50) R0, R9 - This will operate in 32-bit mode
+50 00 09
+
+# MODECMP (0x72) 1 - Compare with 64-bit mode (should set zero=false)
+72 01
+
+# MODE64 (0x71) - Switch to 64-bit mode
+71
+
+# MODECMP (0x72) 1 - Compare with 64-bit mode (should set zero=true)
+72 01
+
+# HALT (0xFF)
+FF
