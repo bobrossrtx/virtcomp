@@ -564,7 +564,7 @@ uint8_t parse_hex_byte(const std::string& hex_str);
  * @return Configuration structure
  */
 struct Config {
-    std::string program_file;
+    std::string program_file;  // Hex file path
     bool enable_gui;
     bool interactive_mode;
     bool show_help;

@@ -34,14 +34,14 @@ make
 # Run unit and integration tests  
 make test
 
-# Run a program
-./bin/virtcomp -p tests/helloworld.hex
+# Run a hex program
+./bin/virtcomp -H tests/helloworld.hex
 
 # Compile a program
-./bin/virtcomp -p tests/helloworld -o
+./bin/virtcomp -H tests/helloworld -o
 
 # Enable debug GUI
-./bin/virtcomp -p tests/helloworld.hex --gui
+./bin/virtcomp -H tests/helloworld.hex --gui
 ```
 
 ---
@@ -102,7 +102,7 @@ virtcomp Usage: virtcomp [options]
   --debug          -d      Enable debug mode
   --verbose        -v      Show informational messages (use --verbose=false to disable)
   --debug-file     -f      Debug file path
-  --program        -p      Path to program file (hex bytes, space or newline separated)
+  --hex            -H      Path to hex file (hex bytes, space or newline separated)
   --test           -t      Run tests
   --gui            -g      Enable debug GUI
   --compile        -o      Compile program into a standalone executable (optionally specify output name)

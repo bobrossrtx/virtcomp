@@ -1,519 +1,513 @@
 # VirtComp Codebase Documentation
 
-This section provides technical documentation for developers working on VirtComp itself. The documentation mirrors and expands upon the `/** documentation comments **/` found in the source code.
+**Complete technical documentation for VirtComp virtual machine developers**
 
-## Table of Contents
+Welcome to the VirtComp codebase documentation. This guide provides comprehensive technical information for developers working on VirtComp itself, including architecture details, API references, and development guidelines.
 
-- [Architecture Overview](#architecture-overview)
-- [Core Components](#core-components)
-  - [CPU Implementation](#cpu-implementation)
-  - [Device System](#device-system)
-  - [Debug Interface](#debug-interface)
-  - [Main Application](#main-application)
-- [API Reference](API_REFERENCE.md)
-- [Build System](#build-system)
-- [Development Guidelines](#development-guidelines)
+## Quick Navigation
+
+### Core Documentation
+- **[API Reference](API_REFERENCE.md)** - Complete API documentation with examples
+- **[Module Documentation](#module-documentation)** - Per-component technical details
+- **[Architecture Overview](#architecture-overview)** - System design and patterns
+- **[Development Workflow](#development-workflow)** - Building, testing, and contributing
+
+### Developer Resources
+- **[Code Style Guide](#code-style-guidelines)** - Coding standards and best practices
+- **[Testing Framework](#testing-requirements)** - Unit tests and validation
+- **[Build System](#build-system)** - Compilation and dependency management
+- **[Debugging Tools](#debugging-and-profiling)** - Debug interfaces and profiling
+
+## Module Documentation
+
+VirtComp is organized into clearly defined modules, each with comprehensive documentation:
+
+### [📱 Main Application (`main.cpp`)](modules/main.md)
+**Application orchestration and command-line interface**
+- Entry point and system initialization
+- Command-line argument parsing with validation
+- Execution mode management (hex, assembly, testing, GUI)
+- Integration of all subsystems
+
+### [🧠 CPU Core System (`vhardware/cpu.*`)](modules/cpu.md)
+**Virtual processor implementation and execution engine**
+- Complete instruction set architecture (50+ opcodes)
+- Extended register system (50 registers: R0-R49)
+- Memory management with 1MB virtual memory
+- Flag system for conditional operations and status tracking
+
+### [⚙️ Assembly Language System (`assembler/`)](modules/assembler.md)
+**Complete assembly toolchain and compiler**
+- **Lexer**: Token generation and syntax analysis
+- **Parser**: Abstract syntax tree construction
+- **Assembler**: Two-pass bytecode generation with symbol resolution
+- Full instruction set support with comprehensive error handling
+
+### [🔌 Device Management (`vhardware/device_manager.*`)](modules/device_manager.md)
+**Hardware abstraction and I/O coordination**
+- Unified device interface with extensible architecture
+- Device factory pattern for component creation
+- Console output device with future expansion support
+- Memory-mapped I/O capabilities and port management
+
+### [🐛 Debug and Logging System (`debug/`)](modules/debug.md)
+**Development tools and runtime analysis**
+- Structured logging framework with multiple severity levels
+- Real-time GUI debugging interface (ImGui-based)
+- Interactive breakpoint system and state inspection
+- Performance monitoring and execution profiling
+
+### [🧪 Test Framework (`test/`)](modules/testing.md)
+**Comprehensive testing infrastructure**
+- Unit testing for all CPU instructions and components
+- Integration tests for complete system validation
+- Assembly language toolchain testing
+- Automated test execution with coverage analysis
 
 ## Architecture Overview
 
-VirtComp follows a modular architecture with clear separation of concerns:
+VirtComp follows a modular, layered architecture with clear separation of concerns:
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Main App      │───▶│      CPU        │───▶│     Memory      │
-│   (main.cpp)    │    │   (cpu.cpp)     │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │
-         ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐
-│   Debug GUI     │    │ Device Manager  │
-│   (gui.cpp)     │    │ (device_*.cpp)  │
-└─────────────────┘    └─────────────────┘
-                               │
-                               ▼
-                    ┌─────────────────┐
-                    │    Devices      │
-                    │ (Console, File, │
-                    │  Serial, etc.)  │
-                    └─────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                    Application Layer                        │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ main.cpp    │  │ CLI Parser  │  │ Configuration       │  │
+│  │ Entry Point │  │ & Validation│  │ Management          │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                     Core Systems Layer                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ CPU Core    │  │ Assembly    │  │ Device Manager      │  │
+│  │ • Execution │  │ Toolchain   │  │ • I/O Abstraction   │  │
+│  │ • Registers │  │ • Lexer     │  │ • Device Factory    │  │
+│  │ • Memory    │  │ • Parser    │  │ • Port Management   │  │
+│  │ • Flags     │  │ • Assembler │  │ • Console Device    │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  Development Tools Layer                    │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │ Debug GUI   │  │ Logging     │  │ Test Framework      │  │
+│  │ • Real-time │  │ Framework   │  │ • Unit Tests        │  │
+│  │ • State     │  │ • Structured│  │ • Integration Tests │  │
+│  │ • Breakpts  │  │ • Multiple  │  │ • Coverage Analysis │  │
+│  │ • Profiling │  │   Levels    │  │ • Automated Runs    │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
 ```
 
 ### Key Design Principles
 
-1. **Modularity**: Each component has a clear, well-defined interface
-2. **Extensibility**: New devices can be added without modifying core CPU code
-3. **Portability**: Platform-specific code is isolated and abstracted
-4. **Debuggability**: Comprehensive debugging support through GUI and logging
+#### 🔧 **Modularity**
+Each component has a well-defined interface and clear responsibilities, enabling independent development and testing.
 
-## Core Components
+#### 🔄 **Extensibility**
+Plugin architecture supports adding new devices, instructions, and debugging tools without modifying core systems.
 
-### CPU Implementation
+#### 🎯 **Testability**
+Dependency injection and interface segregation enable comprehensive unit testing and system validation.
 
-**File**: `src/vhardware/cpu.hpp`, `src/vhardware/cpu.cpp`
+#### 📊 **Observability**
+Comprehensive logging, debugging interfaces, and profiling tools provide deep system insights.
 
-The CPU is the heart of the virtual computer, implementing a custom 32-bit architecture.
+#### 🛡️ **Reliability**
+Robust error handling, input validation, and graceful degradation ensure stable operation.
 
-#### Class: `CPU`
+## Development Workflow
 
-**Purpose**: Emulates a complete CPU with registers, memory, and instruction execution.
+### Building the System
+
+```bash
+# Complete clean build
+make clean && make
+
+# Debug build with symbols
+make debug
+
+# Release build (optimized)
+make release
+
+# Run test suite
+make test
+
+# Install system-wide (if supported)
+make install
+```
+
+### Running VirtComp
+
+```bash
+# Execute hex bytecode
+./bin/virtcomp -H program.hex
+
+# Assemble and run source code
+./bin/virtcomp -A program.asm
+
+# Launch with GUI debugger
+./bin/virtcomp -H program.hex --gui
+
+# Run comprehensive test suite
+./bin/virtcomp -t
+
+# Compile to standalone executable
+./bin/virtcomp -H program.hex -o my_program
+```
+
+### File Organization
+
+```
+src/                           # Source code
+├── main.cpp                   # Application entry point
+├── config.hpp                 # Global configuration
+├── assembler/                 # Assembly language system
+│   ├── lexer.hpp/cpp         # Token generation
+│   ├── parser.hpp/cpp        # AST construction
+│   ├── assembler.hpp/cpp     # Bytecode generation
+│   ├── ast.hpp               # Abstract syntax tree nodes
+│   ├── token.hpp             # Token type definitions
+│   └── opcodes.hpp           # Instruction mappings
+├── vhardware/                # Virtual hardware layer
+│   ├── cpu.hpp/cpp           # CPU implementation
+│   ├── cpu_registers.hpp/cpp # Register architecture
+│   ├── cpu_flags.hpp         # Flag system definitions
+│   ├── device_manager.hpp/cpp# Device coordination
+│   ├── device_factory.hpp    # Device creation patterns
+│   ├── device.hpp            # Device interface
+│   └── opcodes/              # Instruction implementations
+├── debug/                    # Development and debugging tools
+│   ├── logger.hpp/cpp        # Logging framework
+│   └── gui.hpp/cpp           # Debug interface (ImGui)
+└── test/                     # Testing infrastructure
+    ├── test_framework.hpp    # Test execution framework
+    ├── test.hpp              # Test case definitions
+    └── unit_tests.cpp        # Comprehensive test suite
+
+docs/codebase/                # Technical documentation
+├── README.md                 # This overview document
+├── API_REFERENCE.md          # Complete API documentation
+└── modules/                  # Per-module documentation
+    ├── main.md              # Application entry point
+    ├── cpu.md               # CPU system details
+    ├── assembler.md         # Assembly toolchain
+    ├── device_manager.md    # Device management
+    ├── debug.md             # Debug and logging
+    └── testing.md           # Test framework
+
+examples/                     # Working assembly programs
+├── hello_world.asm          # Basic output demonstration
+├── calculator.asm           # Arithmetic operations
+├── loops.asm               # Control flow examples
+└── README.md               # Example documentation
+```
+
+## Code Style Guidelines
+
+### Naming Conventions
 
 ```cpp
-/**
- * Virtual CPU implementation with 32-bit architecture
- * Supports a comprehensive instruction set and device I/O
- */
+// Classes and Types: PascalCase
+class CPURegister;
+enum class TokenType;
+
+// Functions and Variables: snake_case
+void execute_instruction();
+uint32_t program_counter;
+
+// Constants: UPPER_SNAKE_CASE
+const int MAX_REGISTERS = 50;
+
+// Member Variables: trailing underscore
 class CPU {
-public:
-    CPU(size_t memory_size = 64 * 1024);
-    ~CPU();
-    
-    // Core execution
-    void reset();
-    void step();
-    void run();
-    
-    // State access
-    uint32_t get_register(Register reg) const;
-    void set_register(Register reg, uint32_t value);
-    uint32_t get_pc() const { return pc; }
-    void set_pc(uint32_t address) { pc = address; }
-    
-    // Memory operations
-    uint8_t read_memory(uint32_t address) const;
-    void write_memory(uint32_t address, uint8_t value);
-    uint32_t read_memory_word(uint32_t address) const;
-    void write_memory_word(uint32_t address, uint32_t value);
-    
-    // Device management
-    void set_device_manager(DeviceManager* dm) { device_manager = dm; }
-    
-    // Program loading
-    bool load_hex_program(const std::string& filename);
-    
-    // Debug support
-    bool is_halted() const { return halted; }
-    const std::string& get_last_error() const { return last_error; }
-};
-```
-
-#### Register Architecture
-
-The CPU provides 8 general-purpose registers plus special-purpose registers:
-
-- **R0-R7**: General-purpose 32-bit registers
-- **PC**: Program Counter (32-bit)
-- **SP**: Stack Pointer (32-bit)
-- **FP**: Frame Pointer (32-bit)
-- **FLAGS**: Status flags (32-bit)
-
-#### Memory Model
-
-- **Address Space**: 32-bit addressing (4GB theoretical, configurable actual size)
-- **Endianness**: Little-endian
-- **Word Size**: 32-bit (4 bytes)
-- **Stack**: Grows downward from high memory
-
-#### Instruction Format
-
-Instructions use variable-length encoding:
-
-1. **Single Byte**: Opcode only (e.g., `NOP`, `HALT`)
-2. **Two Bytes**: Opcode + register/immediate (e.g., `PUSH R0`)
-3. **Multiple Bytes**: Opcode + register + 32-bit immediate (e.g., `LOAD_IMM R0, 0x1234`)
-
-### Device System
-
-**Files**: `src/vhardware/device*.hpp`, `src/vhardware/device*.cpp`
-
-The device system provides a flexible I/O framework that allows the CPU to interact with various virtual and real hardware components.
-
-#### Class: `DeviceManager`
-
-**Purpose**: Manages device lifecycle and port mapping for I/O operations.
-
-```cpp
-/**
- * Central manager for all devices connected to the virtual computer
- * Handles port mapping, device lifecycle, and I/O routing
- */
-class DeviceManager {
-public:
-    DeviceManager();
-    ~DeviceManager();
-    
-    // Device registration
-    void register_device(std::unique_ptr<Device> device, uint8_t port);
-    void unregister_device(uint8_t port);
-    
-    // I/O operations
-    uint8_t read_port(uint8_t port);
-    void write_port(uint8_t port, uint8_t value);
-    uint16_t read_port_word(uint8_t port);
-    void write_port_word(uint8_t port, uint16_t value);
-    uint32_t read_port_dword(uint8_t port);
-    void write_port_dword(uint8_t port, uint32_t value);
-    
-    // String I/O
-    std::string read_string(uint8_t port);
-    void write_string(uint8_t port, const std::string& str);
-    
-    // Management
-    void update_all();
-    Device* get_device(uint8_t port);
-    const std::map<uint8_t, std::unique_ptr<Device>>& get_devices() const;
-};
-```
-
-#### Base Device Interface
-
-```cpp
-/**
- * Abstract base class for all devices in the virtual computer
- * Provides standard interface for I/O operations
- */
-class Device {
-public:
-    virtual ~Device() = default;
-    
-    // Basic I/O
-    virtual uint8_t read() = 0;
-    virtual void write(uint8_t value) = 0;
-    
-    // Extended I/O (optional)
-    virtual uint16_t read_word() { return read() | (read() << 8); }
-    virtual void write_word(uint16_t value) { write(value & 0xFF); write(value >> 8); }
-    virtual uint32_t read_dword() { return read_word() | (read_word() << 16); }
-    virtual void write_dword(uint32_t value) { write_word(value & 0xFFFF); write_word(value >> 16); }
-    
-    // String I/O (optional)
-    virtual std::string read_string() { return ""; }
-    virtual void write_string(const std::string& str) {}
-    
-    // Management
-    virtual void update() {}
-    virtual std::string get_type() const = 0;
-    virtual std::string get_info() const { return get_type(); }
-};
-```
-
-### Available Devices
-
-#### ConsoleDevice
-**Purpose**: Provides text-based input/output for program interaction.
-
-```cpp
-/**
- * Console device for text I/O operations
- * Supports both character and string-based communication
- */
-class ConsoleDevice : public Device {
-    // Implements standard input/output with buffering
-    // Supports both blocking and non-blocking reads
-    // Handles string operations for text processing
-};
-```
-
-#### FileDevice
-**Purpose**: Enables file system access for the virtual computer.
-
-```cpp
-/**
- * File system access device
- * Allows programs to read from and write to host filesystem
- */
-class FileDevice : public Device {
-    // File operations: open, close, read, write
-    // Path resolution and security sandboxing
-    // Error handling and status reporting
-};
-```
-
-#### SerialPortDevice
-**Purpose**: Interfaces with real hardware serial ports.
-
-```cpp
-/**
- * Real hardware serial port interface
- * Enables communication with external devices
- */
-class SerialPortDevice : public Device {
-    // Hardware abstraction for serial communication
-    // Configurable baud rate, parity, stop bits
-    // Asynchronous operation with buffering
-};
-```
-
-### Debug Interface
-
-**File**: `src/debug/gui.cpp`
-
-The debug interface provides comprehensive visualization and control over the virtual computer's execution.
-
-#### Class: `DebugGUI`
-
-**Purpose**: ImGui-based graphical debugger for real-time system inspection.
-
-```cpp
-/**
- * ImGui-based debug interface for VirtComp
- * Provides real-time visualization of CPU state, memory, and device status
- */
-class DebugGUI {
-public:
-    DebugGUI(CPU* cpu, DeviceManager* device_manager);
-    ~DebugGUI();
-    
-    // Main interface
-    bool initialize();
-    void render();
-    void shutdown();
-    
-    // Control
-    bool should_close() const;
-    void handle_events();
-    
 private:
-    // UI Panels
-    void render_cpu_state();
-    void render_memory_view();
-    void render_device_status();
-    void render_control_panel();
-    void render_disassembly();
-    
-    // State management
-    CPU* cpu;
-    DeviceManager* device_manager;
-    bool show_cpu_window;
-    bool show_memory_window;
-    bool show_device_window;
-    uint32_t memory_view_address;
-    size_t memory_view_size;
+    uint32_t program_counter_;
+    std::vector<Register> registers_;
 };
+
+// Namespaces: lowercase
+namespace assembler {
+    class Lexer;
+}
 ```
 
-#### Debug Features
-
-1. **CPU State Display**: Real-time register values, flags, and execution status
-2. **Memory Viewer**: Hexadecimal memory dump with navigation
-3. **Device Monitor**: Live device status and I/O activity
-4. **Execution Control**: Step-by-step execution, breakpoints, and flow control
-5. **Disassembly**: Instruction disassembly with address mapping
-
-### Main Application
-
-**File**: `src/main.cpp`
-
-The main application handles command-line parsing, system initialization, and execution modes.
-
-#### Key Functions
+### Documentation Standards
 
 ```cpp
 /**
- * Main application entry point
- * Handles command-line arguments and system initialization
+ * @brief Execute a single CPU instruction
+ * 
+ * Decodes and executes the instruction at the current program counter,
+ * updating CPU state and advancing PC as appropriate.
+ * 
+ * @param instruction The opcode and operands to execute
+ * @return true if execution should continue, false if HALT encountered
+ * @throws CPUException for invalid instructions or runtime errors
+ * 
+ * @example
+ * ```cpp
+ * CPU cpu;
+ * bool continue_execution = cpu.execute_instruction(0x01); // LOAD_IMM
+ * ```
  */
-int main(int argc, char* argv[]);
-
-/**
- * Parse and validate command-line arguments
- * Returns parsed configuration or exits on error
- */
-Config parse_arguments(int argc, char* argv[]);
-
-/**
- * Initialize and run the virtual computer
- * Supports both GUI and headless modes
- */
-int run_virtcomp(const Config& config);
+bool execute_instruction(uint8_t instruction);
 ```
 
-#### Command-Line Interface
-
-The application supports various execution modes:
-
-- **Program Execution**: `virtcomp program.hex`
-- **GUI Mode**: `virtcomp program.hex --gui`
-- **Interactive Mode**: `virtcomp --interactive`
-- **Help**: `virtcomp --help`
-
-## API Reference
-
-### Instruction Set Architecture
-
-The CPU implements a comprehensive instruction set organized into categories:
-
-#### Basic Operations
-- `NOP`: No operation
-- `HALT`: Stop execution
-- `LOAD_IMM Rd, imm32`: Load immediate value into register
-- `MOV Rd, Rs`: Copy register value
-
-#### Arithmetic Operations
-- `ADD Rd, Rs`: Add registers
-- `SUB Rd, Rs`: Subtract registers
-- `MUL Rd, Rs`: Multiply registers
-- `DIV Rd, Rs`: Divide registers
-- `INC Rd`: Increment register
-- `DEC Rd`: Decrement register
-
-#### Memory Operations
-- `LOAD Rd, [Rs]`: Load from memory address in Rs
-- `STORE [Rd], Rs`: Store Rs to memory address in Rd
-
-#### Control Flow
-- `JMP addr`: Unconditional jump
-- `CMP Rd, Rs`: Compare registers (sets flags)
-- `JZ addr`: Jump if zero flag set
-- `JNZ addr`: Jump if zero flag clear
-- `JS addr`: Jump if sign flag set
-- `JNS addr`: Jump if sign flag clear
-
-#### Stack Operations
-- `PUSH Rs`: Push register to stack
-- `POP Rd`: Pop from stack to register
-- `CALL addr`: Call subroutine
-- `RET`: Return from subroutine
-- `PUSH_ARG Rs`: Push function argument
-- `POP_ARG Rd`: Pop function argument
-
-#### Bitwise Operations
-- `AND Rd, Rs`: Bitwise AND
-- `OR Rd, Rs`: Bitwise OR
-- `XOR Rd, Rs`: Bitwise XOR
-- `NOT Rd`: Bitwise NOT
-- `SHL Rd, imm`: Shift left
-- `SHR Rd, imm`: Shift right
-
-#### I/O Operations
-- `IN Rd, port`: Read byte from port
-- `OUT port, Rs`: Write byte to port
-- `INW Rd, port`: Read word from port
-- `OUTW port, Rs`: Write word to port
-- `INL Rd, port`: Read dword from port
-- `OUTL port, Rs`: Write dword to port
-- `INSTR Rd, port`: Read string from port
-- `OUTSTR port, Rs`: Write string to port
-
-#### Data Definition
-- `DB value`: Define byte in program
-
-### Error Handling
-
-The system uses a combination of return codes and exception handling:
+### Error Handling Strategy
 
 ```cpp
-enum class CPUError {
-    NONE,
-    INVALID_INSTRUCTION,
-    MEMORY_ACCESS_VIOLATION,
-    STACK_OVERFLOW,
-    STACK_UNDERFLOW,
-    DIVISION_BY_ZERO,
-    DEVICE_ERROR
+// Use exceptions for unrecoverable errors
+if (register_id >= MAX_REGISTERS) {
+    throw std::out_of_range("Invalid register: R" + std::to_string(register_id));
+}
+
+// Use return codes for expected failures
+enum class AssemblerResult {
+    SUCCESS,
+    SYNTAX_ERROR,
+    UNDEFINED_SYMBOL,
+    INVALID_INSTRUCTION
 };
+
+// Always validate inputs
+bool CPU::set_register(uint8_t reg, uint32_t value) {
+    if (reg >= TOTAL_REGISTERS) {
+        LOG_ERROR("Invalid register access: R" + std::to_string(reg));
+        return false;
+    }
+    registers_[reg].set_value(value);
+    return true;
+}
 ```
 
-### Memory Layout
+## Testing Requirements
 
-```
-High Memory  ┌─────────────────┐
-            │     Stack       │  ← SP points here
-            ├─────────────────┤
-            │       ▼         │  (Stack grows down)
-            │                 │
-            │   Free Space    │
-            │                 │
-            │       ▲         │  (Heap grows up)
-            ├─────────────────┤
-            │      Heap       │
-            ├─────────────────┤
-            │      Data       │
-            ├─────────────────┤
-            │      Code       │  ← PC starts here
-Low Memory  └─────────────────┘  Address 0x0000
+### Test Coverage Goals
+- **Unit Tests**: >95% coverage for all public APIs
+- **Integration Tests**: End-to-end workflow validation
+- **Assembly Examples**: Working programs for every instruction
+- **Regression Tests**: Automated validation of bug fixes
+
+### Test Organization
+
+```cpp
+// Test Naming Convention
+class ArithmeticInstructionTests : public TestCase {
+public:
+    void test_add_basic_operation();
+    void test_add_overflow_handling();
+    void test_add_flag_updates();
+};
+
+// Assertion Helpers
+void assert_register_equals(CPU& cpu, uint8_t reg, uint32_t expected);
+void assert_flag_set(CPU& cpu, CPUFlag flag);
+void assert_memory_contains(CPU& cpu, uint32_t addr, uint8_t expected);
+
+// Test Data Management
+namespace TestPrograms {
+    const std::vector<uint8_t> SIMPLE_ADD = {
+        0x01, 0x00, 10,     // LOAD_IMM R0, 10
+        0x01, 0x01, 20,     // LOAD_IMM R1, 20
+        0x02, 0x00, 0x01,   // ADD R0, R1
+        0xFF                // HALT
+    };
+}
 ```
 
 ## Build System
 
-**File**: `Makefile`
-
-The build system uses GNU Make with the following targets:
-
-- `make` or `make all`: Build the main executable
-- `make clean`: Remove build artifacts
-- `make debug`: Build with debug symbols
-- `make release`: Build optimized version
-- `make install`: Install to system (if supported)
-
 ### Dependencies
 
-- **C++17** compatible compiler (GCC, Clang)
-- **fmt library** for string formatting
-- **ImGui** for debug interface
-- **OpenGL** for GUI rendering (when using debug mode)
-
-### Build Configuration
-
 ```makefile
-# Compiler settings
-CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O2
+# Required Compiler
+CXX = g++ (C++17 compatible)
 
-# Include paths
-INCLUDES = -Isrc -Ithird_party
+# Core Libraries
+fmt                    # String formatting
+ImGui                  # Debug GUI framework
+OpenGL/GLFW           # Graphics for debug interface
 
-# Libraries
-LIBS = -lfmt -lGL -lglfw
-
-# Source files
-SOURCES = $(wildcard src/**/*.cpp) $(wildcard src/*.cpp)
-
-# Output
-TARGET = bin/virtcomp
+# Build Tools
+make                  # Build system
+git                   # Version control
 ```
 
-## Development Guidelines
+### Build Targets
 
-### Code Style
-
-1. **Naming Convention**:
-   - Classes: `PascalCase`
-   - Functions/Variables: `snake_case`
-   - Constants: `UPPER_CASE`
-   - Private members: trailing underscore
-
-2. **Documentation**:
-   - Use `/** */` comments for API documentation
-   - Include purpose, parameters, and return values
-   - Document complex algorithms inline
-
-3. **Error Handling**:
-   - Use exceptions for unrecoverable errors
-   - Return error codes for expected failures
-   - Always validate input parameters
-
-### Testing
-
-Test programs are located in the `tests/` directory and use hex format:
-
-```hex
-# Hello World Program
-01 00 48 65 6C 6C 6F  # LOAD_IMM R0, "Hello"
-...
-FF                    # HALT
+```bash
+make                  # Default build (optimized)
+make debug           # Debug build with symbols
+make test            # Build and run test suite
+make clean           # Remove build artifacts
+make install         # System installation
+make docs            # Generate documentation
 ```
 
-### Contributing
+### Platform Support
 
-1. Follow the existing code style
-2. Add appropriate documentation
-3. Include test cases for new features
-4. Update this documentation for API changes
+- **Linux**: Primary development platform (full support)
+- **macOS**: Supported with Homebrew dependencies
+- **Windows**: Supported via MSYS2/MinGW-w64
 
-## Future Enhancements
+## Debugging and Profiling
 
-- Assembly language compiler
-- Advanced debugging features (breakpoints, watchpoints)
-- Network device support
-- Graphics/display devices
-- Performance optimization tools
+### Debug GUI Features
+
+```cpp
+// Launch debug interface
+./bin/virtcomp -H program.hex --gui --debug
+
+// Available debug windows:
+// - CPU State: Real-time register and flag display
+// - Memory Viewer: Hex dump with navigation
+// - Disassembly: Instruction display with symbols
+// - Device Monitor: I/O activity tracking
+// - Console Output: Program output capture
+// - Control Panel: Execution control and settings
+```
+
+### Logging Framework
+
+```cpp
+// Logging levels and usage
+LOG_DEBUG("Detailed execution information");
+LOG_INFO("General program flow information");
+LOG_WARNING("Potential issues or deprecated usage");
+LOG_ERROR("Recoverable errors with context");
+LOG_SUCCESS("Positive completion notifications");
+
+// Log configuration
+Logger::getInstance().set_log_level(LogLevel::DEBUG);
+Logger::getInstance().enable_file_logging("debug.log");
+Logger::getInstance().enable_colors(true);
+```
+
+### Performance Profiling
+
+```cpp
+// Built-in profiling support
+ExecutionProfiler profiler;
+profiler.start_profiling();
+
+// Run program...
+
+auto stats = profiler.get_statistics();
+std::cout << "Instructions/sec: " << stats.instructions_per_second << std::endl;
+std::cout << "Memory hotspots: " << stats.memory_hotspots.size() << std::endl;
+```
+
+## Integration Points
+
+### External Libraries
+
+```cpp
+// fmt: String formatting and output
+#include <fmt/format.h>
+std::string message = fmt::format("Register R{}: 0x{:08X}", reg, value);
+
+// ImGui: Debug interface
+#include "imgui.h"
+ImGui::Text("CPU State");
+ImGui::InputInt("Register", &register_value);
+
+// Standard Library: Core functionality
+#include <vector>      // Dynamic arrays
+#include <unordered_map> // Hash tables
+#include <memory>      // Smart pointers
+#include <filesystem>  // File operations
+```
+
+### Version Control Integration
+
+```bash
+# Development workflow
+git checkout -b feature/new-instruction
+# Make changes...
+git add . && git commit -m "Add: NEW_INSTRUCTION opcode implementation"
+git push origin feature/new-instruction
+# Create pull request...
+
+# Testing before merge
+./scripts/run_full_test_suite.sh
+make clean && make test
+```
+
+## Contributing Guidelines
+
+### Development Process
+
+1. **Fork and Clone**: Create personal fork and local development environment
+2. **Feature Branch**: Create descriptive branch name (`feature/add-graphics-device`)
+3. **Test-Driven Development**: Write tests before implementing features
+4. **Code Review**: Submit pull request with comprehensive description
+5. **Documentation**: Update relevant documentation with changes
+6. **Integration**: Merge after passing all checks and reviews
+
+### Quality Standards
+
+- **Code Coverage**: Maintain >90% test coverage
+- **Documentation**: Document all public APIs with examples
+- **Performance**: Profile critical paths and optimize bottlenecks
+- **Compatibility**: Ensure cross-platform functionality
+- **Security**: Validate all inputs and handle edge cases
+
+### Pull Request Checklist
+
+- [ ] All tests pass (`make test`)
+- [ ] Code follows style guidelines
+- [ ] Documentation updated for API changes
+- [ ] Examples provided for new features
+- [ ] Performance impact assessed
+- [ ] Breaking changes documented
+
+## Future Development
+
+### Planned Enhancements
+
+#### Phase 3: Documentation and Examples (Current)
+- **Comprehensive Tutorials**: Step-by-step assembly programming guides
+- **Advanced Examples**: Complex programs demonstrating VM capabilities
+- **API Documentation**: Complete reference with interactive examples
+- **Video Tutorials**: Visual learning resources for complex topics
+
+#### Phase 4: Advanced Features
+- **Graphics Device**: Display controller with framebuffer support
+- **Audio Device**: Sound generation and audio I/O capabilities
+- **Network Device**: TCP/UDP communication support
+- **Storage Device**: Virtual disk with filesystem support
+
+#### Phase 5: Performance and Tooling
+- **JIT Compilation**: Runtime optimization for performance-critical code
+- **Reverse Debugging**: Time-travel debugging capabilities
+- **Plugin Architecture**: External device and instruction plugins
+- **Remote Debugging**: Network-based debugging protocol
+
+### Architecture Evolution
+
+The VirtComp architecture is designed for extensibility and long-term growth:
+
+- **Modular Design**: New components integrate without core changes
+- **Interface Stability**: Public APIs maintain backward compatibility
+- **Performance Scalability**: Optimized for both educational and production use
+- **Platform Portability**: Clean abstraction enables multi-platform support
+
+---
+
+## Getting Started
+
+Ready to contribute to VirtComp? Start here:
+
+1. **Read the [API Reference](API_REFERENCE.md)** for complete technical details
+2. **Explore [Module Documentation](#module-documentation)** for specific components
+3. **Set up your [Development Environment](#development-workflow)**
+4. **Run the [Test Suite](#testing-requirements)** to validate your setup
+5. **Check our [Contributing Guidelines](#contributing-guidelines)** before making changes
+
+For questions, issues, or feature requests, please use the project's issue tracker or discussion forums.
+
+**Happy coding! 🚀**

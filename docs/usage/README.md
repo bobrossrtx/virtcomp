@@ -38,16 +38,22 @@ This section provides user guides for programming the VirtComp virtual computer.
 ### Command-Line Options
 
 ```bash
-virtcomp [OPTIONS] [PROGRAM_FILE]
+virtcomp [OPTIONS] -A [Assembly File]
 
-Options:
-  --gui          Enable graphical debugger
-  --interactive  Start in interactive mode
-  --help         Show help message
-  --version      Show version information
+virtcomp Usage: virtcomp [options]
+  --help               -h      Shows help information
+  --debug              -d      Enable debug mode
+  --verbose            -v      Show informational messages (use --verbose=false to disable)
+  --extended-registers -er     Show extended register output (50 registers)
+  --debug-file         -f      Debug file path
+  --hex                -H      Path to hex file (hex bytes, space or newline separated)
+  --test               -t      Run tests
+  --gui                -g      Enable debug GUI
+  --assembly           -A      Assembly mode: assemble and run .asm file
+  --compile            -o      Compile program into a standalone executable (optionally specify output name)
 
 Examples:
-  virtcomp program.hex           # Run program
+  virtcomp program.hex           # Run hex program
   virtcomp program.hex --gui     # Run with debugger
   virtcomp --interactive         # Interactive mode
 ```
@@ -736,7 +742,7 @@ VirtComp provides a flat memory model, but you can implement your own memory man
 04 06 07            # MOV R6, R7        (set new frame pointer)
 # ... allocate local variables by adjusting SP
 
-# Function epilogue  
+# Function epilogue
 04 07 06            # MOV R7, R6        (restore stack pointer)
 0B 06               # POP R6            (restore frame pointer)
 0D                  # RET

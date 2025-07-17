@@ -248,8 +248,8 @@ public:
         parser.add_value_arg("debug_file", "--debug-file", "-f", "Debug file path",
             [this](const std::string& value) { Config::debug_file = value; });
 
-        // Program file argument
-        parser.add_value_arg("program", "--program", "-p", "Path to program file (hex bytes, space or newline separated)",
+        // Hex file argument
+        parser.add_value_arg("hex", "--hex", "-H", "Path to hex file (hex bytes, space or newline separated)",
             [this](const std::string& value) { Config::program_file = value; });
 
         // Run tests argument
@@ -563,7 +563,7 @@ public:
                 return;
             }
             if (!Config::program_file.empty()) {
-                std::cerr << "Error: Test mode (-t/--test) cannot be used with program file (-p/--program)" << std::endl;
+                std::cerr << "Error: Test mode (-t/--test) cannot be used with hex file (-H/--hex)" << std::endl;
                 return;
             }
             run_tests();
@@ -572,7 +572,7 @@ public:
 
         // Validate conflicting flags for assembly mode
         if (Config::assembly_mode && !Config::program_file.empty()) {
-            std::cerr << "Error: Assembly mode (-A/--assembly) cannot be used with program file (-p/--program)" << std::endl;
+            std::cerr << "Error: Assembly mode (-A/--assembly) cannot be used with hex file (-H/--hex)" << std::endl;
             return;
         }
 
@@ -592,7 +592,7 @@ public:
                 return;
             }
         } else {
-            std::cerr << "No program file specified. Use --program or -p to specify a program file." << std::endl;
+            std::cerr << "No hex file specified. Use --hex or -H to specify a hex file." << std::endl;
             return;
         }
 
