@@ -201,6 +201,19 @@ Transform VirtComp from an interpreter-like system to a proper bytecode compilat
 - **Memory Safety**: Bounds checking, null pointer protection
 - **Interoperability**: C/C++ FFI for external library integration
 
+#### Compilation Codegen Infrastructure
+
+- **AST Generation**: Abstract Syntax Tree representation of assembly programs
+- **Intermediate Representation**: Three-address code (TAC) generation for optimization passes
+- **Peephole Optimization**: Local instruction sequence improvements for efficiency
+- **Register Allocation**: Graph coloring algorithm for optimal register usage
+- **Dead Code Elimination**: Removal of unreachable or ineffective instructions
+- **Constant Folding**: Compile-time evaluation of constant expressions
+- **Instruction Scheduling**: Reordering for pipeline optimization and latency reduction
+- **Platform-Specific Tuning**: Target-aware code generation for x32/x64 modes
+- **Link-Time Optimization**: Cross-module code improvements
+- **Debug Information**: Source mapping for symbolic debugging support
+
 ---
 
 ### 🏗️ **Phase 3: Virtual Storage System** *(Planned - Q1 2026)*
