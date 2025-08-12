@@ -10,6 +10,7 @@
 
 using Logging::Logger;
 using VirtComp_Registers::Register;
+using VirtComp_Registers::RegisterNames;
 using VirtComp_Registers::TOTAL_REGISTERS;
 
 // CPU Operation Modes
@@ -109,6 +110,100 @@ enum class Opcode : uint8_t {
     MODECMP = 0x72,     // Compare current mode with operand
     MODEFLAG = 0x73,    // Set mode flag in RFLAGS register
 
+    // SIMD Operations (0x80-0x9F range)
+    MOVAPS = 0x80,      // Move Aligned Packed Single
+    MOVUPS = 0x81,      // Move Unaligned Packed Single
+    ADDPS = 0x82,       // Add Packed Single
+    SUBPS = 0x83,       // Subtract Packed Single
+    MULPS = 0x84,       // Multiply Packed Single
+    DIVPS = 0x85,       // Divide Packed Single
+    SQRTPS = 0x86,      // Square Root Packed Single
+    MAXPS = 0x87,       // Maximum Packed Single
+    MINPS = 0x88,       // Minimum Packed Single
+    ANDPS = 0x89,       // Bitwise AND Packed Single
+    ORPS = 0x8A,        // Bitwise OR Packed Single
+    XORPS = 0x8B,       // Bitwise XOR Packed Single
+    CMPPS = 0x8C,       // Compare Packed Single
+
+    // Packed Double Operations
+    MOVAPD = 0x8D,      // Move Aligned Packed Double
+    MOVUPD = 0x8E,      // Move Unaligned Packed Double
+    ADDPD = 0x8F,       // Add Packed Double
+    SUBPD = 0x90,       // Subtract Packed Double
+    MULPD = 0x91,       // Multiply Packed Double
+    DIVPD = 0x92,       // Divide Packed Double
+    SQRTPD = 0x93,      // Square Root Packed Double
+    MAXPD = 0x94,       // Maximum Packed Double
+    MINPD = 0x95,       // Minimum Packed Double
+    ANDPD = 0x96,       // Bitwise AND Packed Double
+    ORPD = 0x97,        // Bitwise OR Packed Double
+    XORPD = 0x98,       // Bitwise XOR Packed Double
+    CMPPD = 0x99,       // Compare Packed Double
+
+    // FPU Operations (0xA0-0xBF range)
+    FLD = 0xA0,         // Load floating point value
+    FST = 0xA1,         // Store floating point value
+    FSTP = 0xA2,        // Store floating point value and pop
+    FILD = 0xA3,        // Load integer as floating point
+    FIST = 0xA4,        // Store floating point as integer
+    FISTP = 0xA5,       // Store floating point as integer and pop
+    FADD = 0xA6,        // Floating point add
+    FSUB = 0xA7,        // Floating point subtract
+    FMUL = 0xA8,        // Floating point multiply
+    FDIV = 0xA9,        // Floating point divide
+    FSIN = 0xAA,        // Floating point sine
+    FCOS = 0xAB,        // Floating point cosine
+    FTAN = 0xAC,        // Floating point tangent
+    FSQRT = 0xAD,       // Floating point square root
+    FABS = 0xAE,        // Floating point absolute value
+    FCHS = 0xAF,        // Floating point change sign
+
+    // FPU Control Operations
+    FINIT = 0xB0,       // Initialize FPU
+    FCLEX = 0xB1,       // Clear exceptions
+    FSTCW = 0xB2,       // Store control word
+    FLDCW = 0xB3,       // Load control word
+    FSTSW = 0xB4,       // Store status word
+    FCOMPP = 0xB5,      // Compare and pop twice
+    FUCOMPP = 0xB6,     // Unordered compare and pop twice
+
+    // AVX Operations (0xC0-0xDF range)
+    VADDPS = 0xC0,      // AVX Add Packed Single
+    VSUBPS = 0xC1,      // AVX Subtract Packed Single
+    VMULPS = 0xC2,      // AVX Multiply Packed Single
+    VDIVPS = 0xC3,      // AVX Divide Packed Single
+    VSQRTPS = 0xC4,     // AVX Square Root Packed Single
+    VMAXPS = 0xC5,      // AVX Maximum Packed Single
+    VMINPS = 0xC6,      // AVX Minimum Packed Single
+    VANDPS = 0xC7,      // AVX Bitwise AND Packed Single
+    VORPS = 0xC8,       // AVX Bitwise OR Packed Single
+    VXORPS = 0xC9,      // AVX Bitwise XOR Packed Single
+
+    // AVX Packed Double Operations
+    VADDPD = 0xCA,      // AVX Add Packed Double
+    VSUBPD = 0xCB,      // AVX Subtract Packed Double
+    VMULPD = 0xCC,      // AVX Multiply Packed Double
+    VDIVPD = 0xCD,      // AVX Divide Packed Double
+    VSQRTPD = 0xCE,     // AVX Square Root Packed Double
+    VMAXPD = 0xCF,      // AVX Maximum Packed Double
+    VMINPD = 0xD0,      // AVX Minimum Packed Double
+    VANDPD = 0xD1,      // AVX Bitwise AND Packed Double
+    VORPD = 0xD2,       // AVX Bitwise OR Packed Double
+    VXORPD = 0xD3,      // AVX Bitwise XOR Packed Double
+
+    // MMX Operations (0xE0-0xEF range)
+    MOVQ = 0xE0,        // Move Quadword
+    PADDB = 0xE1,       // Add Packed Bytes
+    PADDW = 0xE2,       // Add Packed Words
+    PADDD = 0xE3,       // Add Packed Doublewords
+    PSUBB = 0xE4,       // Subtract Packed Bytes
+    PSUBW = 0xE5,       // Subtract Packed Words
+    PSUBD = 0xE6,       // Subtract Packed Doublewords
+    PCMPEQB = 0xE7,     // Compare Packed Bytes for Equality
+    PCMPEQW = 0xE8,     // Compare Packed Words for Equality
+    PCMPEQD = 0xE9,     // Compare Packed Doublewords for Equality
+    EMMS = 0xEA,        // Empty MMX State
+
     HALT = 0xFF         // Halt execution
 };
 
@@ -199,6 +294,86 @@ public:
         auto index = static_cast<size_t>(reg);
         return index >= 8 && index < 16; // R8-R15
     }
+
+    // SIMD register access (128-bit XMM registers)
+    void get_xmm_register(Register xmm_reg, uint64_t& low, uint64_t& high) const {
+        if (RegisterNames::is_simd(xmm_reg)) {
+            low = get_register(xmm_reg);
+            // Get corresponding high part
+            auto high_reg = static_cast<Register>(static_cast<size_t>(xmm_reg) + 1);
+            high = get_register(high_reg);
+        }
+    }
+
+    void set_xmm_register(Register xmm_reg, uint64_t low, uint64_t high) {
+        if (RegisterNames::is_simd(xmm_reg)) {
+            set_register(xmm_reg, low);
+            // Set corresponding high part
+            auto high_reg = static_cast<Register>(static_cast<size_t>(xmm_reg) + 1);
+            set_register(high_reg, high);
+        }
+    }
+
+    // FPU register access (80-bit floating point)
+    void get_fpu_register(Register st_reg, uint64_t& mantissa, uint64_t& exponent_sign) const {
+        if (RegisterNames::is_fpu(st_reg)) {
+            mantissa = get_register(st_reg);
+            // Get corresponding metadata part
+            auto meta_reg = static_cast<Register>(static_cast<size_t>(st_reg) + 1);
+            exponent_sign = get_register(meta_reg);
+        }
+    }
+
+    void set_fpu_register(Register st_reg, uint64_t mantissa, uint64_t exponent_sign) {
+        if (RegisterNames::is_fpu(st_reg)) {
+            set_register(st_reg, mantissa);
+            // Set corresponding metadata part
+            auto meta_reg = static_cast<Register>(static_cast<size_t>(st_reg) + 1);
+            set_register(meta_reg, exponent_sign);
+        }
+    }
+
+    // AVX register access (256-bit YMM registers)
+    void get_ymm_register(Register ymm_reg, uint64_t parts[4]) const {
+        if (RegisterNames::is_simd(ymm_reg)) {
+            // Lower 128 bits from XMM
+            get_xmm_register(ymm_reg, parts[0], parts[1]);
+            
+            // Upper 128 bits from YMM high parts
+            auto base_index = static_cast<size_t>(ymm_reg) - static_cast<size_t>(Register::XMM0);
+            auto high2_reg = static_cast<Register>(static_cast<size_t>(Register::YMM0_HIGH2) + base_index * 2);
+            auto high3_reg = static_cast<Register>(static_cast<size_t>(Register::YMM0_HIGH3) + base_index * 2);
+            parts[2] = get_register(high2_reg);
+            parts[3] = get_register(high3_reg);
+        }
+    }
+
+    void set_ymm_register(Register ymm_reg, const uint64_t parts[4]) {
+        if (RegisterNames::is_simd(ymm_reg)) {
+            // Lower 128 bits to XMM
+            set_xmm_register(ymm_reg, parts[0], parts[1]);
+            
+            // Upper 128 bits to YMM high parts
+            auto base_index = static_cast<size_t>(ymm_reg) - static_cast<size_t>(Register::XMM0);
+            auto high2_reg = static_cast<Register>(static_cast<size_t>(Register::YMM0_HIGH2) + base_index * 2);
+            auto high3_reg = static_cast<Register>(static_cast<size_t>(Register::YMM0_HIGH3) + base_index * 2);
+            set_register(high2_reg, parts[2]);
+            set_register(high3_reg, parts[3]);
+        }
+    }
+
+    // SIMD and FPU control register access
+    uint32_t get_mxcsr() const { return static_cast<uint32_t>(get_register(Register::MXCSR)); }
+    void set_mxcsr(uint32_t value) { set_register(Register::MXCSR, value); }
+
+    uint16_t get_fpu_control() const { return static_cast<uint16_t>(get_register(Register::FPU_CONTROL)); }
+    void set_fpu_control(uint16_t value) { set_register(Register::FPU_CONTROL, value); }
+
+    uint16_t get_fpu_status() const { return static_cast<uint16_t>(get_register(Register::FPU_STATUS)); }
+    void set_fpu_status(uint16_t value) { set_register(Register::FPU_STATUS, value); }
+
+    uint16_t get_fpu_tag() const { return static_cast<uint16_t>(get_register(Register::FPU_TAG)); }
+    void set_fpu_tag(uint16_t value) { set_register(Register::FPU_TAG, value); }
 
     // Register name support for debugging
     std::string get_register_name(Register reg) const;

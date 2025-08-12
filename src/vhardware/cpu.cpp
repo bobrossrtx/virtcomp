@@ -399,10 +399,10 @@ void CPU::print_extended_registers() const {
         }
         Register reg = static_cast<Register>(i);
         std::string reg_name = get_register_name(reg);
-        
+
         // Reset all formatting before register name
         oss << std::left << std::setw(3) << std::setfill(' ') << reg_name;
-        
+
         // Format the hex value with proper settings
         oss << "=0x" << std::right << std::setw(16) << std::setfill('0')
             << std::hex << std::uppercase << get_register_64(reg) << " ";
