@@ -6,7 +6,7 @@ BUILD_DIR := build
 BIN_DIR := bin
 
 # Find all .cpp files in src and its subdirectories, excluding test files
-SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -not -name 'test_runner.cpp' -not -name 'test_assembler.cpp')
+SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -not -name 'test_runner.cpp' -not -name 'test_*.cpp')
 # Add the new register system source files explicitly
 REGISTER_SRCS := $(SRC_DIR)/vhardware/cpu_registers.cpp
 SRCS += $(REGISTER_SRCS)
@@ -22,7 +22,7 @@ ASSEMBLER_TEST_OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(filter $(S
 
 # Test framework
 TEST_TARGET := $(BIN_DIR)/test_runner
-TEST_SRCS := $(filter-out $(SRC_DIR)/main.cpp $(SRC_DIR)/debug/gui.cpp $(SRC_DIR)/test/test_assembler.cpp, $(shell find $(SRC_DIR) -name '*.cpp' -not -path '$(SRC_DIR)/test/test_runner.cpp'))
+TEST_SRCS := $(filter-out $(SRC_DIR)/main.cpp $(SRC_DIR)/debug/gui.cpp, $(shell find $(SRC_DIR) -name '*.cpp' -not -name 'test_runner.cpp' -not -name 'test_*.cpp'))
 TEST_OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(TEST_SRCS))
 TEST_RUNNER_SRC := $(SRC_DIR)/test/test_runner.cpp
 TEST_RUNNER_OBJ := $(BUILD_DIR)/test/test_runner.o

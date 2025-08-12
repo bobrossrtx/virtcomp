@@ -1,26 +1,45 @@
 # VirtComp Development Roadmap
 
-> **Last Updated:** July 17, 2025
-> **Project Status:** Phase 2.5 Complete - Extended Architecture Ready, Assembly Language Development Next Priority
+> **Last Updated:** August 12, 2025
+> **Project Status:** Phase 2.5 Partially Complete - Memory Management and Extended Architecture In Progress
 
 ---
 
 ## 🎯 Project Overview
 
-VirtComp is a virtual computer system with a custom CPU architecture, supporting instruction execution, device I/O, and debugging capabilities. This roadmap outlines the planned development phases and feature implementations.
+VirtComp is evolving into a native code generation and execution system, targeting real CPU architectures like x86 and x64. The project focuses on direct hardware interaction, system call integration, and GDB-compatible debugging capabilities. This roadmap outlines the transition from virtualization to native architecture support and planned feature implementations.
 
---### 🌐 **Phase 3D: Advanced I/O & Networking** *(Q2 2026)*
+### 🌐 **Phase 3D: Native System Integration** *(Q2 2026)*
 
-**Priority: MEDIUM** | **Dependencies: Graphics ### 🌐 **Phase 3D: Advanced I/O & Networking** *(Q2 2026)*
-
-**Priority: MEDIUM** | **D### 🌐 **Phase 3D: Advanced I/O & Networking** *(Q2 2026)*
+**Priority: HIGH** | **Dependencies: Phase 3C Complete**
 
 **Priority: MEDIUM** | **Dependencies: Graphics System Complete**
 
 Expand I/O capabilities for real-world integration and communication.
 
-#### System Call Interface
+#### System Cal### 🎯 Long-term Vision *(2026+)*
 
+### System Architecture Support
+- **x86 Support**: Native x86 instruction set compilation
+- **x64 Support**: Full AMD64/x86_64 instruction set
+- **ARM Support**: Future ARM architecture targeting
+- **RISC-V**: Optional RISC-V architecture support
+- **Optimized Code Generation**: Architecture-specific optimizations
+- **Cross-compilation**: Build for multiple target architectures
+- **Platform-Specific Features**: Utilize native CPU features
+
+### Advanced Features
+- **Native Debugging**: Integration with platform debug tools
+- **Performance Analysis**: Architecture-specific profiling
+- **Security Features**: Hardware security feature utilization
+- **System Calls**: Direct OS interaction through native syscalls
+- **Memory Management**: Native virtual memory support
+
+### Platform Expansion
+- **Cross-Platform**: Enhanced Linux, Windows, macOS support
+- **Multiple Architectures**: Support for various CPU architectures
+- **Educational Tools**: Architecture learning modules
+- **Development Tools**: Native development environment
 **Core System Call Implementation**
 - **SYSCALL Instruction**: Direct host OS system call interface
 - **INT 0x80**: Linux/Unix style interrupt-based syscalls
@@ -191,13 +210,13 @@ filename:  .string "/etc/passwd"
 
 Expand I/O capabilities for real-world integration and communication.## 🏆 Completed Features
 
-### ✅ Core CPU Architecture
-- **Complete Instruction Set**: Arithmetic, logic, memory, and control flow operations
-- **Register System**: 8 general-purpose 32-bit registers
-- **Memory Management**: 256-byte addressable memory space
-- **Stack Operations**: PUSH/POP with stack pointer management
-- **Flag System**: Zero, Sign, Carry, and Overflow flags for conditional operations
-- **Jump Instructions**: Complete set including JG/JL/JGE/JLE comparison jumps
+### 🚧 Core CPU Architecture *(Partially Complete)*
+- ✅ **Basic Instruction Set**: Core arithmetic, logic, and control flow operations
+- 🚧 **Extended Register System**: 50 registers planned, 16 implemented
+- 🚧 **Memory Management**: Expanded beyond 256 bytes, paging in progress
+- ✅ **Stack Operations**: Enhanced PUSH/POP with frame pointer support
+- ✅ **Flag System**: Complete x86-style flag implementation
+- ✅ **Jump Instructions**: Full conditional and unconditional jump support
 
 ### ✅ Output Formatting & Polish *(100% Complete)*
 - ✅ **ASCII Art Removal**: Cleaned up debug output for professional appearance
@@ -237,18 +256,69 @@ Expand I/O capabilities for real-world integration and communication.## 🏆 Com
 
 ---
 
-## 🚀 Current Development Phase
+## 🚀 Development Timeline
 
-### ✅ **Phase 1: CPU Instruction Set Completion** *(100% Complete)*
+### 🔥 **Phase 1: Native Code Generation** *(In Progress - Q3-Q4 2025)*
 
-**Priority: COMPLETED** | **Timeline: Q3 2025** | **Status: All tests passing, ready for Phase 2**
+**Priority: CRITICAL** | **Dependencies: Phase 2.5 Memory Management (Partial)**
 
-#### Stack & Call Operations *(100% Complete)*
-- ✅ **CALL**: Subroutine calls with return address management
-- ✅ **RET**: Return from subroutine
-- ✅ **PUSH_ARG/POP_ARG**: Function argument handling with context awareness
-- ✅ **Stack Frame Management**: Fixed arg_offset initialization and frame pointer handling
-- ✅ **Memory Layout**: Corrected subroutine positioning for proper CALL/RET execution
+This phase focuses on transforming VirtComp from a virtual machine to a native code generation system.
+
+#### Native Architecture Support
+- **x86 Backend**: Complete x86 instruction set support
+  - Basic instruction encoding/decoding
+  - Memory operand handling
+  - Addressing modes
+  - Condition codes and flags
+- **x64 Extensions**: AMD64/x86_64 support
+  - 64-bit register set
+  - Extended addressing modes
+  - System V ABI compliance
+  - Windows x64 ABI support
+
+#### Toolchain Development
+- **Native Assembler**: Platform-specific assembly generation
+  - AT&T and Intel syntax support
+  - Platform-specific directives
+  - Macro processing
+  - Symbol resolution
+- **Binary Generation**: ELF/PE format output
+  - Section layout
+  - Symbol tables
+  - Relocations
+  - Debug information
+- **Linker Integration**: Dynamic and static linking
+  - Shared library support
+  - Position-independent code
+  - Global offset table
+  - Procedure linkage table
+
+#### Platform Integration
+- **System Call Interface**: Direct OS integration
+  - Linux syscall convention
+  - Windows API calling convention
+  - BSD system calls
+  - Error handling and errno
+- **Exception Handling**: Native exception support
+  - Stack unwinding
+  - Exception tables
+  - SEH (Windows) support
+  - DWARF debug info
+
+**Priority: CRITICAL** | **Timeline: Q3-Q4 2025** | **Status: Architecture redesign**
+
+#### x86/x64 Architecture Implementation
+- **Instruction Set**: Native x86/x64 instruction set support
+- **Register System**: Full x86/x64 register set implementation
+- **Memory Model**: Native memory management and paging
+- **System Integration**: Direct OS system call interface
+- **Debug Interface**: GDB-compatible debugging protocol
+
+#### Core Components Refactoring
+- **Code Generation**: Native assembly output
+- **Optimization**: Architecture-specific optimizations
+- **System Calls**: Direct OS interaction layer
+- **Security**: Platform security feature utilization
 
 #### Enhanced I/O Operations *(100% Complete)*
 - ✅ **Basic I/O**: IN/OUT operations for device communication
@@ -313,17 +383,20 @@ Transform VirtComp from hex-based programming to human-readable assembly languag
 
 ---
 
-### ✅ **Phase 2.5: CPU Architecture Expansion** *(100% Complete - Q4 2025)*
+### ✅ **Phase 2.5: CPU Architecture Expansion** *(COMPLETED August 2025)*
 
 **Priority: COMPLETED** | **Dependencies: Phase 1 ✅ Complete**
 
-Successfully expanded VirtComp's CPU architecture to support a comprehensive x64-like register set and dual-mode operation, preparing for its role as a virtual machine base for future programming language projects.
+Extended CPU architecture with full x64-like features and dual-mode operation successfully implemented.
 
-#### ✅ Extended Register Architecture *(100% Complete)*
-- ✅ **50-Register System**: Complete implementation of RAX, RBX, RCX, RDX, RSP, RBP, RSI, RDI, R8-R15 (16 GP), plus segment, control, debug, and special registers
-- ✅ **x64-Style Register Names**: Full register naming system with legacy aliases (EAX, AX, AL, etc.)
-- ✅ **Register Size Support**: 8-bit, 16-bit, 32-bit, and 64-bit register operations
-- ✅ **Extended Register Operations**: MOVEX, ADDEX, SUBEX for R8-R15 register access
+#### ✅ Extended Register Architecture *(COMPLETED August 2025)*
+- ✅ **Basic Register Set**: Implemented RAX, RBX, RCX, RDX, RSP, RBP, RSI, RDI, R8-R15
+- ✅ **Basic Register Operations**: MOV, ADD, SUB operations for main registers
+- ✅ **Extended Register Support**: MOVEX, ADDEX, SUBEX fully implemented with 64-bit arithmetic
+- ✅ **64-bit Flag Handling**: Proper carry, overflow, zero, and sign flag calculations
+- ✅ **Mode Integration**: Extended operations work seamlessly with 32/64-bit mode switching
+- ❌ **Advanced Register Features**: SIMD, FPU registers not yet implemented (deferred to Phase 4)
+- ✅ **Register Size Support**: Complete 64-bit register operations implemented
 
 #### ✅ Dual-Mode CPU Operation *(100% Complete)*
 - ✅ **x32/x64 Mode Switching**: Dynamic switching between 32-bit and 64-bit operation modes
@@ -331,23 +404,33 @@ Successfully expanded VirtComp's CPU architecture to support a comprehensive x64
 - ✅ **Mode-Aware Arithmetic**: Operations automatically adapt width based on current CPU mode
 - ✅ **Backward Compatibility**: All existing 32-bit code continues to work seamlessly
 
-#### ✅ Massive Memory Expansion *(100% Complete)*
-- ✅ **Memory Capacity**: Expanded from 256 bytes to 1MB (4,096x increase)
-- ✅ **Dynamic Memory Resizing**: Runtime memory management with bounds checking
-- ✅ **Test Compatibility**: Maintained 256-byte test environment for backward compatibility
-- ✅ **Memory Architecture**: Flat memory model with full addressing support
+#### 🚧 Memory Architecture *(In Progress)*
 
-#### ✅ Enhanced Instruction Set *(100% Complete)*
-- ✅ **64-bit Arithmetic**: ADD64, SUB64, MUL64, DIV64, CMP64 with proper overflow handling
-- ✅ **64-bit Data Movement**: MOV64, LOAD_IMM64 for full 64-bit value manipulation
-- ✅ **Extended Register Access**: Full access to all 50 registers through enhanced opcodes
-- ✅ **Mode Integration**: All operations respect current CPU mode for seamless dual-mode support
+- ✅ **Basic Memory Management**: Implemented memory resizing and basic access
+- ⏳ **Memory Protection**: Basic bounds checking in progress
+- ⏳ **Memory Model**: Basic flat memory model in development
+- ❌ **Virtual Memory**: Paging and virtual memory not implemented
+- ❌ **Memory Mapping**: Memory-mapped I/O planned for Phase 3
+- ❌ **Protection Rings**: CPU privilege levels scheduled for Phase 3B
 
-#### ✅ Validation & Testing *(100% Complete)*
-- ✅ **Extended Register Test**: Comprehensive test demonstrating x32/x64 mode switching and extended register operations
-- ✅ **100% Test Coverage**: All 53 unit tests and 39 integration tests continue to pass
-- ✅ **Debug Infrastructure**: Enhanced debugging output with mode indicators and register name resolution
-- ✅ **Performance Validation**: 1MB memory operations confirmed working efficiently
+#### 🚧 Enhanced Instruction Set *(Completed August 2025)*
+
+- ✅ **64-bit Operations**: ADD64, SUB64, MOV64 implemented and tested
+- ✅ **Extended Register Operations**: MOVEX, ADDEX, SUBEX with full 64-bit arithmetic
+- ✅ **Register Access**: Complete register operations for all 50 registers
+- ✅ **Mode Integration**: Full 32/64-bit mode switching working correctly
+- ✅ **Flag System**: Proper carry, overflow, zero, and sign flag handling for 64-bit operations
+- ❌ **Advanced Features**: SIMD, FPU operations not yet implemented (deferred to Phase 4)
+- ❌ **Vector Operations**: AVX, SSE features planned but not implemented (deferred to Phase 4)
+
+#### 🚧 Testing Infrastructure *(In Progress)*
+
+- ✅ **Basic Unit Tests**: Core functionality tests implemented
+- ✅ **Integration Tests**: Basic instruction set tests completed
+- ⏳ **Extended Register Tests**: Basic register operations tested
+- ❌ **Advanced Feature Tests**: SIMD, FPU tests not implemented
+- ❌ **Performance Testing**: Benchmarking suite not implemented
+- ⚠️ **Test Coverage**: Not all new features are covered by tests
 
 #### ✅ UI Enhancement & Professional Polish *(100% Complete)*
 - ✅ **Extended Register Display**: Command-line flag (-er/--extended-registers) for 50-register visibility
@@ -358,9 +441,9 @@ Successfully expanded VirtComp's CPU architecture to support a comprehensive x64
 
 ---
 
-### 🚀 **Phase 2.7: Bytecode Compilation System** *(Long-term Goal - Overtime)*
+### 🚀 **Phase 2.7: Bytecode Compilation System** *(Long-term Goal - Q1 2026)*
 
-**Priority: OVERTIME** | **Dependencies: Architecture Expansion**
+**Priority: HIGH** | **Dependencies: Native Code Generation & Development Tools**
 
 Transform VirtComp from an interpreter-like system to a proper bytecode compilation target, enabling it to serve as the foundation for a new programming language project.
 
@@ -413,20 +496,30 @@ Based on the successful completion of assembly language integration, here is the
 
 Essential for usability - create comprehensive documentation and examples so developers can actually use the assembly language we've built.
 
-#### ✅ Documentation Creation *(COMPLETED)*
-- ✅ **Assembly Language Manual**: Complete instruction reference with syntax and examples
-- ✅ **Tutorial Series**: Step-by-step guides from basic to advanced assembly programming
-- ✅ **API Documentation**: Register descriptions, addressing modes, and calling conventions
-- ✅ **Quick Reference**: Printable instruction set summary and register map
-- ✅ **Module Documentation**: Comprehensive technical docs for all 6 core modules
-- ✅ **Developer Codebase README**: Professional technical documentation structure
+#### 🚧 Documentation *(In Progress)*
 
-#### ✅ Example Programs *(COMPLETED)*
-- ✅ **Hello World**: Basic text output demonstration with multiple approaches
-- ✅ **Arithmetic Examples**: Addition, subtraction, multiplication, division
-- ✅ **Control Flow**: Loops, conditionals, and function calls
-- ✅ **Device I/O**: Console, file, and counter device usage
-- ✅ **Advanced Examples**: Complex programs showcasing full feature set
+- ✅ **Basic Documentation**: Core functionality documented
+- ✅ **README**: Project overview and basic setup instructions
+- ⏳ **API Documentation**: Basic API documentation started
+- ❌ **Advanced Features**: Advanced feature documentation pending
+- ❌ **Architecture Guide**: Detailed architecture documentation needed
+- ❌ **Contributing Guide**: Development workflow documentation needed
+
+#### 🚧 Example Programs *(In Progress)*
+
+- ✅ **Basic Examples**: Simple arithmetic and control flow
+  - Addition and subtraction operations
+  - Basic loops and conditionals
+  - Simple I/O operations
+- ⏳ **Intermediate Examples**: Work in progress
+  - Function calls and parameter passing
+  - Basic device interaction
+  - Memory operations
+- ❌ **Advanced Examples**: Not yet implemented
+  - Complex arithmetic operations
+  - Full device interaction suite
+  - System call demonstrations
+  - Native code integration examples
 
 #### ✅ Testing & Validation *(COMPLETED)*
 - ✅ **Example Verification**: All examples compile and run correctly
@@ -435,11 +528,13 @@ Essential for usability - create comprehensive documentation and examples so dev
 
 ---
 
-### 🔧 **Phase 3B: Enhanced Instruction Set & Assembly Language Features** *(Next Priority - Q4 2025)*
+### � **Phase 3B: Enhanced Assembly Language Features** *(CURRENT PRIORITY - Starting August 12, 2025)*
 
-**Priority: CRITICAL** | **Dependencies: Phase 3A ✅ Complete**
+**Priority: CRITICAL** | **Dependencies: Phase 2.5 ✅ Complete**
 
-Based on advanced assembly programming needs, implement missing opcodes and language features to support modern programming patterns like the user's enhanced Hello World example.
+This phase focuses on implementing missing opcodes and enhanced assembly language features to support modern programming patterns like advanced Hello World examples and practical assembly development.
+
+Based on user feedback and advanced assembly programming needs, implement missing opcodes and language features to support modern programming patterns.
 
 #### Missing Opcodes for Modern Assembly Programming
 
@@ -714,7 +809,9 @@ string:
 
 ### 🖥️ **Phase 3C: Graphics & Display System** *(Q1 2026)*
 
-**Priority: HIGH** | **Dependencies: Enhanced Instruction Set Complete**
+**Priority: HIGH** | **Dependencies: Native Code Generation & System Integration**
+
+This phase adds visual output capabilities through a native graphics abstraction layer.
 
 Add visual output capabilities to make VirtComp programs engaging and enable graphics programming.
 
@@ -736,13 +833,13 @@ Add visual output capabilities to make VirtComp programs engaging and enable gra
 - **Games**: Simple games like Pong or Snake
 - **Visualizations**: Data plotting and graphic displays
 
-### � **Phase 3C: Advanced I/O & Networking** *(Q2 2026)*
+### 🔌 **Phase 3D: Advanced I/O & Networking** *(Q2 2026)*
 
-**Priority: MEDIUM** | **Dependencies: Graphics System Complete**
+**Priority: MEDIUM** | **Dependencies: Graphics System & Native Integration**
 
 Expand I/O capabilities for real-world integration and communication.
 
-#### Enhanced I/O
+#### Enhanced I/O Systems
 - **Serial Communication**: UART device for external communication
 - **Network Interface**: TCP/UDP socket simulation
 - **Timer System**: Programmable intervals and real-time operations
@@ -756,7 +853,9 @@ Expand I/O capabilities for real-world integration and communication.
 
 ### 🚀 **Phase 3E: High-Level Language Frontend** *(Q3 2026)*
 
-**Priority: VERY HIGH** | **Dependencies: All Previous Phases Complete**
+**Priority: VERY HIGH** | **Dependencies: Native Code Generation & Development Tools**
+
+This phase implements a high-level language that compiles to native code via the VirtComp toolchain.
 
 Transform VirtComp into a true language platform by implementing a high-level language that compiles to VirtComp assembly.
 
@@ -780,7 +879,9 @@ Transform VirtComp into a true language platform by implementing a high-level la
 
 ### ⚡ **Phase 3F: Performance & Optimization** *(Q4 2026)*
 
-**Priority: MEDIUM** | **Dependencies: Language Frontend Complete**
+**Priority: MEDIUM** | **Dependencies: High-Level Language Frontend (Partial)**
+
+This phase focuses on optimizing code generation and runtime performance once core functionality is stable.
 
 Optimize VirtComp for speed and efficiency once all major features are complete.
 
@@ -798,9 +899,11 @@ Optimize VirtComp for speed and efficiency once all major features are complete.
 
 ---
 
-### �🏗️ **Phase 4: Virtual Storage System** *(Planned - Q1 2027)*
+### 🏗️ **Phase 4: Virtual Storage System** *(Planned - Q1 2027)*
 
-**Priority: MEDIUM** | **Dependencies: Phase 2 completion**
+**Priority: MEDIUM** | **Dependencies: Performance & Optimization (Partial)**
+
+This phase implements persistent storage and filesystem capabilities to support application data management.
 
 #### Storage Architecture
 - **Virtual Hard Disk**: Persistent block-level storage
@@ -821,21 +924,57 @@ Optimize VirtComp for speed and efficiency once all major features are complete.
 
 ---
 
-### 🎨 **Phase 4: Enhanced Development Environment** *(Planned - Q2 2026)*
+### 🎨 **Phase 2: Development Tools & Debugging** *(Q4 2025 - Q1 2026)*
 
-**Priority: MEDIUM** | **Dependencies: Phase 3 completion**
+**Priority: HIGH** | **Dependencies: Phase 1 Complete**
 
-#### IDE Improvements
-- **Syntax Highlighting**: Assembly language code coloring
-- **IntelliSense**: Code completion and error detection
-- **Project Management**: Multi-file project organization
-- **Integrated Debugger**: Step-through debugging with breakpoints
+#### GDB Protocol Implementation
+- **Remote Debug Protocol**: GDB/LLDB compatibility
+  - Remote Serial Protocol (RSP)
+  - Packet handling
+  - Command processing
+- **Debug Features**:
+  - Hardware and software breakpoints
+  - Single stepping
+  - Register access
+  - Memory examination
+  - Stack unwinding
+  - Symbol resolution
 
-#### Debugging Tools
-- **Memory Viewer**: Real-time memory inspection and editing
-- **Register Watch**: Monitor register changes during execution
-- **Call Stack Viewer**: Function call hierarchy visualization
+#### Platform Integration Tools
+- **Binary Analysis**:
+  - Disassembly support
+  - Symbol table parsing
+  - Section analysis
+  - Relocation handling
+- **Development Integration**:
+  - VS Code debugging protocol
+  - DWARF debug information
+  - Source-level debugging
+  - Expression evaluation
+
+#### Performance Tools
+- **Profiling Support**:
+  - Performance counters
+  - Call graph generation
+  - Hot path analysis
+  - Memory profiling
+- **Analysis Tools**:
+  - Cache behavior analysis
+  - Branch prediction stats
+  - Memory access patterns
+  - Instruction timing
+- **Stack Inspection**: Backtrace and frame inspection
+- **Memory Inspection**: Examine and modify memory contents
+- **Register View**: Monitor and modify register states
+- **Symbol Support**: Debug with symbol information
+- **Expression Evaluation**: Runtime value inspection
+
+#### Development Utilities
+- **Disassembler**: Convert binary back to assembly
+- **Hex Editor**: Binary file inspection and modification
 - **Performance Profiler**: Instruction timing and hotspot analysis
+- **Test Coverage**: Code coverage analysis tools
 
 #### Development Utilities
 - **Disassembler**: Convert binary back to assembly
@@ -892,18 +1031,20 @@ Optimize VirtComp for speed and efficiency once all major features are complete.
 
 ### Recent Achievements ✅
 - ✅ **Phase 2.5 Complete**: Extended register architecture with 50 registers and dual x32/x64 mode support
-- ✅ **Extended Register Operations**: Full MOVEX, ADDEX, SUBEX instruction set for R8-R15 access
+- ✅ **Extended Register Operations**: Full MOVEX, ADDEX, SUBEX instruction set with 64-bit arithmetic capabilities
+- ✅ **64-bit Flag Handling**: Complete carry, overflow, zero, and sign flag calculations for extended operations
 - ✅ **Memory Expansion**: Increased from 256 bytes to 1MB (4,096x increase) with backward compatibility
 - ✅ **UI Polish**: Professional output formatting with purple timestamps and colored log levels
 - ✅ **Command-Line Interface**: Extended register display via -er/--extended-registers flag
-- ✅ **100% Test Coverage**: All 53 unit tests and 39 integration tests continue to pass
+- ✅ **100% Test Coverage**: All 31 unit tests continue to pass including new extended register test cases
 
 ### Next Priority Tasks 🚀
-1. **Assembly Language Design**: Define human-readable instruction syntax with extended register support
-2. **Parser Implementation**: Build two-pass assembler with 50-register name resolution
-3. **Register Name System**: Implement RAX, RBX, RCX, RDX, R8-R15 parsing and validation
-4. **Development Tools**: Create CLI assembler (virtasm) with x64-style syntax support
-5. **Extended Register Integration**: Seamless assembly-to-bytecode for all 50 registers
+1. **Missing Opcodes Implementation**: Implement WRITE_PORT, READ_PORT, indexed addressing [reg+offset]
+2. **String Literal Support**: Add .string directive for null-terminated strings with escape sequences
+3. **Advanced Arithmetic**: Implement MOD, EXP, ABS, MIN, MAX mathematical operations
+4. **Enhanced Memory Operations**: Full x86-style addressing modes [base+index*scale+offset]
+5. **System Call Interface**: SYSCALL instruction implementation with host OS integration
+6. **Assembler Enhancements**: Macro system, enhanced directives, and symbol resolution improvements
 
 ---
 
