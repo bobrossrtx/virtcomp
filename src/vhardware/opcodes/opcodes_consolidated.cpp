@@ -70,6 +70,7 @@ using Logging::Logger;
 #include "load_imm64.hpp"
 #include "movex.hpp"
 #include "addex.hpp"
+#include "subex.hpp"
 
 // CPU mode control headers
 #include "mode32.hpp"
@@ -84,11 +85,11 @@ void handle_add(CPU& cpu, const std::vector<uint8_t>& program, [[maybe_unused]] 
         uint8_t reg1 = program[cpu.get_pc() + 1];
         uint8_t reg2 = program[cpu.get_pc() + 2];
         Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[ADD] │ PC={} R{} += R{}", cpu.get_pc(), "", cpu.get_pc(), reg1, reg2) << std::endl;
-        
+
         uint32_t before = cpu.get_registers()[reg1];
         uint32_t operand = cpu.get_registers()[reg2];
         uint32_t result = before + operand;
-        
+
         // Set carry flag if result overflows 32-bit
         uint32_t current_flags = cpu.get_flags();
         if (result < before) {
@@ -96,7 +97,7 @@ void handle_add(CPU& cpu, const std::vector<uint8_t>& program, [[maybe_unused]] 
         } else {
             cpu.set_flags(current_flags & ~FLAG_CARRY);
         }
-        
+
         // Set overflow flag for signed arithmetic
         // Overflow occurs when:
         // - Adding two positive numbers results in a negative number
@@ -104,13 +105,13 @@ void handle_add(CPU& cpu, const std::vector<uint8_t>& program, [[maybe_unused]] 
         bool sign_before = (static_cast<int32_t>(before) < 0);
         bool sign_operand = (static_cast<int32_t>(operand) < 0);
         bool sign_result = (static_cast<int32_t>(result) < 0);
-        
+
         if ((sign_before == sign_operand) && (sign_before != sign_result)) {
             cpu.set_flags(cpu.get_flags() | FLAG_OVERFLOW);
         } else {
             cpu.set_flags(cpu.get_flags() & ~FLAG_OVERFLOW);
         }
-        
+
         cpu.get_registers()[reg1] = result;
         Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[ADD] │ R{}: {} + {} = {} (carry={}, overflow={})", cpu.get_pc(), "", reg1, before, operand, result, (cpu.get_flags() & FLAG_CARRY) ? 1 : 0, (cpu.get_flags() & FLAG_OVERFLOW) ? 1 : 0) << std::endl;
     }
@@ -639,11 +640,11 @@ void handle_mul(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
         if (reg1 < cpu.get_registers().size() && reg2 < cpu.get_registers().size()) {
             uint32_t before = cpu.get_registers()[reg1];
             uint32_t operand = cpu.get_registers()[reg2];
-            
+
             // Use 64-bit arithmetic to detect overflow
             uint64_t result64 = static_cast<uint64_t>(before) * static_cast<uint64_t>(operand);
             uint32_t result = static_cast<uint32_t>(result64);
-            
+
             // Set carry flag if result overflows 32-bit
             uint32_t current_flags = cpu.get_flags();
             if (result64 > UINT32_MAX) {
@@ -651,7 +652,7 @@ void handle_mul(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
             } else {
                 cpu.set_flags(current_flags & ~FLAG_CARRY);
             }
-            
+
             // Set overflow flag for signed arithmetic
             // Check if signed multiplication overflows
             int64_t signed_result = static_cast<int64_t>(static_cast<int32_t>(before)) * static_cast<int64_t>(static_cast<int32_t>(operand));
@@ -660,7 +661,7 @@ void handle_mul(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
             } else {
                 cpu.set_flags(cpu.get_flags() & ~FLAG_OVERFLOW);
             }
-            
+
             cpu.get_registers()[reg1] = result;
             Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[MUL] │ R{}: {} * {} = {} (carry={}, overflow={})", cpu.get_pc(), "", reg1, before, operand, result, (cpu.get_flags() & FLAG_CARRY) ? 1 : 0, (cpu.get_flags() & FLAG_OVERFLOW) ? 1 : 0) << std::endl;
         }
@@ -1056,7 +1057,7 @@ void handle_sub(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
             uint32_t before = cpu.get_registers()[reg1];
             uint32_t operand = cpu.get_registers()[reg2];
             uint32_t result = before - operand;
-            
+
             // Set carry flag if underflow occurs (borrowing needed)
             uint32_t current_flags = cpu.get_flags();
             if (before < operand) {
@@ -1064,7 +1065,7 @@ void handle_sub(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
             } else {
                 cpu.set_flags(current_flags & ~FLAG_CARRY);
             }
-            
+
             // Set overflow flag for signed arithmetic
             // Overflow occurs when:
             // - Subtracting a negative number from a positive number results in a negative number
@@ -1072,13 +1073,13 @@ void handle_sub(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
             bool sign_before = (static_cast<int32_t>(before) < 0);
             bool sign_operand = (static_cast<int32_t>(operand) < 0);
             bool sign_result = (static_cast<int32_t>(result) < 0);
-            
+
             if ((sign_before != sign_operand) && (sign_before != sign_result)) {
                 cpu.set_flags(cpu.get_flags() | FLAG_OVERFLOW);
             } else {
                 cpu.set_flags(cpu.get_flags() & ~FLAG_OVERFLOW);
             }
-            
+
             cpu.get_registers()[reg1] = result;
             Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[SUB] │ R{}: {} - {} = {} (carry={}, overflow={})", cpu.get_pc(), "", reg1, before, operand, result, (cpu.get_flags() & FLAG_CARRY) ? 1 : 0, (cpu.get_flags() & FLAG_OVERFLOW) ? 1 : 0) << std::endl;
         }
@@ -1394,6 +1395,9 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
         case Opcode::ADDEX:
             handle_addex(cpu, program, running);
             break;
+        case Opcode::SUBEX:
+            handle_subex(cpu, program, running);
+            break;
 
         // CPU Mode Control Operations
         case Opcode::MODE32:
@@ -1427,7 +1431,7 @@ void handle_add64(CPU& cpu, const std::vector<uint8_t>& program, bool& running) 
     handle_add(cpu, program, running);
 }
 
-// Implementation for SUB64 opcode - 64-bit subtraction  
+// Implementation for SUB64 opcode - 64-bit subtraction
 void handle_sub64(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [SUB64] 64-bit subtraction operation", cpu.get_pc()) << std::endl;
     // Placeholder: delegate to regular SUB for now
@@ -1448,20 +1452,6 @@ void handle_load_imm64(CPU& cpu, const std::vector<uint8_t>& program, bool& runn
     handle_load_imm(cpu, program, running);
 }
 
-// Implementation for MOVEX opcode - Extended move
-void handle_movex(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
-    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [MOVEX] Extended move operation", cpu.get_pc()) << std::endl;
-    // Placeholder: delegate to regular MOV for now  
-    handle_mov(cpu, program, running);
-}
-
-// Implementation for ADDEX opcode - Extended addition
-void handle_addex(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
-    Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [ADDEX] Extended addition operation", cpu.get_pc()) << std::endl;
-    // Placeholder: delegate to regular ADD for now
-    handle_add(cpu, program, running);
-}
-
 // Mode Control Operations Implementation
 
 // Implementation for MODE32 opcode - Switch to 32-bit mode
@@ -1471,7 +1461,7 @@ void handle_mode32(CPU& cpu, const std::vector<uint8_t>& program, bool& running)
     cpu.set_pc(cpu.get_pc() + 1);
 }
 
-// Implementation for MODE64 opcode - Switch to 64-bit mode  
+// Implementation for MODE64 opcode - Switch to 64-bit mode
 void handle_mode64(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     Logger::instance().debug() << fmt::format("[PC=0x{:04X}] [MODE64] Switching CPU to 64-bit mode", cpu.get_pc()) << std::endl;
     cpu.set_cpu_mode(CPUMode::MODE_64BIT);
