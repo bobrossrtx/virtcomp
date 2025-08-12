@@ -76,6 +76,9 @@ debug_shift_test.cpp
 merge-to-main.sh
 src/test/test_runner.cpp
 
+# Documentation files (project development)
+docs/project_pitch.txt
+
 # Backup files
 *.old.*
 .aider*
