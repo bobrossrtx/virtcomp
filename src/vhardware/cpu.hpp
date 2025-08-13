@@ -41,6 +41,10 @@ enum class Opcode : uint8_t {
     JNC = 0x22,         // Jump if carry flag not set
     JO  = 0x23,         // Jump if overflow flag set
     JNO = 0x24,         // Jump if overflow flag not set
+    JG  = 0x25,         // Jump if greater (signed)
+    JL  = 0x26,         // Jump if less (signed)
+    JGE = 0x27,         // Jump if greater or equal (signed)
+    JLE = 0x28,         // Jump if less or equal (signed)
 
     MUL = 0x10,         // Multiply reg1, reg2
     DIV = 0x11,         // Divide reg1, reg2
@@ -338,7 +342,7 @@ public:
         if (RegisterNames::is_simd(ymm_reg)) {
             // Lower 128 bits from XMM
             get_xmm_register(ymm_reg, parts[0], parts[1]);
-            
+
             // Upper 128 bits from YMM high parts
             auto base_index = static_cast<size_t>(ymm_reg) - static_cast<size_t>(Register::XMM0);
             auto high2_reg = static_cast<Register>(static_cast<size_t>(Register::YMM0_HIGH2) + base_index * 2);
@@ -352,7 +356,7 @@ public:
         if (RegisterNames::is_simd(ymm_reg)) {
             // Lower 128 bits to XMM
             set_xmm_register(ymm_reg, parts[0], parts[1]);
-            
+
             // Upper 128 bits to YMM high parts
             auto base_index = static_cast<size_t>(ymm_reg) - static_cast<size_t>(Register::XMM0);
             auto high2_reg = static_cast<Register>(static_cast<size_t>(Register::YMM0_HIGH2) + base_index * 2);
