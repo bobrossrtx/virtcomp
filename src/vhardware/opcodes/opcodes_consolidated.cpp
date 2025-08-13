@@ -5,6 +5,7 @@
 #include "opcode_dispatcher.hpp"
 #include "../cpu.hpp"
 #include "../cpu_flags.hpp"
+#include "../../assembler/opcodes.hpp"
 #include "../../debug/logger.hpp"
 #include <fmt/core.h>
 #include <iomanip>
@@ -1218,6 +1219,98 @@ void handle_jno(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     cpu.print_state("JNO");
 }
 
+// Implementation for JG (Jump if Greater)
+void handle_jg(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    uint32_t pc = cpu.get_pc();
+
+    if (pc + 1 < program.size()) {
+        uint8_t addr = program[pc + 1];
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JG] │ PC={} Checking flags for greater", pc, "", pc) << std::endl;
+
+        // JG: Jump if greater (not sign and not zero)
+        if (!(cpu.get_flags() & FLAG_SIGN) && !(cpu.get_flags() & FLAG_ZERO)) {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JG] │ Greater condition met, jumping to address {}", pc, "", addr) << std::endl;
+            cpu.set_pc(addr);
+        } else {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JG] │ Greater condition not met, continuing", pc, "", pc) << std::endl;
+            cpu.set_pc(pc + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JG");
+}
+
+// Implementation for JL (Jump if Less)
+void handle_jl(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    uint32_t pc = cpu.get_pc();
+
+    if (pc + 1 < program.size()) {
+        uint8_t addr = program[pc + 1];
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JL] │ PC={} Checking flags for less", pc, "", pc) << std::endl;
+
+        // JL: Jump if less (sign set and not zero)
+        if ((cpu.get_flags() & FLAG_SIGN) && !(cpu.get_flags() & FLAG_ZERO)) {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JL] │ Less condition met, jumping to address {}", pc, "", addr) << std::endl;
+            cpu.set_pc(addr);
+        } else {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JL] │ Less condition not met, continuing", pc, "", pc) << std::endl;
+            cpu.set_pc(pc + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JL");
+}
+
+// Implementation for JGE (Jump if Greater or Equal)
+void handle_jge(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    uint32_t pc = cpu.get_pc();
+
+    if (pc + 1 < program.size()) {
+        uint8_t addr = program[pc + 1];
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JGE] │ PC={} Checking flags for greater or equal", pc, "", pc) << std::endl;
+
+        // JGE: Jump if greater or equal (not sign or zero)
+        if (!(cpu.get_flags() & FLAG_SIGN) || (cpu.get_flags() & FLAG_ZERO)) {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JGE] │ Greater or equal condition met, jumping to address {}", pc, "", addr) << std::endl;
+            cpu.set_pc(addr);
+        } else {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JGE] │ Greater or equal condition not met, continuing", pc, "", pc) << std::endl;
+            cpu.set_pc(pc + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JGE");
+}
+
+// Implementation for JLE (Jump if Less or Equal)
+void handle_jle(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
+    uint32_t pc = cpu.get_pc();
+
+    if (pc + 1 < program.size()) {
+        uint8_t addr = program[pc + 1];
+        Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JLE] │ PC={} Checking flags for less or equal", pc, "", pc) << std::endl;
+
+        // JLE: Jump if less or equal (sign set or zero)
+        if ((cpu.get_flags() & FLAG_SIGN) || (cpu.get_flags() & FLAG_ZERO)) {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JLE] │ Less or equal condition met, jumping to address {}", pc, "", addr) << std::endl;
+            cpu.set_pc(addr);
+        } else {
+            Logger::instance().debug() << fmt::format("[PC=0x{:04X}]{:>6}[JLE] │ Less or equal condition not met, continuing", pc, "", pc) << std::endl;
+            cpu.set_pc(pc + 2);
+        }
+    } else {
+        running = false;
+    }
+
+    cpu.print_state("JLE");
+}
+
 // Dispatcher function (copied from opcode_dispatcher.cpp)
 void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& running) {
     if (cpu.get_pc() >= program.size()) {
@@ -1281,6 +1374,18 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
             break;
         case Opcode::JNO:
             handle_jno(cpu, program, running);
+            break;
+        case Opcode::JG:
+            handle_jg(cpu, program, running);
+            break;
+        case Opcode::JL:
+            handle_jl(cpu, program, running);
+            break;
+        case Opcode::JGE:
+            handle_jge(cpu, program, running);
+            break;
+        case Opcode::JLE:
+            handle_jle(cpu, program, running);
             break;
         case Opcode::LOAD:
             handle_load(cpu, program, running);
@@ -1412,9 +1517,10 @@ void dispatch_opcode(CPU& cpu, const std::vector<uint8_t>& program, bool& runnin
 
         default:
             Logger::instance().error()
-                << std::right << std::setw(23) << std::setfill(' ') << "Invalid opcode " << "│ "
-                << "Unknown opcode 0x"
+                << "Invalid opcode │ Unknown opcode 0x"
                 << std::hex << std::uppercase << std::setw(2) << std::setfill('0') << static_cast<int>(opcode)
+                << " ('" << (static_cast<int>(opcode) >= 32 && static_cast<int>(opcode) <= 126 ?
+                            static_cast<char>(opcode) : '.') << "')"
                 << " at PC=" << std::dec << cpu.get_pc() << std::endl;
             running = false;
             break;
