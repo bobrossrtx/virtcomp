@@ -1,8 +1,8 @@
-// Minimal ImGui+GLFW+OpenGL3 integration for VirtComp VM debug GUI
+// Minimal ImGui+GLFW+OpenGL3 integration for DemiEngine debug GUI
 #include "gui.hpp"
 #include "../config.hpp"
 #include "../debug/logger.hpp"
-#include "../vhardware/cpu.hpp"
+#include "../engine/cpu.hpp"
 
 #include <imgui.h>
 #include <GLFW/glfw3.h>
@@ -244,7 +244,7 @@ void Gui::run_vm(const std::vector<uint8_t>& program) {
 
             if (largeFont) {
                 ImGui::PushFont(largeFont);
-                ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "VirtComp Debugger");
+                ImGui::TextColored(ImVec4(0.4f, 0.8f, 1.0f, 1.0f), "DemiEngine Debugger");
                 ImGui::PopFont(); // Pop largeFont
             }
 

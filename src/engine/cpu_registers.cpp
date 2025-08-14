@@ -1,7 +1,7 @@
 #include "cpu_registers.hpp"
 #include <unordered_map>
 
-namespace VirtComp_Registers {
+namespace DemiEngine_Registers {
 
 // Register information table
 const RegisterInfo REGISTER_INFO[] = {
@@ -296,4 +296,4 @@ bool RegisterNames::is_simd_control(Register reg) {
     return index >= 98 && index < 102; // MXCSR, FPU control registers
 }
 
-} // namespace VirtComp_Registers
+} // namespace DemiEngine_Registers

@@ -1,5 +1,5 @@
 #include "test_framework.hpp"
-#include "../vhardware/cpu_flags.hpp"
+#include "../engine/cpu_flags.hpp"
 
 // Example unit tests using the new framework
 
@@ -604,7 +604,7 @@ TEST_CASE(mode_switching, "cpu_modes") {
 
 TEST_CASE(simd_register_classification, "simd_registers") {
     // Test SIMD register type classification
-    using namespace VirtComp_Registers;
+    using namespace DemiEngine_Registers;
 
     // Test XMM registers are classified as SIMD
     ctx.assert_eq(true, RegisterNames::is_simd(Register::XMM0), "XMM0 should be SIMD");
@@ -633,7 +633,7 @@ TEST_CASE(simd_register_classification, "simd_registers") {
 
 TEST_CASE(simd_register_names, "simd_registers") {
     // Test SIMD register name mapping
-    using namespace VirtComp_Registers;
+    using namespace DemiEngine_Registers;
 
     // Test XMM register names
     ctx.assert_eq(std::string("XMM0"), RegisterNames::get_name(Register::XMM0), "XMM0 name should be correct");
@@ -656,7 +656,7 @@ TEST_CASE(simd_register_names, "simd_registers") {
 
 TEST_CASE(register_count_expansion, "simd_registers") {
     // Test that register count has been properly expanded
-    using namespace VirtComp_Registers;
+    using namespace DemiEngine_Registers;
 
     // Verify total register count
     ctx.assert_eq(static_cast<size_t>(134), TOTAL_REGISTERS, "Total register count should be 134");
@@ -672,7 +672,7 @@ TEST_CASE(register_count_expansion, "simd_registers") {
 
 TEST_CASE(xmm_register_access, "simd_registers") {
     // Test basic XMM register access using 64-bit operations
-    using namespace VirtComp_Registers;
+    using namespace DemiEngine_Registers;
 
     ctx.cpu.reset();
 
@@ -697,7 +697,7 @@ TEST_CASE(xmm_register_access, "simd_registers") {
 
 TEST_CASE(fpu_register_access, "fpu_registers") {
     // Test basic FPU register access using 64-bit operations
-    using namespace VirtComp_Registers;
+    using namespace DemiEngine_Registers;
 
     ctx.cpu.reset();
 
@@ -722,7 +722,7 @@ TEST_CASE(fpu_register_access, "fpu_registers") {
 
 TEST_CASE(mmx_register_aliasing, "mmx_registers") {
     // Test MMX register aliasing to FPU registers
-    using namespace VirtComp_Registers;
+    using namespace DemiEngine_Registers;
 
     ctx.cpu.reset();
 
@@ -766,7 +766,7 @@ TEST_CASE(extended_register_operations, "extended_registers") {
 
 TEST_CASE(simd_control_registers, "simd_control") {
     // Test SIMD control register access
-    using namespace VirtComp_Registers;
+    using namespace DemiEngine_Registers;
 
     ctx.cpu.reset();
 
@@ -794,7 +794,7 @@ TEST_CASE(simd_control_registers, "simd_control") {
 
 TEST_CASE(register_type_boundaries, "register_validation") {
     // Test register type boundary validation
-    using namespace VirtComp_Registers;
+    using namespace DemiEngine_Registers;
 
     // Test first and last registers of each type
     ctx.assert_eq(true, RegisterNames::is_general_purpose(Register::RAX), "RAX should be general purpose");

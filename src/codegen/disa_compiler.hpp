@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include "x86_encoder.hpp"
 #include "register_allocator.hpp"
-#include "../vhardware/cpu.hpp"
+#include "../engine/cpu.hpp"
 
 namespace CodeGen {
 

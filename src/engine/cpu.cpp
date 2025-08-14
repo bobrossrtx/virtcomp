@@ -11,7 +11,7 @@
 #include "cpu_registers.hpp"  // Include the new register system
 #include "opcodes/opcode_dispatcher.hpp"
 
-using namespace VirtComp_Registers;
+using namespace DemiEngine_Registers;
 
 // Constants for CPU configuration
 constexpr size_t CPU_LEGACY_REGISTER_COUNT = 8;  // For backward compatibility

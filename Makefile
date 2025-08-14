@@ -8,12 +8,12 @@ BIN_DIR := bin
 # Find all .cpp files in src and its subdirectories, excluding test files
 SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -not -name 'test_runner.cpp' -not -name 'test_*.cpp')
 # Add the new register system source files explicitly
-REGISTER_SRCS := $(SRC_DIR)/vhardware/cpu_registers.cpp
+REGISTER_SRCS := $(SRC_DIR)/engine/cpu_registers.cpp
 SRCS += $(REGISTER_SRCS)
 # Replace src/ with build/ and .cpp with .o for object files
 OBJS := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
-TARGET := $(BIN_DIR)/virtcomp
+TARGET := $(BIN_DIR)/demi-engine
 
 # Assembler test target (minimal dependencies, no CPU execution)
 ASSEMBLER_TEST_TARGET := $(BIN_DIR)/test_assembler

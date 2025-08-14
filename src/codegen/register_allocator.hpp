@@ -4,7 +4,7 @@
 #include <vector>
 #include <optional>
 #include "x86_encoder.hpp"
-#include "../vhardware/cpu_registers.hpp"
+#include "../engine/cpu_registers.hpp"
 
 namespace CodeGen {
 

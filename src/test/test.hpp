@@ -5,7 +5,7 @@
 #include <filesystem>
 #include <fstream>
 #include <fmt/core.h>
-#include "../vhardware/cpu.hpp"
+#include "../engine/cpu.hpp"
 
 class TestRunner {
 public:

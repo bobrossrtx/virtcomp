@@ -18,8 +18,8 @@ namespace fs = std::experimental::filesystem;
 #endif
 
 #include "config.hpp"
-#include "vhardware/cpu.hpp"
-#include "vhardware/device_factory.hpp"
+#include "engine/cpu.hpp"
+#include "engine/device_factory.hpp"
 
 // Include the debug framework
 #include "debug/logger.hpp"
@@ -30,7 +30,7 @@ namespace fs = std::experimental::filesystem;
 #include "test/test_framework.hpp"
 
 // Include the assembler framework
-#include "assembler/virtcomp_assembler.hpp"
+#include "assembler/demi_assembler.hpp"
 #include "assembler/lexer.hpp"
 #include "assembler/parser.hpp"
 #include "assembler/assembler.hpp"
@@ -145,7 +145,7 @@ public:
     }
 
     void print_help() const {
-        std::cout << "virtcomp Usage: virtcomp [options]" << std::endl;
+        std::cout << "demi-engine Usage: demi-engine [options]" << std::endl;
         for (const auto& def : args_) {
             // Use printf to align arguments and help text
             std::cout << fmt::format("  {:<20} {:<6}  {}\n", def.arg, def.alias, def.help);
@@ -161,7 +161,7 @@ bool run_tests() {
     // If debug mode is on, use orange (ANSI 38;5;208), else cyan (36)
     const char* color = Config::debug ? "\033[38;5;208m" : "\033[36m";
     std::cout << color << "┌──────────────────────────────────────────────────────┐\033[0m" << std::endl;
-    std::cout << color << "│     Running VirtComp Unit Tests                      │\033[0m" << std::endl;
+    std::cout << color << "│     Running DemiEngine Unit Tests                    │\033[0m" << std::endl;
     std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
 
     // Run unit tests using the new framework
@@ -170,7 +170,7 @@ bool run_tests() {
     // Also run the old integration tests for now
     std::cout << std::endl;
     std::cout << color << "┌──────────────────────────────────────────────────────┐\033[0m" << std::endl;
-    std::cout << color << "│     Running VirtComp Integration Tests               │\033[0m" << std::endl;
+    std::cout << color << "│     Running DemiEngine Integration Tests             │\033[0m" << std::endl;
     std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
 
     // Use TestRunner to run all .hex files in tests/
@@ -180,7 +180,7 @@ bool run_tests() {
     // Print result header with the same style as the test header
     const char* result_color = Config::debug ? "\033[38;5;208m" : "\033[36m";
     std::cout << result_color << "┌──────────────────────────────────────────────────────┤\033[0m" << std::endl;
-    std::cout << result_color << "│     VirtComp Integration Test Results                │\033[0m" << std::endl;
+    std::cout << result_color << "│     DemiEngine Integration Test Results                │\033[0m" << std::endl;
     std::cout << result_color << "└──────────────────────────────────────────────────────┘\033[0m" << std::endl;
     for (const auto& result : results) {
         // Print test result with neat spacing (fixed width for name)
@@ -222,14 +222,14 @@ void run_gui() {
             }
         }
     }
-    Gui gui("VirtComp Debugger");
+    Gui gui("DemiEngine Debugger");
     gui.run_vm(program);
     exit(0);
 }
 
-class VirtComp {
+class DemiEngine {
 public:
-    VirtComp(int argc, char *argv[]) {
+    DemiEngine(int argc, char *argv[]) {
         // Help argument
         parser.add_action_arg("help", "--help", "-h", "Shows help information",
             [this]() { parser.print_help(); show_help = true; });
@@ -605,7 +605,7 @@ public:
         // Print a simple, clean headerw
         if (!Config::compile_only) {
             const char* color = Config::debug ? "\033[38;5;208m" : "\033[36m";
-            std::cout << color << "\n=== VirtComp Virtual Machine ===" << "\033[0m" << std::endl;
+            std::cout << color << "\n=== Demi Engine ===" << "\033[0m" << std::endl;
             std::cout << color << "Execution started..." << "\033[0m\n" << std::endl;
         }
 
@@ -773,7 +773,7 @@ private:
 };
 
 int main(int argc, char *argv[]) {
-    VirtComp app(argc, argv);
+    DemiEngine app(argc, argv);
     app.run();
     return 0;
 }

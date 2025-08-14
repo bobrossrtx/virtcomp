@@ -9,9 +9,9 @@ namespace Assembler {
 /**
  * Main assembler interface that combines lexing, parsing, and code generation
  */
-class VirtCompAssembler {
+class DemiAssembler {
 public:
-    VirtCompAssembler() = default;
+    DemiAssembler() = default;
     
     /**
      * Assemble assembly source code into bytecode

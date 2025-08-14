@@ -8,8 +8,8 @@
 #include <chrono>
 #include <limits>
 #include <fmt/format.h>
-#include "../vhardware/cpu.hpp"
-#include "../vhardware/device_factory.hpp"
+#include "../engine/cpu.hpp"
+#include "../engine/device_factory.hpp"
 #include "../config.hpp"
 #include "../debug/logger.hpp"
 

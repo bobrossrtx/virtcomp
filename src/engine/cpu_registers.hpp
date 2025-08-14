@@ -9,7 +9,7 @@
  * This provides the foundation for advanced programming language compilation targets.
  */
 
-namespace VirtComp_Registers {
+namespace DemiEngine_Registers {
 
 // Register enumeration for 64-bit x64-style architecture
 enum class Register : uint8_t {
@@ -213,4 +213,4 @@ enum class RegisterType {
 // Predefined register information
 extern const RegisterInfo REGISTER_INFO[];
 
-} // namespace VirtComp_Registers
+} // namespace DemiEngine_Registers

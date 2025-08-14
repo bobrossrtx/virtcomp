@@ -1,4 +1,4 @@
-#include "virtcomp_assembler.hpp"
+#include "demi_assembler.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include <fstream>
@@ -7,7 +7,7 @@
 
 namespace Assembler {
 
-std::vector<uint8_t> VirtCompAssembler::assemble_string(const std::string& source) {
+std::vector<uint8_t> DemiAssembler::assemble_string(const std::string& source) {
     clear_errors();
     
     // Lexical analysis
@@ -43,7 +43,7 @@ std::vector<uint8_t> VirtCompAssembler::assemble_string(const std::string& sourc
     return bytecode;
 }
 
-std::vector<uint8_t> VirtCompAssembler::assemble_file(const std::string& filename) {
+std::vector<uint8_t> DemiAssembler::assemble_file(const std::string& filename) {
     std::string source = read_file(filename);
     if (source.empty() && has_errors()) {
         return {};
@@ -52,16 +52,16 @@ std::vector<uint8_t> VirtCompAssembler::assemble_file(const std::string& filenam
     return assemble_string(source);
 }
 
-void VirtCompAssembler::clear_errors() {
+void DemiAssembler::clear_errors() {
     all_errors.clear();
     symbols.clear();
 }
 
-void VirtCompAssembler::collect_errors(const std::vector<std::string>& errors) {
+void DemiAssembler::collect_errors(const std::vector<std::string>& errors) {
     all_errors.insert(all_errors.end(), errors.begin(), errors.end());
 }
 
-std::string VirtCompAssembler::read_file(const std::string& filename) {
+std::string DemiAssembler::read_file(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         all_errors.push_back("Cannot open file: " + filename);
@@ -75,7 +75,7 @@ std::string VirtCompAssembler::read_file(const std::string& filename) {
 
 // Convenience functions
 std::vector<uint8_t> assemble(const std::string& source) {
-    VirtCompAssembler assembler;
+    DemiAssembler assembler;
     auto bytecode = assembler.assemble_string(source);
     
     if (assembler.has_errors()) {
@@ -89,7 +89,7 @@ std::vector<uint8_t> assemble(const std::string& source) {
 }
 
 std::vector<uint8_t> assemble_file(const std::string& filename) {
-    VirtCompAssembler assembler;
+    DemiAssembler assembler;
     auto bytecode = assembler.assemble_file(filename);
     
     if (assembler.has_errors()) {

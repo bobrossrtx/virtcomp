@@ -9,9 +9,9 @@
 #include "device_manager.hpp"
 
 using Logging::Logger;
-using VirtComp_Registers::Register;
-using VirtComp_Registers::RegisterNames;
-using VirtComp_Registers::TOTAL_REGISTERS;
+using DemiEngine_Registers::Register;
+using DemiEngine_Registers::RegisterNames;
+using DemiEngine_Registers::TOTAL_REGISTERS;
 
 // CPU Operation Modes
 enum class CPUMode : uint8_t {

@@ -2,7 +2,7 @@
 #include <iomanip>
 #include <fstream>
 #include <sstream>
-#include "../assembler/virtcomp_assembler.hpp"
+#include "../assembler/demi_assembler.hpp"
 #include "../assembler/lexer.hpp"
 #include "../assembler/parser.hpp"
 #include "../assembler/assembler.hpp"

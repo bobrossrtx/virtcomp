@@ -5,7 +5,7 @@
 
 class Gui {
 public:
-    Gui(const std::string& title = "VirtComp Debugger");
+    Gui(const std::string& title = "DemiEngine Debugger");
     void set_title(const std::string& title);
     void run_vm(const std::vector<uint8_t>& program);
 private:
