@@ -8,7 +8,7 @@
 
 namespace CodeGen {
 
-// Maps VirtComp's 134 registers to x86-64's 16 registers
+// Maps DemiEngine's 134 registers to x86-64's 16 registers
 class RegisterAllocator {
 private:
     // Physical x86 registers available for allocation
@@ -21,12 +21,12 @@ private:
     };
 
     // Current allocation state
-    std::unordered_map<uint8_t, X86Register> virt_to_phys;  // VirtComp reg → x86 reg
+    std::unordered_map<uint8_t, X86Register> virt_to_phys;  // DemiEngine reg → x86 reg
     std::unordered_set<X86Register> used_regs;              // Currently allocated x86 regs
     std::unordered_map<uint8_t, bool> dirty_regs;           // Registers that need spilling
 
     // Spill management
-    std::unordered_map<uint8_t, int32_t> spill_slots;       // VirtComp reg → stack offset
+    std::unordered_map<uint8_t, int32_t> spill_slots;       // DemiEngine reg → stack offset
     int32_t next_spill_offset;
 
     // Statistics

@@ -1,9 +1,9 @@
-# VirtComp Assembly Examples
+# DemiEngine Assembly Examples
 
-This directory contains working assembly language examples for the VirtComp virtual machine. All examples use the complete instruction set and produce readable output.
+This directory contains working assembly language examples for the DemiEngine virtual machine. All examples use the complete instruction set and produce readable output.
 
 ## Quick Start
-Run any example with: `./bin/virtcomp -A examples/<filename>.asm`
+Run any example with: `./bin/demi-engine -A examples/<filename>.asm`
 
 ## Examples
 

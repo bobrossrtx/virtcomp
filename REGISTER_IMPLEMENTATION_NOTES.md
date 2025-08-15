@@ -1,11 +1,11 @@
-# VirtComp Register Architecture Implementation Notes
+# DemiEngine Register Architecture Implementation Notes
 
-> **Project**: VirtComp Extended Register System
+> **Project**: DemiEngine Extended Register System
 > **Goal**: Implement x64-style 64-bit register architecture with 50 total registers
 > **Status**: Foundation C### **Session 1 (July 17, 2025)**
 - ✅ Created comprehensive register architecture
 - ✅ Updated CPU class structure
-- ✅ Fixed namespace conflict (VirtComp → VirtComp_Registers)
+- ✅ Fixed namespace conflict (DemiEngine → DemiEngine_Registers)
 - ✅ **CONFIRMED**: Register system compiles successfully
 - ✅ **CONFIRMED**: Memory expansion working (1MB memory allocation successful)
 - ✅ **FIXED**: CPU implementation - All register variable references updated
@@ -30,7 +30,7 @@
 
 ## 🎯 **OVERVIEW**
 
-Transforming VirtComp from 8 simple 32-bit registers to a comprehensive x64-style register architecture with 50 64-bit registers. This is a critical foundation for making VirtComp a proper virtual machine base for future programming language projects.
+Transforming DemiEngine from 8 simple 32-bit registers to a comprehensive x64-style register architecture with 50 64-bit registers. This is a critical foundation for making DemiEngine a proper virtual machine base for future programming language projects.
 
 ---
 
@@ -240,7 +240,7 @@ registers[static_cast<size_t>(Register::RFLAGS)] = 0;
 ### **Session 1 (July 17, 2025)**
 - ✅ Created comprehensive register architecture
 - ✅ Updated CPU class structure
-- ✅ Fixed namespace conflict (VirtComp → VirtComp_Registers)
+- ✅ Fixed namespace conflict (DemiEngine → DemiEngine_Registers)
 - ✅ **CONFIRMED**: Register system compiles successfully
 - ✅ **CONFIRMED**: Memory expansion working (1MB memory allocation successful)
 - 🔴 **BLOCKED**: CPU implementation - ~20+ register variable references need updating

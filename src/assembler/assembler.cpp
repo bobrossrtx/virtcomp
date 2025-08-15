@@ -9,7 +9,7 @@ AssemblerEngine::AssemblerEngine() : current_address(0) {
 }
 
 void AssemblerEngine::init_opcode_table() {
-    // Map mnemonics to opcodes based on VirtComp CPU instruction set
+    // Map mnemonics to opcodes based on DemiEngine CPU instruction set
     mnemonic_to_opcode["NOP"] = static_cast<uint8_t>(Opcode::NOP);
     mnemonic_to_opcode["LOAD_IMM"] = static_cast<uint8_t>(Opcode::LOAD_IMM);
     mnemonic_to_opcode["ADD"] = static_cast<uint8_t>(Opcode::ADD);
@@ -268,7 +268,7 @@ void AssemblerEngine::encode_instruction(const Instruction& instruction) {
         int64_t value = evaluate_expression(*instruction.operands[1], is_symbol, symbol_name);
 
         if (is_symbol) {
-            emit_forward_ref(symbol_name, 1); // VirtComp LOAD_IMM uses 1-byte immediate
+            emit_forward_ref(symbol_name, 1); // DemiEngine's LOAD_IMM uses 1-byte immediate
         } else {
             emit_byte(static_cast<uint8_t>(value)); // 1-byte immediate, not 4-byte
         }
@@ -309,7 +309,7 @@ void AssemblerEngine::encode_instruction(const Instruction& instruction) {
         int64_t value = evaluate_expression(*instruction.operands[0], is_symbol, symbol_name);
 
         if (is_symbol) {
-            emit_forward_ref(symbol_name, 1); // VirtComp uses 8-bit addresses for jumps
+            emit_forward_ref(symbol_name, 1); // DemiEngine uses 8-bit addresses for jumps
         } else {
             emit_byte(static_cast<uint8_t>(value));
         }
@@ -380,7 +380,7 @@ void AssemblerEngine::encode_instruction(const Instruction& instruction) {
         int64_t addr_value = evaluate_expression(*instruction.operands[1], is_symbol, symbol_name);
 
         if (is_symbol) {
-            emit_forward_ref(symbol_name, 1); // VirtComp uses 8-bit addresses
+            emit_forward_ref(symbol_name, 1); // DemiEngine uses 8-bit addresses
         } else {
             emit_byte(static_cast<uint8_t>(addr_value));
         }
@@ -492,7 +492,7 @@ void AssemblerEngine::emit_forward_ref(const std::string& symbol, size_t size, b
 }
 
 size_t AssemblerEngine::get_instruction_size(const std::string& mnemonic, const std::vector<std::unique_ptr<Expression>>& /* operands */) {
-    // Basic instruction size calculations for VirtComp
+    // Basic instruction size calculations for Demi Engine
     if (mnemonic == "NOP" || mnemonic == "HALT" || mnemonic == "RET" ||
         mnemonic == "PUSH_FLAG" || mnemonic == "POP_FLAG") {
         return 1;

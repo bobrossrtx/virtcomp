@@ -24,7 +24,7 @@ void Lexer::init_tables() {
     keywords[".string"] = TokenType::DIRECTIVE;
     keywords[".end"] = TokenType::DIRECTIVE;
     
-    // VirtComp instruction mnemonics (matching the CPU opcodes)
+    // DemiEngine instruction mnemonics (matching the CPU opcodes)
     mnemonics["NOP"] = TokenType::MNEMONIC;
     mnemonics["LOAD_IMM"] = TokenType::MNEMONIC;
     mnemonics["ADD"] = TokenType::MNEMONIC;

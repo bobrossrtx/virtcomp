@@ -1,6 +1,6 @@
-# VirtComp Troubleshooting Guide
+# DemiEngine Troubleshooting Guide
 
-This guide helps you diagnose and fix common issues when using VirtComp.
+This guide helps you diagnose and fix common issues when using DemiEngine.
 
 ## Table of Contents
 
@@ -156,19 +156,19 @@ make debug
 ```bash
 # Check file path and permissions
 ls -la tests/your_program.hex
-./bin/virtcomp tests/your_program.hex
+./bin/demi-engine tests/your_program.hex
 
 # Use absolute path if needed
-./bin/virtcomp $(pwd)/tests/your_program.hex
+./bin/demi-engine $(pwd)/tests/your_program.hex
 ```
 
 **Permission Issues**:
 ```bash
 # Make executable
-chmod +x bin/virtcomp
+chmod +x bin/demi-engine
 
 # Check file permissions
-ls -la bin/virtcomp
+ls -la bin/demi-engine
 ```
 
 ### GUI Won't Start
@@ -212,7 +212,7 @@ sudo apt install mesa-utils
 
 **Enable Step-by-Step Execution**:
 ```bash
-./bin/virtcomp your_program.hex --gui
+./bin/demi-engine your_program.hex --gui
 ```
 
 **Key Debug Windows**:
@@ -381,7 +381,7 @@ When reporting issues, include:
 make debug
 
 # Run with debug output
-./bin/virtcomp program.hex --gui 2>&1 | tee debug.log
+./bin/demi-engine program.hex --gui 2>&1 | tee debug.log
 ```
 
 ### Community Resources

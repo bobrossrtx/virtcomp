@@ -3,7 +3,7 @@
 
 namespace Assembler {
 
-// VirtComp instruction opcodes (standalone version for assembler)
+// DemiEngine instruction opcodes (standalone version for assembler)
 enum class Opcode : uint8_t {
     NOP = 0x00,         // No operation
     LOAD_IMM = 0x01,    // Load immediate value into reg

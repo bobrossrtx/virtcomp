@@ -3,9 +3,9 @@
 #include <string>
 
 /**
- * VirtComp Extended Register Architecture
+ * DemiEngine Extended Register Architecture
  *
- * Implements a comprehensive x64-style register set for the VirtComp virtual machine.
+ * Implements a comprehensive x64-style register set for the DemiEngine virtual machine.
  * This provides the foundation for advanced programming language compilation targets.
  */
 

@@ -2,12 +2,12 @@
 
 ## 🎯 Next Phase: Demi Language Frontend
 
-Now that VirtComp backend is solid (40/40 tests, 134 registers, 162 opcodes), it's time to build the revolutionary Demi language on top of it.
+Now that DemiEngine backend is solid (40/40 tests, 134 registers, 162 opcodes), it's time to build the revolutionary Demi language on top of it.
 
 ## 📋 Immediate Development Priorities
 
 ### Phase 1: Basic Demi Language (4-6 weeks)
-**Goal**: Get simple Demi programs running on VirtComp
+**Goal**: Get simple Demi programs running on DemiEngine
 
 #### Week 1-2: Core Language Design
 - [ ] Define basic Demi syntax (variables, functions, control flow)
@@ -19,7 +19,7 @@ Now that VirtComp backend is solid (40/40 tests, 134 registers, 162 opcodes), it
 - [ ] AST → D-ISA assembly translation
 - [ ] Symbol table management (variables, functions)
 - [ ] Type checking and semantic analysis
-- [ ] Integration with existing VirtComp assembler
+- [ ] Integration with existing DemiEngine assembler
 
 #### Week 5-6: Development Tools
 - [ ] `demi -I program.dem` interpretation mode
@@ -75,7 +75,7 @@ src/
 │   ├── compiler.hpp/cpp
 │   ├── config.hpp/cpp
 │   └── repl.hpp/cpp
-├── vhardware/          # VirtComp VM (existing)
+├── vhardware/          # DemiEngine VM (existing)
 └── debug/              # Development tools (existing)
 ```
 
@@ -84,7 +84,7 @@ src/
 1. **Create** `src/demi/` directory structure
 2. **Design** basic Demi syntax (what should "Hello World" look like?)
 3. **Implement** Demi lexer for tokenizing .dem files
-4. **Test** with simple programs on VirtComp VM
+4. **Test** with simple programs on DemiEngine VM
 
 ## 💡 Key Design Questions to Answer
 

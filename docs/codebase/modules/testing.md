@@ -1,11 +1,11 @@
 # Test Framework System
 
 **Files:** `src/test/test_framework.hpp`, `src/test/test.hpp`, `src/test/unit_tests.cpp`  
-**Purpose:** Comprehensive unit testing framework for VirtComp components
+**Purpose:** Comprehensive unit testing framework for DemiEngine components
 
 ## Overview
 
-The test framework provides a complete testing infrastructure for VirtComp, including unit tests for all CPU instructions, assembly language features, device operations, and system integration. It ensures reliability and enables regression testing during development.
+The test framework provides a complete testing infrastructure for DemiEngine, including unit tests for all CPU instructions, assembly language features, device operations, and system integration. It ensures reliability and enables regression testing during development.
 
 ## Test Framework Architecture
 
@@ -298,7 +298,7 @@ public:
 private:
     void test_bytecode_generation() {
         std::string source = "LOAD_IMM R0, 42\nHALT";
-        auto bytecode = VirtCompAssembler::assemble_string(source);
+        auto bytecode = DemiEngineAssembler::assemble_string(source);
         
         // Expected: [0x01, 0x00, 42, 0xFF]
         assert_equals(bytecode.size(), 4);
@@ -314,7 +314,7 @@ private:
             "    LOAD_IMM R0, 1\n"
             "    JMP main";
         
-        auto bytecode = VirtCompAssembler::assemble_string(source);
+        auto bytecode = DemiEngineAssembler::assemble_string(source);
         
         // Should resolve 'main' label to address 0
         assert_true(bytecode.size() > 0, "Should generate valid bytecode");
@@ -402,7 +402,7 @@ private:
             "done:\n"
             "    HALT\n";
         
-        auto bytecode = VirtCompAssembler::assemble_string(source);
+        auto bytecode = DemiEngineAssembler::assemble_string(source);
         
         CPU cpu;
         cpu.run(bytecode);
@@ -475,17 +475,17 @@ private:
 #!/bin/bash
 # run_tests.sh - Automated test execution
 
-echo "Building VirtComp with test support..."
+echo "Building DemiEngine with test support..."
 make clean
 make test
 
 echo "Running comprehensive test suite..."
-./bin/virtcomp --test
+./bin/demi-engine --test
 
 echo "Running assembly language examples..."
 for asm_file in examples/*.asm; do
     echo "Testing: $asm_file"
-    ./bin/virtcomp -A "$asm_file" || echo "FAILED: $asm_file"
+    ./bin/demi-engine -A "$asm_file" || echo "FAILED: $asm_file"
 done
 
 echo "Test execution completed."
@@ -548,4 +548,4 @@ namespace TestPrograms {
 }
 ```
 
-The test framework ensures VirtComp reliability through comprehensive testing of all components, from individual CPU instructions to complete program execution, supporting both automated regression testing and development validation.
+The test framework ensures DemiEngine reliability through comprehensive testing of all components, from individual CPU instructions to complete program execution, supporting both automated regression testing and development validation.

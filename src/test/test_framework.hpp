@@ -353,7 +353,7 @@ public:
         // Print header
         std::cout << fmt::format("{}┌────────────────────────────────────────────────────────────┐{}\n",
                                 "\033[36m", "\033[0m");
-        std::cout << fmt::format("{}│     VirtComp Unit Test Results                             │{}\n",
+        std::cout << fmt::format("{}│     DemiEngine Unit Test Results                           │{}\n",
                                 "\033[36m", "\033[0m");
         std::cout << fmt::format("{}└────────────────────────────────────────────────────────────┘{}\n",
                                 "\033[36m", "\033[0m");

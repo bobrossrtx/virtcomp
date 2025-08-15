@@ -22,7 +22,7 @@ void print_bytecode(const std::vector<uint8_t>& bytecode) {
 }
 
 int main(int argc, char* argv[]) {
-    std::cout << "Testing VirtComp Assembler\n";
+    std::cout << "Testing DemiEngine Assembler\n";
     std::cout << "==========================\n\n";
 
     std::string test_code;

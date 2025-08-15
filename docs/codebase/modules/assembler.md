@@ -1,7 +1,7 @@
 # Assembly Language System
 
 **Files:** `src/assembler/` directory  
-**Purpose:** Complete assembly language toolchain for VirtComp
+**Purpose:** Complete assembly language toolchain for DemiEngine
 
 ## Overview
 
@@ -142,12 +142,12 @@ std::unordered_map<std::string, uint8_t> mnemonic_to_opcode = {
 - **Address Resolution:** Labels converted to memory addresses
 - **Size Calculation:** Accurate instruction size for jumps
 
-### 4. VirtComp Assembler Interface (`virtcomp_assembler.hpp`)
+### 4. DemiEngine Assembler Interface (`demi-engine_assembler.hpp`)
 
 **Purpose:** High-level interface for assembly operations
 
 ```cpp
-namespace VirtCompAssembler {
+namespace DemiEngineAssembler {
     std::vector<uint8_t> assemble_file(const std::string& filename);
     std::vector<uint8_t> assemble_string(const std::string& source);
     void save_bytecode(const std::vector<uint8_t>& bytecode, 
@@ -230,16 +230,16 @@ OUT 1, R0               ; Output to console
 ```cpp
 // In main.cpp
 if (Config::assembly_mode) {
-    auto bytecode = VirtCompAssembler::assemble_file(filename);
+    auto bytecode = DemiEngineAssembler::assemble_file(filename);
     cpu.run(bytecode);
 }
 ```
 
 ### Build System
-The assembler compiles into the main VirtComp executable and is available via the `-A` flag:
+The assembler compiles into the main DemiEngine executable and is available via the `-A` flag:
 
 ```bash
-./bin/virtcomp -A program.asm
+./bin/demi-engine -A program.asm
 ```
 
 ## Usage Examples
@@ -278,4 +278,4 @@ ADD R99, R0                   ; Invalid register
 JMP undefined_label           ; Undefined symbol
 ```
 
-The assembly system provides a complete, robust toolchain for VirtComp development, supporting educational use cases while maintaining professional-grade error handling and debugging capabilities.
+The assembly system provides a complete, robust toolchain for DemiEngine development, supporting educational use cases while maintaining professional-grade error handling and debugging capabilities.

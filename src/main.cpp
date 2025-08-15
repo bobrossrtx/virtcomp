@@ -180,7 +180,7 @@ bool run_tests() {
     // Print result header with the same style as the test header
     const char* result_color = Config::debug ? "\033[38;5;208m" : "\033[36m";
     std::cout << result_color << "┌──────────────────────────────────────────────────────┤\033[0m" << std::endl;
-    std::cout << result_color << "│     DemiEngine Integration Test Results                │\033[0m" << std::endl;
+    std::cout << result_color << "│     DemiEngine Integration Test Results              │\033[0m" << std::endl;
     std::cout << result_color << "└──────────────────────────────────────────────────────┘\033[0m" << std::endl;
     for (const auto& result : results) {
         // Print test result with neat spacing (fixed width for name)

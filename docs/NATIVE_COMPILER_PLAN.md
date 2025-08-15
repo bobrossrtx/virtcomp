@@ -1,7 +1,7 @@
 # D-ISA to x86-64 Native Compiler Implementation Plan
 
 ## 🎯 Overview
-Transform VirtComp from a VM-based system to a true native code compiler that translates D-ISA bytecode directly to x86-64 machine code.
+Transform DemiEngine from a VM-based system to a true native code compiler that translates D-ISA bytecode directly to x86-64 machine code.
 
 ## 📋 Implementation Phases
 
@@ -24,7 +24,7 @@ Transform VirtComp from a VM-based system to a true native code compiler that tr
   - [ ] Simple linear scan allocation
   - [ ] Basic spill/reload mechanism
   - [ ] Register lifetime tracking
-- [ ] Map VirtComp's 134 registers to x86-64's 16 registers
+- [ ] Map DemiEngine's 134 registers to x86-64's 16 registers
 - [ ] Stack frame management for spilled registers
 
 ### Phase 2: Core Translation (Weeks 3-4)
@@ -57,7 +57,7 @@ Transform VirtComp from a VM-based system to a true native code compiler that tr
 - [ ] LOAD instruction → MOV reg, [base+offset]
 - [ ] STORE instruction → MOV [base+offset], reg
 - [ ] Memory addressing mode translation
-- [ ] Handle VirtComp's memory model vs x86-64 memory model
+- [ ] Handle DemiEngine's memory model vs x86-64 memory model
 
 #### Week 6: Stack Operations
 - [ ] PUSH instruction → PUSH reg
@@ -90,7 +90,7 @@ Transform VirtComp from a VM-based system to a true native code compiler that tr
 - [ ] Register allocation improvements
 
 #### Week 10: Integration & Testing
-- [ ] Integrate compiler into main VirtComp executable
+- [ ] Integrate compiler into main DemiEngine executable
 - [ ] Add `--native-compile` flag to command line
 - [ ] Comprehensive test suite
 - [ ] Performance benchmarking vs VM execution
@@ -99,21 +99,21 @@ Transform VirtComp from a VM-based system to a true native code compiler that tr
 ## 🔧 Technical Challenges & Solutions
 
 ### Challenge 1: Register Pressure
-**Problem**: VirtComp has 134 registers, x86-64 has 16
+**Problem**: DemiEngine has 134 registers, x86-64 has 16
 **Solution**: 
 - Intelligent register allocation with spilling
 - Live range analysis to minimize spills
 - Register renaming for better utilization
 
 ### Challenge 2: Memory Model Differences
-**Problem**: VirtComp's memory addressing vs x86-64
+**Problem**: DemiEngine's memory addressing vs x86-64
 **Solution**:
 - Abstract memory interface
 - Address translation layer
-- Efficient mapping of VirtComp addressing modes
+- Efficient mapping of DemiEngine addressing modes
 
 ### Challenge 3: Device I/O Translation
-**Problem**: VirtComp's device model doesn't map to x86-64
+**Problem**: DemiEngine's device model doesn't map to x86-64
 **Solution**:
 - Runtime library for device operations
 - Function calls for complex I/O operations

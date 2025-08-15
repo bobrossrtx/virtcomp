@@ -1,6 +1,6 @@
-# VirtComp API Reference
+# DemiEngine API Reference
 
-This document provides detailed API documentation for all classes, functions, and interfaces in the VirtComp codebase.
+This document provides detailed API documentation for all classes, functions, and interfaces in the DemiEngine codebase.
 
 ## Table of Contents
 
@@ -18,7 +18,7 @@ This document provides detailed API documentation for all classes, functions, an
 
 **File**: `src/vhardware/cpu.hpp`, `src/vhardware/cpu.cpp`
 
-The core CPU emulation class implementing the VirtComp 32-bit architecture.
+The core CPU emulation class implementing the DemiEngine 32-bit architecture.
 
 #### Constructor
 
@@ -187,7 +187,7 @@ enum class Register {
 
 **File**: `src/vhardware/device.hpp`
 
-Abstract base class for all devices in the VirtComp system.
+Abstract base class for all devices in the DemiEngine system.
 
 #### Pure Virtual Methods
 
@@ -653,4 +653,4 @@ constexpr uint8_t OP_STORE = 0x07;
 constexpr uint8_t OP_HALT = 0xFF;
 ```
 
-This API reference provides comprehensive documentation for all public interfaces in the VirtComp codebase, enabling developers to understand and extend the system effectively.
+This API reference provides comprehensive documentation for all public interfaces in the DemiEngine codebase, enabling developers to understand and extend the system effectively.

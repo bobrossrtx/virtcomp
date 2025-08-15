@@ -13,7 +13,7 @@ namespace Logging {
  * @brief Enumeration of available log levels
  *
  * Log levels are ordered by severity, with SUCCESS being the lowest
- * and ERROR being the highest. Special levels like VIRTCOMP bypass
+ * and ERROR being the highest. Special levels like ENGINE bypass
  * normal filtering rules.
  */
 enum class LogLevel {
@@ -23,7 +23,7 @@ enum class LogLevel {
     ERROR,      ///< Error messages (red) - always shown
     DEBUG,      ///< Debug messages (orange) - filtered by debug mode
     RUNNING,    ///< Process status messages (blue)
-    VIRTCOMP,   ///< VirtComp system messages (magenta) - always shown
+    ENGINE,   ///< Demi Engine's system messages (magenta) - always shown
     ERRORINFO   ///< Error-related info (cyan) - always shown
 };
 
@@ -145,10 +145,10 @@ public:
     Logger& running();
 
     /**
-     * @brief Set log level to VIRTCOMP
+     * @brief Set log level to ENGINE
      * @return Reference to this Logger for method chaining
      */
-    Logger& virtcomp();
+    Logger& demiengine();
 
     // ============================================================================
     // GUI Buffer Management

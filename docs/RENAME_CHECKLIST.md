@@ -45,7 +45,7 @@ After running the automated rename script, manually verify these areas:
 1. **Circular Dependencies**: Renamed headers causing include loops
 2. **Case Sensitivity**: Linux filesystem case-sensitive file references
 3. **Git History**: Ensure `git mv` preserves file history
-4. **Hardcoded Paths**: Any absolute paths that include "virtcomp"
+4. **Hardcoded Paths**: Any absolute paths that include "demi-engine"
 5. **External Tools**: Scripts or configs that reference old names
 
 ## 🔧 **Manual Fixes Likely Needed**
@@ -54,11 +54,11 @@ These areas often require manual attention after automated rename:
 
 ### **Complex String Replacements**
 ```bash
-# Find remaining VirtComp references that need context-aware fixes
-grep -r "VirtComp" . --exclude-dir=.git | grep -v "# DemiEngine"
+# Find remaining DemiEngine references that need context-aware fixes
+grep -r "DemiEngine" . --exclude-dir=.git | grep -v "# DemiEngine"
 
-# Check for any virtcomp in lowercase that might be missed
-grep -r "virtcomp" . --exclude-dir=.git | grep -v "demi-engine"
+# Check for any demi-engine in lowercase that might be missed
+grep -r "demi-engine" . --exclude-dir=.git | grep -v "demi-engine"
 ```
 
 ### **Git Repository Updates**
@@ -94,7 +94,7 @@ make clean && make -j4
 valgrind ./bin/demi-engine examples/simple_addition.asm
 
 # File reference check
-find . -name "*.cpp" -o -name "*.hpp" | xargs grep -l "virtcomp\|VirtComp" | grep -v .git
+find . -name "*.cpp" -o -name "*.hpp" | xargs grep -l "demi-engine\|DemiEngine" | grep -v .git
 ```
 
 ## 🎯 **Success Criteria**
@@ -102,7 +102,7 @@ find . -name "*.cpp" -o -name "*.hpp" | xargs grep -l "virtcomp\|VirtComp" | gre
 The rename is successful when:
 - [x] Project builds without errors
 - [x] All tests pass
-- [x] No "virtcomp" or "VirtComp" references remain (except in git history)
+- [x] No "demi-engine" or "DemiEngine" references remain (except in git history)
 - [x] Binary runs and processes assembly files correctly
 - [x] Debug GUI opens with "DemiEngine" branding
 - [x] Help text shows "demi-engine" usage

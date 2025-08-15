@@ -1,11 +1,11 @@
-# VirtComp Documentation
+# DemiEngine Documentation
 
-Welcome to the VirtComp documentation! This virtual computer simulation provides a complete environment for learning computer architecture, assembly programming, and system design.
+Welcome to the DemiEngine documentation! This virtual computer simulation provides a complete environment for learning computer architecture, assembly programming, and system design.
 
 ## Documentation Sections
 
 ### [Codebase Documentation](./codebase/README.md)
-Technical documentation for developers working on VirtComp itself. Includes detailed API references, architecture overviews, and implementation details that mirror and expand upon the /** documentation comments **/ found in the source code.
+Technical documentation for developers working on DemiEngine itself. Includes detailed API references, architecture overviews, and implementation details that mirror and expand upon the /** documentation comments **/ found in the source code.
 
 - **[Architecture & Components](./codebase/README.md)** - Core system design and implementation
 - **[API Reference](./codebase/API_REFERENCE.md)** - Complete class and function documentation
@@ -17,21 +17,21 @@ User guides for programming the virtual computer. Covers writing hex programs, u
 Fast lookup for instruction set, device ports, and common patterns.
 
 ### [Example Programs](./examples/README.md)
-Well-documented example programs demonstrating various programming concepts and VirtComp features.
+Well-documented example programs demonstrating various programming concepts and DemiEngine features.
 
 ### [Troubleshooting Guide](./TROUBLESHOOTING.md)
 Solutions for common problems, debugging tips, and best practices.
 
 ## Quick Start
 
-1. **Build VirtComp**: Run `make` in the project root
-2. **Run a program**: `./bin/virtcomp tests/helloworld.hex`
-3. **Enable debug GUI**: `./bin/virtcomp tests/helloworld.hex --gui`
-4. **Interactive mode**: `./bin/virtcomp --interactive`
+1. **Build DemiEngine**: Run `make` in the project root
+2. **Run a program**: `./bin/demi-engine tests/helloworld.hex`
+3. **Enable debug GUI**: `./bin/demi-engine tests/helloworld.hex --gui`
+4. **Interactive mode**: `./bin/demi-engine --interactive`
 
 ## Project Overview
 
-VirtComp is a virtual computer simulation featuring:
+DemiEngine is a virtual computer simulation featuring:
 - Custom 32-bit CPU architecture with comprehensive instruction set
 - Device-based I/O system with virtual and real hardware support
 - ImGui-based visual debugger

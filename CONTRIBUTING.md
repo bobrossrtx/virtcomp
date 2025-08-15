@@ -1,6 +1,6 @@
-# Contributing to VirtComp
+# Contributing to DemiEngine
 
-Thank you for your interest in contributing to VirtComp! This guide explains how to contribute to the project effectively.
+Thank you for your interest in contributing to DemiEngine! This guide explains how to contribute to the project effectively.
 
 ## Table of Contents
 
@@ -61,7 +61,7 @@ sudo apt install g++ make git libfmt-dev libgl1-mesa-dev libglfw3-dev
 ```bash
 # Clone the repository
 git clone <repository-url>
-cd virtcomp
+cd demi-engine
 
 # Build the project
 make clean
@@ -214,7 +214,7 @@ void set_register(Register reg, uint32_t value) {
 ```cpp
 /**
  * @file cpu.hpp
- * @brief CPU emulation for VirtComp virtual computer
+ * @brief CPU emulation for DemiEngine virtual computer
  * @author Your Name
  * @date 2025-06-09
  *
@@ -335,7 +335,7 @@ What:
 - Updated instruction decoder to handle new opcodes
 
 Why:
-- Enable scientific computing applications on VirtComp
+- Enable scientific computing applications on DemiEngine
 - Support graphics and simulation programs requiring floating-point
 
 How:
@@ -440,4 +440,4 @@ When asking for help:
 
 ---
 
-Thank you for contributing to VirtComp! Your contributions help make this educational tool better for everyone learning computer architecture and systems programming.
+Thank you for contributing to DemiEngine! Your contributions help make this educational tool better for everyone learning computer architecture and systems programming.

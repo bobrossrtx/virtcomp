@@ -1,8 +1,8 @@
-# VirtComp Testing Framework Design Document
+# DemiEngine Testing Framework Design Document
 
 ## Overview
 
-This document outlines the design for a modern, comprehensive testing framework for VirtComp that combines unit testing capabilities with integration testing support for hex programs.
+This document outlines the design for a modern, comprehensive testing framework for DemiEngine that combines unit testing capabilities with integration testing support for hex programs.
 
 ## Current Problems
 
@@ -300,4 +300,4 @@ TEST_SUITE("Arithmetic Instructions") {
 3. **Phase 3**: Add comprehensive unit test coverage
 4. **Phase 4**: Deprecate old test system when new one is complete
 
-This framework will provide a solid foundation for testing VirtComp while maintaining educational value and ease of use.
+This framework will provide a solid foundation for testing DemiEngine while maintaining educational value and ease of use.

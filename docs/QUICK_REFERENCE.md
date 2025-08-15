@@ -1,4 +1,4 @@
-# VirtComp Instruction Set Quick Reference
+# DemiEngine Instruction Set Quick Reference
 
 ## Basic Syntax
 - Instructions are written in hexadecimal

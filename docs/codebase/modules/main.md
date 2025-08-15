@@ -1,11 +1,11 @@
 # Main Application Entry Point
 
 **File:** `src/main.cpp`
-**Purpose:** Application entry point, command line argument parsing, and orchestration of VirtComp components
+**Purpose:** Application entry point, command line argument parsing, and orchestration of DemiEngine components
 
 ## Overview
 
-The main.cpp file serves as the central orchestrator for the VirtComp virtual machine. It handles command line argument parsing, initializes subsystems, and manages the execution flow between different modes (assembly, hex execution, testing, GUI debugging).
+The main.cpp file serves as the central orchestrator for the DemiEngine virtual machine. It handles command line argument parsing, initializes subsystems, and manages the execution flow between different modes (assembly, hex execution, testing, GUI debugging).
 
 ## Key Components
 
@@ -59,7 +59,7 @@ The main.cpp file serves as the central orchestrator for the VirtComp virtual ma
 
 #### 1. Hex File Execution Mode
 ```bash
-./bin/virtcomp -H program.hex
+./bin/demi-engine -H program.hex
 ```
 - Loads pre-assembled hex bytecode
 - Executes directly on virtual CPU
@@ -67,7 +67,7 @@ The main.cpp file serves as the central orchestrator for the VirtComp virtual ma
 
 #### 2. Assembly Mode
 ```bash
-./bin/virtcomp -A program.asm
+./bin/demi-engine -A program.asm
 ```
 - Invokes lexer → parser → assembler pipeline
 - Compiles assembly source to bytecode
@@ -75,7 +75,7 @@ The main.cpp file serves as the central orchestrator for the VirtComp virtual ma
 
 #### 3. Test Mode
 ```bash
-./bin/virtcomp -t
+./bin/demi-engine -t
 ```
 - Runs comprehensive unit test suite
 - Tests all CPU instructions and subsystems
@@ -83,7 +83,7 @@ The main.cpp file serves as the central orchestrator for the VirtComp virtual ma
 
 #### 4. GUI Debug Mode
 ```bash
-./bin/virtcomp -H program.hex --gui
+./bin/demi-engine -H program.hex --gui
 ```
 - Launches graphical debugger interface
 - Provides real-time CPU state visualization
@@ -91,7 +91,7 @@ The main.cpp file serves as the central orchestrator for the VirtComp virtual ma
 
 #### 5. Compile Mode
 ```bash
-./bin/virtcomp -H program.hex -o [output_name]
+./bin/demi-engine -H program.hex -o [output_name]
 ```
 - Generates standalone executable
 - Bundles VM runtime with program
@@ -123,30 +123,30 @@ The main application implements comprehensive error handling:
 #include "debug/logger.hpp"              // Logging framework
 #include "debug/gui.hpp"                 // Graphical debugger
 #include "test/test.hpp"                 // Unit testing
-#include "assembler/virtcomp_assembler.hpp" // Assembly pipeline
+#include "assembler/demi-engine_assembler.hpp" // Assembly pipeline
 ```
 
 ### Build Integration
 
-The main.cpp compiles to the primary `bin/virtcomp` executable and serves as the unified interface to all VirtComp functionality.
+The main.cpp compiles to the primary `bin/demi-engine` executable and serves as the unified interface to all DemiEngine functionality.
 
 ### Usage Examples
 
 ```bash
 # Basic execution
-./bin/virtcomp -H examples/hello_world.hex
+./bin/demi-engine -H examples/hello_world.hex
 
 # Assembly compilation and execution
-./bin/virtcomp -A examples/calculator.asm
+./bin/demi-engine -A examples/calculator.asm
 
 # Debug with GUI
-./bin/virtcomp -H tests/complex_program.hex --gui --debug
+./bin/demi-engine -H tests/complex_program.hex --gui --debug
 
 # Run test suite
-./bin/virtcomp -t
+./bin/demi-engine -t
 
 # Compile standalone executable
-./bin/virtcomp -H program.hex -o my_program
+./bin/demi-engine -H program.hex -o my_program
 ```
 
-This file represents the primary user interface to VirtComp and orchestrates all major subsystems while maintaining clean separation of concerns.
+This file represents the primary user interface to DemiEngine and orchestrates all major subsystems while maintaining clean separation of concerns.

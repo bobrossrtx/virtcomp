@@ -1,6 +1,6 @@
-# VirtComp
+# DemiEngine
 
-[![Build Status](https://github.com/bobrossrtx/virtcomp/actions/workflows/build.yml/badge.svg)](https://github.com/bobrossrtx/virtcomp/actions/workflows/build.yml)
+[![Build Status](https://github.com/bobrossrtx/demi-engine/actions/workflows/build.yml/badge.svg)](https://github.com/bobrossrtx/demi-engine/actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 #### **Built Using:**
@@ -10,7 +10,7 @@
 **Virtual Computer Simulation**
 *A complete virtual computer environment with custom 32-bit architecture and 100% test coverage*
 
-VirtComp provides a comprehensive virtual computer simulation featuring a custom CPU architecture, device-based I/O system, and visual debugger. With 53 unit tests and 39 integration tests all passing, VirtComp offers rock-solid reliability for learning computer architecture, assembly programming, and system design.
+DemiEngine provides a comprehensive virtual computer simulation featuring a custom CPU architecture, device-based I/O system, and visual debugger. With 53 unit tests and 39 integration tests all passing, DemiEngine offers rock-solid reliability for learning computer architecture, assembly programming, and system design.
 
 ---
 
@@ -25,8 +25,8 @@ VirtComp provides a comprehensive virtual computer simulation featuring a custom
 ### Build and Run
 ```sh
 # Clone the repository
-git clone https://github.com/bobrossrtx/virtcomp.git
-cd virtcomp
+git clone https://github.com/bobrossrtx/demi-engine.git
+cd demi-engine
 
 # Build the project
 make
@@ -35,13 +35,13 @@ make
 make test
 
 # Run a hex program
-./bin/virtcomp -H tests/helloworld.hex
+./bin/demi-engine -H tests/helloworld.hex
 
 # Compile a program
-./bin/virtcomp -H tests/helloworld -o
+./bin/demi-engine -H tests/helloworld -o
 
 # Enable debug GUI
-./bin/virtcomp -H tests/helloworld.hex --gui
+./bin/demi-engine -H tests/helloworld.hex --gui
 ```
 
 ---
@@ -93,11 +93,11 @@ make clean    # Clean build artifacts
 ## Command Line Usage
 
 ```sh
-./bin/virtcomp -h
+./bin/demi-engine -h
 ```
 
 ```
-virtcomp Usage: virtcomp [options]
+demi-engine Usage: demi-engine [options]
   --help           -h      Shows help information
   --debug          -d      Enable debug mode
   --verbose        -v      Show informational messages (use --verbose=false to disable)
@@ -108,24 +108,24 @@ virtcomp Usage: virtcomp [options]
   --compile        -o      Compile program into a standalone executable (optionally specify output name)
 
 Examples:
-  virtcomp program.hex           # Run program
-  virtcomp program.hex --gui     # Run with debugger
+  demi-engine program.hex           # Run program
+  demi-engine program.hex --gui     # Run with debugger
 ```
 
 ---
 
 ## Running the Test Suite
 
-VirtComp includes a suite of unit tests to verify core functionality. To run all tests:
+DemiEngine includes a suite of unit tests to verify core functionality. To run all tests:
 
 ```sh
-./bin/virtcomp -t
+./bin/demi-engine -t
 ```
 
 Add `-d` for debug output:
 
 ```sh
-./bin/virtcomp -t -d
+./bin/demi-engine -t -d
 ```
 
 ## Writing Programs
@@ -212,4 +212,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ---
 
-*Happy hacking with VirtComp!*
+*Happy hacking with DemiEngine!*

@@ -1,6 +1,6 @@
-# 🚀 VirtComp → Demi Development Plan Update
+# 🚀 DemiEngine → Demi Development Plan Update
 
-## ✅ **What's Complete: VirtComp Backend (100%)**
+## ✅ **What's Complete: DemiEngine Backend (100%)**
 
 **Solid Foundation Ready:**
 - **134-Register Architecture**: Extended register system operational
@@ -15,7 +15,7 @@
 
 ### **Phase 1: Basic Demi Language (6 weeks)**
 1. **Core Language Design** - Define syntax, AST structure, error handling
-2. **Demi → D-ISA Compiler** - Convert .dem files to VirtComp bytecode
+2. **Demi → D-ISA Compiler** - Convert .dem files to DemiEngine bytecode
 3. **Development Tools** - `demi -I program.dem` interpretation mode
 
 ### **Phase 2: Revolutionary Customization (4 weeks)**
@@ -38,7 +38,7 @@
 ```
 src/
 ├── assembler/          ✅ D-ISA assembly (complete)
-├── vhardware/          ✅ VirtComp VM (complete)
+├── vhardware/          ✅ DemiEngine VM (complete)
 ├── debug/              ✅ Development tools (complete)
 ├── codegen/            🔧 Native compilation (foundation laid)
 └── demi/               🔜 Demi language (next priority)
@@ -52,7 +52,7 @@ src/
 
 ## 🎯 **Why This Order Makes Sense**
 
-1. **VirtComp is rock-solid** - Backend infrastructure complete
+1. **DemiEngine is rock-solid** - Backend infrastructure complete
 2. **Need real programs** - Demi language will provide test cases for native compilation
 3. **User value first** - Developers can start using Demi sooner
 4. **Better testing** - Real applications will validate native codegen properly

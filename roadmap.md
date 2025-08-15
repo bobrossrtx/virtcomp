@@ -1,15 +1,15 @@
-# Demi & VirtComp Development Roadmap
+# Demi & DemiEngine Development Roadmap
 
 > **Last Updated:** August 14, 2025
-> **Project Status:** VirtComp Backend Complete - Ready for Demi Language Development
+> **Project Status:** DemiEngine Backend Complete - Ready for Demi Language Development
 
 ---
 
 ## 🎯 Project Overview
 
-VirtComp has evolved into a rock-solid backend foundation for **Demi**, a revolutionary programming language with unprecedented customization capabilities. With the backend infrastructure complete (134 registers, 162 opcodes, 40/40 tests passing), development now focuses on building the Demi language frontend with its groundbreaking syntax customization and project-specific configuration system.
+DemiEngine has evolved into a rock-solid backend foundation for **Demi**, a revolutionary programming language with unprecedented customization capabilities. With the backend infrastructure complete (134 registers, 162 opcodes, 40/40 tests passing), development now focuses on building the Demi language frontend with its groundbreaking syntax customization and project-specific configuration system.
 
-### 🌟 Current Status: VirtComp Backend ✅ Complete
+### 🌟 Current Status: DemiEngine Backend ✅ Complete
 
 **Phase 1 Achievements:**
 - ✅ **Robust Virtual Machine**: 134-register architecture with comprehensive instruction set
@@ -25,7 +25,7 @@ VirtComp has evolved into a rock-solid backend foundation for **Demi**, a revolu
 **Key Design Principles:**
 - ✅ **Total Customization**: Unprecedented control over language syntax and behavior
 - ✅ **Project-Specific Dialects**: Different language variants per project
-- ✅ **Zero Core Dependencies**: Complete custom implementation on VirtComp
+- ✅ **Zero Core Dependencies**: Complete custom implementation on DemiEngine
 - ✅ **Dual-Mode Execution**: Interpretation (development) + Native compilation (production)
 - ✅ **Revolutionary Configuration**: demi.toml controls every aspect of language behavior
 
@@ -270,17 +270,17 @@ eigenvals = λ(A)  # Custom eigenvalue function
 
 ## 🚀 **CUSTOM DUAL-MODE TOOLCHAIN ROADMAP**
 
-The following 7-stage development plan transforms VirtComp into a complete custom toolchain for the Demi programming language:
+The following 7-stage development plan transforms DemiEngine into a complete custom toolchain for the Demi programming language:
 
 ### 🔥 **Stage 1: Demi Language Foundation** *(CURRENT - Q3-Q4 2025)*
 
-**Priority: CRITICAL** | **Status: In Progress** | **Dependencies: VirtComp Backend ✅ Complete**
+**Priority: CRITICAL** | **Status: In Progress** | **Dependencies: DemiEngine Backend ✅ Complete**
 
 Build the revolutionary Demi language frontend with unprecedented customization capabilities.
 
 #### 🎯 **Immediate Development Priority: Demi Language Core**
 
-**VirtComp Backend Status: ✅ COMPLETE**
+**DemiEngine Backend Status: ✅ COMPLETE**
 - ✅ **134-Register Architecture**: Full extended register system operational
 - ✅ **162-Opcode Instruction Set**: Complete D-ISA implementation
 - ✅ **Assembly Toolchain**: Lexer → Parser → Assembler → Bytecode fully functional
@@ -303,7 +303,7 @@ Build the revolutionary Demi language frontend with unprecedented customization 
 - 🔜 **AST → D-ISA Translation**: Convert Demi programs to D-ISA assembly
 - 🔜 **Symbol Table Management**: Variable and function scope resolution
 - 🔜 **Type System**: Basic type checking and semantic analysis
-- 🔜 **VirtComp Integration**: Seamless integration with existing assembler
+- 🔜 **DemiEngine Integration**: Seamless integration with existing assembler
 
 **Week 5-6: Development Tools**
 - 🔜 **Interpretation Mode**: `demi -I program.dem` command interface
@@ -350,7 +350,7 @@ demi -I hello.dem --debug           # Interactive debugging
 demi -I hello.dem --profile         # Performance profiling
 ```
 
-**Enhanced VirtComp Features:**
+**Enhanced DemiEngine Features:**
 - ✅ **Extended Register System**: 134 registers with dual x32/x64 mode support
 - ✅ **Comprehensive Instruction Set**: 162 opcodes covering arithmetic, logic, control flow, memory, I/O, SIMD, FPU, AVX, and MMX operations
 - ✅ **Memory Management**: Expanded from 256 bytes to 1MB with paging framework
@@ -362,7 +362,7 @@ demi -I hello.dem --profile         # Performance profiling
 **Demi Language Frontend:**
 - 🔜 **Lexer/Parser**: Demi source language syntax processing
 - 🔜 **AST Generation**: Abstract syntax tree for Demi programs
-- 🔜 **Bytecode Translation**: Demi source → VirtComp bytecode compilation
+- 🔜 **Bytecode Translation**: Demi source → DemiEngine bytecode compilation
 - 🔜 **Symbol Tables**: Variable and function scope management
 - 🔜 **Error Reporting**: Comprehensive syntax and runtime error messages
 
@@ -401,7 +401,7 @@ Transform Demi from VM-based interpretation to true native x86-64 compilation.
 - 🔜 **Instruction Mapping**: Translate all 162 D-ISA opcodes to x86-64
 - 🔜 **Control Flow**: Handle jumps, calls, and conditional branches  
 - 🔜 **Stack Operations**: Implement function calls and local variables
-- 🔜 **Device I/O**: Runtime calls for VirtComp device operations
+- 🔜 **Device I/O**: Runtime calls for DemiEngine device operations
 
 **Week 5-6: Optimization Passes**
 - 🔜 **Dead Code Elimination**: Remove unused instructions
@@ -930,7 +930,7 @@ demi publish                      # Publish package to registry
 ```cpp
 // Unified toolchain structure
 class DemiToolchain {
-    InterpreterEngine interpreter;      // Stage 1: VirtComp integration
+    InterpreterEngine interpreter;      // Stage 1: DemiEngine integration
     AssemblerEngine assembler;         // Stage 3: D-ISA assembler
     CompilerEngine compiler;           // Stage 4: Native code generation
     LinkerEngine linker;              // Stage 5: Object file linking
@@ -1011,7 +1011,7 @@ class CodeHotSwap {
 
 ## 🏆 **EXISTING COMPLETED FEATURES**
 
-*Preserving the excellent work already accomplished in VirtComp that forms the foundation for the Demi toolchain.*### ✅ **Core CPU Architecture** *(100% Complete)*
+*Preserving the excellent work already accomplished in DemiEngine that forms the foundation for the Demi toolchain.*### ✅ **Core CPU Architecture** *(100% Complete)*
 
 - ✅ **Basic Instruction Set**: Core arithmetic, logic, and control flow operations
 - ✅ **Extended Register System**: 50 registers implemented (RAX-R15, segments, control)
@@ -1024,7 +1024,7 @@ class CodeHotSwap {
 
 ### ✅ **Assembly Language Integration** *(100% Complete)*
 
-- ✅ **VM Integration**: Full assembly language integrated with main VirtComp executable
+- ✅ **VM Integration**: Full assembly language integrated with main DemiEngine executable
 - ✅ **Assembly Mode**: `-A/--assembly` flag for assembling and running .asm files
 - ✅ **Complete Pipeline**: Lexer → Parser → Assembler → Bytecode → VM execution
 - ✅ **Flag Validation**: Conflict detection between assembly, test, and program modes
@@ -1084,7 +1084,7 @@ class CodeHotSwap {
 1. **Demi Language Core** *(Critical - Weeks 1-6)*
    - 🔜 **Basic Demi Syntax**: Define default language syntax and semantics
    - 🔜 **Demi Lexer/Parser**: Tokenize and parse .dem source files
-   - 🔜 **AST → D-ISA Compiler**: Convert Demi programs to VirtComp bytecode
+   - 🔜 **AST → D-ISA Compiler**: Convert Demi programs to DemiEngine bytecode
    - 🔜 **Integration**: `demi -I program.dem` interpretation mode
 
 2. **Revolutionary Customization System** *(Core Feature - Weeks 7-10)*
@@ -1099,7 +1099,7 @@ class CodeHotSwap {
    - 🔜 **Live Code Updates**: Hot-reload and dynamic modification
    - 🔜 **Command Interface**: Complete `demi` executable with all modes
 
-**VirtComp Backend Status: ✅ COMPLETE**
+**DemiEngine Backend Status: ✅ COMPLETE**
 - 134 registers, 162 opcodes, 40/40 tests passing
 - Native x86-64 ELF generation with embedded VM
 - Professional debugger and development tools
@@ -1132,7 +1132,7 @@ class CodeHotSwap {
 **🎯 Reference Implementation:**
 - D-ISA virtual machine implementation
 - Instruction set validation and testing
-- Performance benchmarking against current VirtComp
+- Performance benchmarking against current DemiEngine
 - Documentation and specification writing
 
 ### 📅 **Q2 2026: Stage 3 - D-ISA Assembler**
@@ -1206,7 +1206,7 @@ class CodeHotSwap {
 ### 📈 **Short-term Goals (2025-2026):**
 
 1. **Complete Custom Toolchain Foundation**
-   - Finish VirtComp interpreter enhancements (Stage 1)
+   - Finish DemiEngine interpreter enhancements (Stage 1)
    - Define and implement D-ISA specification (Stage 2)
    - Build robust D-ISA assembler (Stage 3)
    - Deliver initial native code generation (Stage 4)
@@ -1251,7 +1251,7 @@ class CodeHotSwap {
 
 | Stage | Completion Target | Key Deliverable | Success Criteria |
 |-------|------------------|-----------------|------------------|
-| Stage 1 | Q4 2025 | Enhanced VirtComp Interpreter | Demi source → VirtComp execution |
+| Stage 1 | Q4 2025 | Enhanced DemiEngine Interpreter | Demi source → DemiEngine execution |
 | Stage 2 | Q1 2026 | D-ISA Specification | Complete instruction set definition |
 | Stage 3 | Q2 2026 | D-ISA Assembler | Assembly → Object file compilation |
 | Stage 4 | Q3 2026 | Native Code Generator | D-ISA → x86_64 native code |
@@ -1300,7 +1300,7 @@ class CodeHotSwap {
 
 ### 🔥 **Current Focus Areas:**
 
-1. **Stage 1 Completion** - Finishing VirtComp interpreter enhancements for Demi development mode
+1. **Stage 1 Completion** - Finishing DemiEngine interpreter enhancements for Demi development mode
 2. **Demi Language Design** - Defining syntax and semantics for the high-level Demi language
 3. **Missing Core Features** - Implementing REPL, live code updates, and enhanced debugging
 4. **Test Framework** - Fixing integration test execution and results reporting
@@ -1384,7 +1384,7 @@ This project offers unique learning experiences in:
 | Extended Architecture | 100% | ~2,000 | 100% | Complete |
 | Testing Framework | 100% | ~900 | 100% | Complete |
 | Advanced Instruction Set | 100% | ~1,600 | 100% | Complete |
-| **VirtComp Total** | **85%** | **~10,500** | **100%** | **Complete** |
+| **DemiEngine Total** | **85%** | **~10,500** | **100%** | **Complete** |
 | Demi Frontend | 0% | 0 | 0% | Planning |
 | D-ISA Specification | 0% | 0 | 0% | Planning |
 | Native Code Generator | 0% | 0 | 0% | Planning |
@@ -1393,7 +1393,7 @@ This project offers unique learning experiences in:
 
 ### 🎯 **Upcoming Milestones:**
 
-- **December 2025**: Stage 1 Complete - Enhanced VirtComp interpreter with Demi frontend
+- **December 2025**: Stage 1 Complete - Enhanced DemiEngine interpreter with Demi frontend
 - **March 2026**: Stage 2 Complete - D-ISA specification and reference implementation
 - **June 2026**: Stage 3 Complete - D-ISA assembler with object file generation
 - **September 2026**: Stage 4 Complete - Native x86_64 code generation backend
@@ -1430,11 +1430,11 @@ This project offers unique learning experiences in:
 
 ## 🎯 **CONCLUSION**
 
-The Demi project represents an ambitious but achievable vision: creating a complete, custom programming language ecosystem that combines the rapid development benefits of interpretation with the performance advantages of native compilation. By building on the solid foundation of VirtComp, we're creating something truly unique in the programming language landscape.
+The Demi project represents an ambitious but achievable vision: creating a complete, custom programming language ecosystem that combines the rapid development benefits of interpretation with the performance advantages of native compilation. By building on the solid foundation of DemiEngine, we're creating something truly unique in the programming language landscape.
 
 ### 🌟 **Key Success Factors:**
 
-1. **Proven Foundation**: VirtComp's 100% test coverage and robust architecture
+1. **Proven Foundation**: DemiEngine's 100% test coverage and robust architecture
 2. **Clear Roadmap**: Well-defined 7-stage development plan with realistic timelines
 3. **Modular Design**: Each stage builds incrementally on previous achievements
 4. **Educational Value**: Complete custom implementation appeals to contributors

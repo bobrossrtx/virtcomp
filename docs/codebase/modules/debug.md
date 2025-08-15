@@ -5,7 +5,7 @@
 
 ## Overview
 
-The debug system provides multiple layers of debugging support for VirtComp, including structured logging, real-time GUI debugging, and comprehensive error tracking. It enables both development debugging and educational use cases.
+The debug system provides multiple layers of debugging support for DemiEngine, including structured logging, real-time GUI debugging, and comprehensive error tracking. It enables both development debugging and educational use cases.
 
 ## Logging Framework
 
@@ -53,7 +53,7 @@ namespace Logging {
 using Logging::Logger;
 
 // Basic logging
-Logger::getInstance().info("Starting VirtComp execution");
+Logger::getInstance().info("Starting DemiEngine execution");
 Logger::getInstance().error("Invalid opcode: 0xFF");
 Logger::getInstance().success("Assembly completed successfully");
 
@@ -66,7 +66,7 @@ LOG_ERROR("Memory access violation at address: 0x" +
 ### Log Output Format
 
 ```
-[25-07-17 19:47:05.070] [INFO] Starting VirtComp execution
+[25-07-17 19:47:05.070] [INFO] Starting DemiEngine execution
 [25-07-17 19:47:05.071] [DEBUG] Loading program: examples/hello_world.hex
 [25-07-17 19:47:05.072] [SUCCESS] Assembly completed successfully
 [25-07-17 19:47:05.073] [ERROR] Invalid register access: R99
@@ -402,7 +402,7 @@ LOG_SUCCESS("Program execution completed successfully");
 
 ```bash
 # Launch with debug GUI
-./bin/virtcomp -H program.hex --gui --debug
+./bin/demi-engine -H program.hex --gui --debug
 
 # Debug controls:
 # - Space: Step single instruction
@@ -421,4 +421,4 @@ gui.set_conditional_breakpoint(0x100, "R0 == 42");
 gui.set_conditional_breakpoint(0x200, "memory[0x1000] != 0");
 ```
 
-The debug system provides comprehensive development and educational debugging capabilities, making VirtComp suitable for both learning assembly programming and developing complex virtual machine applications.
+The debug system provides comprehensive development and educational debugging capabilities, making DemiEngine suitable for both learning assembly programming and developing complex virtual machine applications.

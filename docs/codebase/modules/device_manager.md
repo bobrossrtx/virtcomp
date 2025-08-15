@@ -5,7 +5,7 @@
 
 ## Overview
 
-The device management system provides a unified interface for all I/O operations in VirtComp. It abstracts hardware devices behind a consistent API, enabling the CPU to communicate with various peripherals through standardized device IDs.
+The device management system provides a unified interface for all I/O operations in DemiEngine. It abstracts hardware devices behind a consistent API, enabling the CPU to communicate with various peripherals through standardized device IDs.
 
 ## Architecture
 
@@ -335,4 +335,4 @@ std::vector<uint8_t> program = {
 cpu.run(program);
 ```
 
-The device management system provides a clean, extensible foundation for all I/O operations in VirtComp, supporting both current console output needs and future expansion to complex peripheral devices.
+The device management system provides a clean, extensible foundation for all I/O operations in DemiEngine, supporting both current console output needs and future expansion to complex peripheral devices.

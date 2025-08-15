@@ -1,8 +1,8 @@
-# VirtComp Codebase Documentation
+# DemiEngine Codebase Documentation
 
-**Complete technical documentation for VirtComp virtual machine developers**
+**Complete technical documentation for DemiEngine virtual machine developers**
 
-Welcome to the VirtComp codebase documentation. This guide provides comprehensive technical information for developers working on VirtComp itself, including architecture details, API references, and development guidelines.
+Welcome to the DemiEngine codebase documentation. This guide provides comprehensive technical information for developers working on DemiEngine itself, including architecture details, API references, and development guidelines.
 
 ## Quick Navigation
 
@@ -20,7 +20,7 @@ Welcome to the VirtComp codebase documentation. This guide provides comprehensiv
 
 ## Module Documentation
 
-VirtComp is organized into clearly defined modules, each with comprehensive documentation:
+DemiEngine is organized into clearly defined modules, each with comprehensive documentation:
 
 ### [📱 Main Application (`main.cpp`)](modules/main.md)
 **Application orchestration and command-line interface**
@@ -66,7 +66,7 @@ VirtComp is organized into clearly defined modules, each with comprehensive docu
 
 ## Architecture Overview
 
-VirtComp follows a modular, layered architecture with clear separation of concerns:
+DemiEngine follows a modular, layered architecture with clear separation of concerns:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -140,23 +140,23 @@ make test
 make install
 ```
 
-### Running VirtComp
+### Running DemiEngine
 
 ```bash
 # Execute hex bytecode
-./bin/virtcomp -H program.hex
+./bin/demi-engine -H program.hex
 
 # Assemble and run source code
-./bin/virtcomp -A program.asm
+./bin/demi-engine -A program.asm
 
 # Launch with GUI debugger
-./bin/virtcomp -H program.hex --gui
+./bin/demi-engine -H program.hex --gui
 
 # Run comprehensive test suite
-./bin/virtcomp -t
+./bin/demi-engine -t
 
 # Compile to standalone executable
-./bin/virtcomp -H program.hex -o my_program
+./bin/demi-engine -H program.hex -o my_program
 ```
 
 ### File Organization
@@ -360,7 +360,7 @@ make docs            # Generate documentation
 
 ```cpp
 // Launch debug interface
-./bin/virtcomp -H program.hex --gui --debug
+./bin/demi-engine -H program.hex --gui --debug
 
 // Available debug windows:
 // - CPU State: Real-time register and flag display
@@ -489,7 +489,7 @@ make clean && make test
 
 ### Architecture Evolution
 
-The VirtComp architecture is designed for extensibility and long-term growth:
+The DemiEngine architecture is designed for extensibility and long-term growth:
 
 - **Modular Design**: New components integrate without core changes
 - **Interface Stability**: Public APIs maintain backward compatibility
@@ -500,7 +500,7 @@ The VirtComp architecture is designed for extensibility and long-term growth:
 
 ## Getting Started
 
-Ready to contribute to VirtComp? Start here:
+Ready to contribute to DemiEngine? Start here:
 
 1. **Read the [API Reference](API_REFERENCE.md)** for complete technical details
 2. **Explore [Module Documentation](#module-documentation)** for specific components

@@ -129,8 +129,8 @@ Logger& Logger::running() {
     return level(LogLevel::RUNNING);
 }
 
-Logger& Logger::virtcomp() {
-    return level(LogLevel::VIRTCOMP);
+Logger& Logger::demiengine() {
+    return level(LogLevel::ENGINE);
 }
 
 // ============================================================================
@@ -179,7 +179,7 @@ bool Logger::set_log_file(const std::string& file_path) {
 
     if (log_file_.is_open()) {
         // Write header to log file
-        log_file_ << "=== VirtComp Log Session Started ===" << std::endl;
+        log_file_ << "=== DemiEngine Log Session Started ===" << std::endl;
         log_file_ << "Timestamp: " << generate_timestamp() << std::endl;
         log_file_ << "========================================" << std::endl;
         log_file_.flush();
@@ -201,7 +201,7 @@ std::string Logger::level_to_string(LogLevel level) const {
         case LogLevel::ERROR:       return "ERROR";
         case LogLevel::DEBUG:       return "DEBUG";
         case LogLevel::RUNNING:     return "RUNNING";
-        case LogLevel::VIRTCOMP:    return "VIRTCOMP";
+        case LogLevel::ENGINE:      return "ENGINE";
         case LogLevel::ERRORINFO:   return "ERRORINFO";
         default:                    return "UNKNOWN";
     }
@@ -216,7 +216,7 @@ std::string Logger::level_to_color(LogLevel level) const {
         case LogLevel::ERRORINFO:   return "\033[1;36m";     // Bright Cyan
         case LogLevel::DEBUG:       return "\033[38;5;208m"; // Orange (ANSI 256-color)
         case LogLevel::RUNNING:     return "\033[1;34m";     // Bright Blue
-        case LogLevel::VIRTCOMP:    return "\033[1;35m";     // Bright Magenta
+        case LogLevel::ENGINE:      return "\033[1;35m";     // Bright Magenta
         default:                    return RESET_COLOR;
     }
 }
@@ -271,13 +271,13 @@ bool Logger::should_filter_message(LogLevel level) const {
         return false;
     }
 
-    // Never filter ERROR, SUCCESS, WARNING, RUNNING, VIRTCOMP, or ERRORINFO
+    // Never filter ERROR, SUCCESS, WARNING, RUNNING, ENGINE, or ERRORINFO
     switch (level) {
         case LogLevel::ERROR:
         case LogLevel::SUCCESS:
         case LogLevel::WARNING:
         case LogLevel::RUNNING:
-        case LogLevel::VIRTCOMP:
+        case LogLevel::ENGINE:
         case LogLevel::ERRORINFO:
             return false;
 

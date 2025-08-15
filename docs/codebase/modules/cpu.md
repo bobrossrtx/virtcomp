@@ -211,4 +211,4 @@ uint8_t byte = cpu.read_memory(0x100);
 std::cout << cpu.get_state_string() << std::endl;
 ```
 
-The CPU system forms the computational heart of VirtComp, providing a full-featured virtual processor suitable for educational use, embedded simulation, and assembly language learning.
+The CPU system forms the computational heart of DemiEngine, providing a full-featured virtual processor suitable for educational use, embedded simulation, and assembly language learning.

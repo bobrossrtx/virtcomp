@@ -15,9 +15,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Installing Prerequisites 
+    - name: Installing Prerequisites
       run: make prereqs
-    - name: Building Virtcomp
+    - name: Building Demi Engine
       run: make
     - name: Running Tests
       run: make test

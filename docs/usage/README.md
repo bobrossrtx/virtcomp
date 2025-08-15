@@ -1,6 +1,6 @@
-# VirtComp Usage Documentation
+# DemiEngine Usage Documentation
 
-This section provides user guides for programming the VirtComp virtual computer. Learn how to write programs, use the instruction set, and interact with devices.
+This section provides user guides for programming the DemiEngine virtual computer. Learn how to write programs, use the instruction set, and interact with devices.
 
 ## Table of Contents
 
@@ -19,28 +19,28 @@ This section provides user guides for programming the VirtComp virtual computer.
 
 ### Installation and Setup
 
-1. **Build VirtComp**:
+1. **Build DemiEngine**:
    ```bash
-   cd virtcomp
+   cd demi-engine
    make
    ```
 
 2. **Test the installation**:
    ```bash
-   ./bin/virtcomp tests/helloworld.hex
+   ./bin/demi-engine tests/helloworld.hex
    ```
 
 3. **Enable debug mode**:
    ```bash
-   ./bin/virtcomp tests/helloworld.hex --gui
+   ./bin/demi-engine tests/helloworld.hex --gui
    ```
 
 ### Command-Line Options
 
 ```bash
-virtcomp [OPTIONS] -A [Assembly File]
+demi-engine [OPTIONS] -A [Assembly File]
 
-virtcomp Usage: virtcomp [options]
+demi-engine Usage: demi-engine [options]
   --help               -h      Shows help information
   --debug              -d      Enable debug mode
   --verbose            -v      Show informational messages (use --verbose=false to disable)
@@ -53,14 +53,14 @@ virtcomp Usage: virtcomp [options]
   --compile            -o      Compile program into a standalone executable (optionally specify output name)
 
 Examples:
-  virtcomp program.hex           # Run hex program
-  virtcomp program.hex --gui     # Run with debugger
-  virtcomp --interactive         # Interactive mode
+  demi-engine program.hex           # Run hex program
+  demi-engine program.hex --gui     # Run with debugger
+  demi-engine --interactive         # Interactive mode
 ```
 
 ## Hex Programming
 
-VirtComp programs are written in hexadecimal format with support for comments and labels. This section teaches you how to write effective hex programs.
+DemiEngine programs are written in hexadecimal format with support for comments and labels. This section teaches you how to write effective hex programs.
 
 ### Program Format
 
@@ -165,7 +165,7 @@ FF                  # HALT
 
 ## Instruction Set Reference
 
-This section provides detailed information about each instruction in the VirtComp architecture.
+This section provides detailed information about each instruction in the DemiEngine architecture.
 
 ### Instruction Format
 
@@ -368,7 +368,7 @@ The stack grows downward from high memory. The Stack Pointer (SP) always points 
 
 ### I/O Operations
 
-VirtComp uses port-based I/O to communicate with devices.
+DemiEngine uses port-based I/O to communicate with devices.
 
 #### IN (0x18)
 **Format**: `18 <dst_reg> <port>`
@@ -455,7 +455,7 @@ VirtComp uses port-based I/O to communicate with devices.
 
 ## Device Programming
 
-VirtComp's modular device system allows programs to interact with various virtual and real hardware components through port-mapped I/O.
+DemiEngine's modular device system allows programs to interact with various virtual and real hardware components through port-mapped I/O.
 
 ### Available Devices
 
@@ -614,7 +614,7 @@ The debug GUI provides powerful tools for program development and troubleshootin
 
 **Enable GUI**:
 ```bash
-./bin/virtcomp your_program.hex --gui
+./bin/demi-engine your_program.hex --gui
 ```
 
 **GUI Features**:
@@ -720,7 +720,7 @@ FF                  # HALT
 
 ### Memory Management
 
-VirtComp provides a flat memory model, but you can implement your own memory management:
+DemiEngine provides a flat memory model, but you can implement your own memory management:
 
 #### Simple Heap Allocator
 ```hex
@@ -808,7 +808,7 @@ main:
 .end
 ```
 
-This will compile to the hex format currently used by VirtComp.
+This will compile to the hex format currently used by DemiEngine.
 
 ## Examples and Tutorials
 
@@ -874,4 +874,4 @@ Check the `tests/` directory for complete example programs:
 | 4    | Serial | Hardware serial port |
 | 5-255| Available | For custom devices |
 
-This completes the comprehensive usage documentation for VirtComp programming!
+This completes the comprehensive usage documentation for DemiEngine programming!
