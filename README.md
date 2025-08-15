@@ -1,6 +1,6 @@
 # DemiEngine
 
-[![Build Status](https://github.com/bobrossrtx/demi-engine/actions/workflows/build.yml/badge.svg)](https://github.com/bobrossrtx/demi-engine/actions/workflows/build.yml)
+[![Build Status](https://github.com/bobrossrtx/demi/actions/workflows/build.yml/badge.svg)](https://github.com/bobrossrtx/demi-engine/actions/workflows/build.yml)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 #### **Built Using:**
