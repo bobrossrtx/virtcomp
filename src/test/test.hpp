@@ -15,7 +15,7 @@ public:
         std::string message;
     };
 
-    TestRunner(const std::string& test_dir = "tests") : test_dir_(test_dir) {}
+    TestRunner(const std::string& test_dir = "tests/hex") : test_dir_(test_dir) {}
 
     std::vector<TestResult> run_all() {
         std::vector<TestResult> results;
@@ -23,15 +23,11 @@ public:
             if (entry.path().extension() == ".hex") {
                 std::string test_name = entry.path().filename().string();
                 Logger::instance().running()
-                    << fmt::format("{:>14} [RUN] │ {}", "", test_name) << std::endl;
+                    << fmt::format("[RUN] │ {}", test_name) << std::endl;
                 TestResult result = run_test(entry.path());
                 std::ostringstream oss;
 
-                int buffer_size = 15;
-                if (!result.passed) buffer_size += 2;
-
-                oss << std::right << std::setw(buffer_size) << std::setfill(' ') <<
-                "[" << (result.passed ? "PASS" : "FAIL") << "] │ " << test_name;
+                oss << "[" << (result.passed ? "PASS" : "FAIL") << "] │ " << test_name;
                 if (!result.passed && !result.message.empty())
                     oss << " ── " << result.message;
                 if (result.passed) {
@@ -82,7 +78,12 @@ private:
         }
 
         if (!comment.empty()) {
-            Logger::instance().info() << fmt::format("{:>13} [COMMENT] │{}", "", comment) << std::endl;
+            Logger::instance().info() << fmt::format("[COMMENT] │{}", comment) << std::endl;
+        }
+
+        // Check for empty program
+        if (prog.empty()) {
+            return {path.filename().string(), false, "Empty test file - no program to execute"};
         }
 
         CPU cpu;
