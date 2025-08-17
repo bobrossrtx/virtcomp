@@ -57,10 +57,10 @@ void initialize_devices() {
     counter->setCounter(42);
 
     // Create a file device for virtual file I/O
-    auto file = DeviceFactory::createFileDevice("virtual_storage/vhd.dat", 0x04);
-
-    // Create a RAM disk device for block storage
+    auto file = DeviceFactory::createFileDevice("virtual_storage/vhd.dat", 0x04);    // Create a RAM disk device for block storage
+    Logger::instance().debug() << "About to create RAMDisk..." << std::endl;
     auto ramdisk = DeviceFactory::createRamDiskDevice(8192, 0x05, 0x06);
+    Logger::instance().debug() << "RAMDisk created successfully" << std::endl;
 
     // Optionally, create a real serial port device if available
     // Uncomment and modify the port name as needed for your system
@@ -173,8 +173,8 @@ bool run_tests() {
     std::cout << color << "│     Running DemiEngine Integration Tests             │\033[0m" << std::endl;
     std::cout << color << "└──────────────────────────────────────────────────────┤\033[0m" << std::endl;
 
-    // Use TestRunner to run all .hex files in tests/
-    TestRunner runner("tests");
+    // Use TestRunner to run all .hex files in tests/hex/
+    TestRunner runner("tests/hex");
     auto results = runner.run_all();
     int passed = 0, failed = 0;
     // Print result header with the same style as the test header
