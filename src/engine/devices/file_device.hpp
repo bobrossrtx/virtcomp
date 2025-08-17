@@ -41,7 +41,9 @@ public:
         loadFromFile();
     }
 
-    ~FileDevice() override = default;    uint8_t read() override {
+    ~FileDevice() override = default;
+
+    uint8_t read() override {
         std::lock_guard<std::mutex> lock(mutex);
 
         // If position is at the end of the buffer or beyond, return 0
